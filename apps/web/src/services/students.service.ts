@@ -39,7 +39,7 @@ export class StudentsService {
       dateOfBirth?: string;
       gender?: string;
     }
-  ): Promise<{ id: string } | { error: any }> {
+  ): Promise<{ id: string } | { error: Error }> {
     const { data: result, error } = await supabase.rpc('create_student_with_initial_placement', {
       p_organization_id: organizationId,
       p_branch_id: branchId,
@@ -61,7 +61,7 @@ export class StudentsService {
   /**
    * Fetch a single student. RLS will ensure we only see them if they have an active enrollment in a branch we can access.
    */
-  static async getStudent(id: string): Promise<{ data?: Student, error?: any }> {
+  static async getStudent(id: string): Promise<{ data?: Student, error?: Error }> {
     const { data, error } = await supabase
       .from('students')
       .select('*')
@@ -75,7 +75,7 @@ export class StudentsService {
   /**
    * List all visible students. RLS restricts this to students enrolled in our active branches.
    */
-  static async listStudents(): Promise<{ data?: Student[], error?: any }> {
+  static async listStudents(): Promise<{ data?: Student[], error?: Error }> {
     const { data, error } = await supabase
       .from('students')
       .select('*')
@@ -92,7 +92,7 @@ export class StudentsService {
     organizationId: string,
     firstName: string,
     lastName: string
-  ): Promise<{ data?: Guardian, error?: any }> {
+  ): Promise<{ data?: Guardian, error?: Error }> {
     const { data, error } = await supabase
       .from('guardians')
       .insert({
@@ -114,7 +114,7 @@ export class StudentsService {
     studentId: string,
     guardianId: string,
     relationship: string
-  ): Promise<{ error?: any }> {
+  ): Promise<{ error?: Error }> {
     const { error } = await supabase
       .from('student_guardians')
       .insert({

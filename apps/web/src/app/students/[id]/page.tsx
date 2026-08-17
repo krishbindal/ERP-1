@@ -1,5 +1,6 @@
 import React from 'react'
 import { StudentsService } from '@/services/students.service'
+import Link from 'next/link'
 
 export default async function StudentDetailPage({ params }: { params: { id: string } }) {
   const { data: student, error } = await StudentsService.getStudent(params.id)
@@ -12,7 +13,7 @@ export default async function StudentDetailPage({ params }: { params: { id: stri
     <div className="p-8 max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Student Details</h1>
-        <a href="/students" className="text-blue-600 hover:underline">Back to List</a>
+        <Link href="/students" className="text-blue-600 hover:underline">Back to List</Link>
       </div>
 
       <div className="bg-white rounded shadow p-6 mb-6">

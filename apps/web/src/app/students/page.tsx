@@ -1,5 +1,6 @@
-import React from 'react'
+import React from 'react';
 import { StudentsService } from '@/services/students.service'
+import Link from 'next/link'
 
 export default async function StudentsPage() {
   const { data: students, error } = await StudentsService.listStudents()
@@ -12,9 +13,9 @@ export default async function StudentsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Students</h1>
-        <a href="/students/new" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <Link href="/students/new" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
           Add Student
-        </a>
+        </Link>
       </div>
 
       <div className="bg-white rounded shadow overflow-hidden">
@@ -38,7 +39,7 @@ export default async function StudentsPage() {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <a href={`/students/${student.id}`} className="text-blue-600 hover:text-blue-900">View</a>
+                  <Link href={`/students/${student.id}`} className="text-blue-600 hover:text-blue-900">View</Link>
                 </td>
               </tr>
             ))}
