@@ -1,39 +1,56 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - master
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - master
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    name: Validation and Tests
+    runs-on: [self-hosted, linux, x64, schoolos-ci]
+    
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout commit
+        uses: actions/checkout@v4
+        with:
+          clean: true
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Typecheck
-        run: npm run typecheck
+        run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint --workspaces --if-present
 
-      - name: Supabase Local Test Setup
-        uses: supabase/setup-cli@v1
+      - name: Typecheck
+        run: npm run typecheck --workspaces --if-present
 
-      - name: Start Supabase & Run db tests
-        run: |
-          supabase start
-          supabase test db
+      - name: Unit Tests
+        run: npm run test --workspaces --if-present
+
+      - name: Start Local Supabase
+        run: npx supabase start
+
+      - name: Reset Database
+        run: npx supabase db reset
+
+      - name: Database Tests (pgTAP & RLS)
+        run: npx supabase test db
 
       - name: Build Web
         run: npm run build:web
+
+      - name: Secret Scan & Security Checks
+        run: npm audit --audit-level=high
+
+      - name: Stop Local Supabase
+        if: always()
+        run: npx supabase stop

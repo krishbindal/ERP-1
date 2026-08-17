@@ -1,0 +1,24 @@
+name: Runner Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test-ci-governance
+
+jobs:
+  smoke-test:
+    runs-on: [self-hosted, linux, x64, schoolos-ci]
+    steps:
+      - name: Print OS
+        run: uname -a
+      - name: Print Node Version
+        run: node -v
+      - name: Print npm Version
+        run: npm -v
+      - name: Print Git Version
+        run: git --version
+      - name: Verify Docker
+        run: docker --version
+      - name: Verify Supabase CLI
+        run: npx supabase --version
