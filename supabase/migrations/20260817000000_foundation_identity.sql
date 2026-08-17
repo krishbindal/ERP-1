@@ -154,3 +154,14 @@ USING (true);
 CREATE POLICY "User Role Assignments are viewable by self"
 ON user_role_assignments FOR SELECT TO authenticated
 USING (branch_membership_id IN (SELECT id FROM branch_memberships WHERE user_id = auth.uid()) OR auth_is_super_admin());
+
+-- Grants
+GRANT SELECT ON organizations TO authenticated;
+GRANT SELECT ON branches TO authenticated;
+GRANT SELECT ON profiles TO authenticated;
+GRANT SELECT ON organization_memberships TO authenticated;
+GRANT SELECT ON branch_memberships TO authenticated;
+GRANT SELECT ON roles TO authenticated;
+GRANT SELECT ON permissions TO authenticated;
+GRANT SELECT ON role_permissions TO authenticated;
+GRANT SELECT ON user_role_assignments TO authenticated;

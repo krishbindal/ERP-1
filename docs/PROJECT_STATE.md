@@ -1,20 +1,20 @@
 # SchoolOS — Project State
 
-- **Current Phase**: Phase 2B (Next up)
+- **Current Phase**: Phase 3 (Next up)
 - **Current Subphase**: N/A
-- **Completed Phases**: Phase 0, Phase 1A, Phase 1B, Phase 1C, Phase 2A
-- **Architecture Status**: Approved (Phase 1C Database Contract)
+- **Completed Phases**: Phase 0, Phase 1A, Phase 1B, Phase 1C, Phase 2A, Phase 2B (CERTIFIED)
+- **Architecture Status**: Approved (Phase 1C Database Contract, Phase 2B RLS Security Model)
 - **Technology Baseline**: Monorepo (npm), Next.js, Expo, Supabase (PostgreSQL 15)
-- **Implemented Features**: Project initialized. Foundation schema built. 
+- **Implemented Features**: Project initialized. Foundation schema built. RLS strictly hardened. Active/Suspended/Archived lifecycle added.
 - **Database State**: Local setup configured.
-- **Migrations**: `20260817000000_foundation_identity.sql`
-- **RLS Policies**: Foundation table policies configured.
-- **Tests**: pgTAP tests initialized in `supabase/tests/db`.
+- **Migrations**: `20260817000000_foundation_identity.sql`, `20260817192140_phase_2b_security_hardening.sql`, `20260818010730_phase_2b_security_hardening.sql`
+- **RLS Policies**: Foundation table policies configured and certified.
+- **Tests**: 23/23 pgTAP tests passing in `supabase/tests/db/02_auth_rls_tests.sql`.
 - **CI/CD**: GitHub Actions workflow defined.
 - **Git Commits**: Pending user commit.
 - **Known Issues**: None.
-- **Open Decisions**: Pending confirmation on monorepo structure refinements.
+- **Open Decisions**: None.
 - **Deferred Work**: Real ERP modules (students, fees, etc.).
-- **Next Exact Task**: Begin ERP Core (Phase 2B).
-- **Important Discoveries**: None yet.
-- **Documentation Changes**: `/docs/PHASE_2A_REPOSITORY_FOUNDATION_REPORT.md` added.
+- **Next Exact Task**: Begin Phase 3 (ERP Module Bootstrap).
+- **Important Discoveries**: Found and fixed RLS bypass vulnerabilities regarding `auth_is_super_admin()` bounding and default UPDATE access.
+- **Documentation Changes**: `/docs/PHASE_2B_FINAL_SECURITY_CERTIFICATION.md`, `/docs/PHASE_2B_RLS_COVERAGE_MATRIX.md`, `/docs/PHASE_2B_PRIVILEGE_MATRIX.md` added.

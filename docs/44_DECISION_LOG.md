@@ -65,3 +65,15 @@
 - **Context:** Centralized databases make it difficult to "hand over" a branch's database.
 - **Decision:** Implement an asynchronous "Export Branch" Supabase Edge Function that dumps all related data into a secure JSON/CSV archive in Supabase Storage, followed by soft-deletion.
 - **Consequences:** Solves the client data ownership requirement securely without fundamentally altering the centralized database topology.
+
+## ADR 012: UI Framework for Web Shell
+- **Status:** Accepted
+- **Context:** We need a UI framework for the React/Next.js web shell that is maintainable, customizable, and aligns with the design system.
+- **Decision:** Use **shadcn/ui** with **Tailwind CSS**.
+- **Consequences:** Components are code-owned rather than black-box dependencies. High flexibility and easy integration with Stitch design tokens. Avoids heavy library lock-in (like MUI).
+
+## ADR 013: UI Framework for Mobile Shell
+- **Status:** Accepted
+- **Context:** We need a UI framework for the React Native/Expo mobile app that stays lightweight and performant.
+- **Decision:** Use **custom lightweight primitives** rather than a massive UI library (like NativeWind, Tamagui, or React Native Paper).
+- **Consequences:** Smaller bundle sizes, greater control over performance and design fidelity, but requires slightly more upfront work to build the base primitives.
