@@ -63,3 +63,7 @@ jobs:
       - name: Stop Local Supabase
         if: always()
         run: npx supabase stop
+
+      - name: Cleanup Workspace
+        if: always()
+        run: git clean -ffdx && git reset --hard HEAD

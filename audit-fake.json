@@ -1,0 +1,1 @@
+{"vulnerabilities": {"uuid": {"severity": "high", "via": [{"name": "uuid", "url": "https://github.com/advisories/GHSA-fake-advisory"}]}}}
