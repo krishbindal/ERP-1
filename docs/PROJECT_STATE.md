@@ -1,8 +1,10 @@
 # SchoolOS — Project State
 
-- **Current Phase**: Phase 3 (Next up)
-- **Current Subphase**: N/A
-- **Completed Phases**: Phase 0, Phase 1A, Phase 1B, Phase 1C, Phase 2A, Phase 2B (CERTIFIED)
+- **Current Phase**: Phase 3A
+- **Status**: CERTIFIED
+- **Previous Certified Phase**: 2B
+- **Previous Certified Commit**: cff828a
+- **Completed Phases**: Phase 0, Phase 1A, Phase 1B, Phase 1C, Phase 2A, Phase 2B (CERTIFIED), Phase 3A (CERTIFIED)
 - **Architecture Status**: Approved (Phase 1C Database Contract, Phase 2B RLS Security Model)
 - **Technology Baseline**: Monorepo (npm), Next.js, Expo, Supabase (PostgreSQL 15)
 - **Implemented Features**: Project initialized. Foundation schema built. RLS strictly hardened. Active/Suspended/Archived lifecycle added.
