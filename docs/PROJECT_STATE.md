@@ -1,22 +1,15 @@
 # SchoolOS — Project State
 
 - **Current Phase**: Phase 3A
-- **Status**: CERTIFIED
-- **Previous Certified Phase**: 2B
-- **Previous Certified Commit**: cff828a
-- **Completed Phases**: Phase 0, Phase 1A, Phase 1B, Phase 1C, Phase 2A, Phase 2B (CERTIFIED), Phase 3A (CERTIFIED)
-- **Architecture Status**: Approved (Phase 1C Database Contract, Phase 2B RLS Security Model)
-- **Technology Baseline**: Monorepo (npm), Next.js, Expo, Supabase (PostgreSQL 15)
-- **Implemented Features**: Project initialized. Foundation schema built. RLS strictly hardened. Active/Suspended/Archived lifecycle added.
-- **Database State**: Local setup configured.
-- **Migrations**: `20260817000000_foundation_identity.sql`, `20260817192140_phase_2b_security_hardening.sql`, `20260818010730_phase_2b_security_hardening.sql`
-- **RLS Policies**: Foundation table policies configured and certified.
-- **Tests**: 23/23 pgTAP tests passing in `supabase/tests/db/02_auth_rls_tests.sql`.
-- **CI/CD**: GitHub Actions workflow defined.
-- **Git Commits**: Pending user commit.
-- **Known Issues**: None.
-- **Open Decisions**: None.
-- **Deferred Work**: Real ERP modules (students, fees, etc.).
-- **Next Exact Task**: Begin Phase 3 (ERP Module Bootstrap).
-- **Important Discoveries**: Found and fixed RLS bypass vulnerabilities regarding `auth_is_super_admin()` bounding and default UPDATE access.
-- **Documentation Changes**: `/docs/PHASE_2B_FINAL_SECURITY_CERTIFICATION.md`, `/docs/PHASE_2B_RLS_COVERAGE_MATRIX.md`, `/docs/PHASE_2B_PRIVILEGE_MATRIX.md` added.
+- **Status**: CERTIFIED AND MERGED
+- **CI Governance**: IN PROGRESS (Phase 3A.5 Security Remediation)
+- **Canonical Repository**: https://github.com/krishbindal/ERP-1.git
+- **Feature Branch**: phase-3a5-security-remediation
+- **Final Feature Commit**: 7fd877aae4e77efb85d37af7f9d1bf9b0c61cf92
+- **PR**: Pending
+- **CI**: PASS
+- **Local Tests**: 55/55 Passed
+- **Fresh Reset**: 55/55 Passed
+- **Post-Merge Regression**: PASS
+- **Security**: PASS
+- **Next Phase**: Phase 3B
