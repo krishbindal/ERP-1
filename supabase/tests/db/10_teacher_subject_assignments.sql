@@ -88,6 +88,22 @@ INSERT INTO public.staff_branch_profiles (id, staff_id, branch_id) VALUES
 -- ==========================================
 -- 2. SCHEMA Verifications
 -- ==========================================
+CREATE OR REPLACE FUNCTION pg_temp.test_insert_tsa(
+    p_id UUID, p_branch_id UUID, p_year_id UUID, p_class_id UUID, 
+    p_section_id UUID, p_subject_id UUID, p_staff_profile_id UUID, 
+    p_is_primary BOOLEAN DEFAULT false, p_status TEXT DEFAULT 'ACTIVE'
+) RETURNS VOID AS $fn$
+BEGIN
+    IF p_id IS NULL THEN
+        INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary, status)
+        VALUES (p_branch_id, p_year_id, p_class_id, p_section_id, p_subject_id, p_staff_profile_id, COALESCE(p_is_primary, false), COALESCE(p_status, 'ACTIVE'));
+    ELSE
+        INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary, status)
+        VALUES (p_id, p_branch_id, p_year_id, p_class_id, p_section_id, p_subject_id, p_staff_profile_id, COALESCE(p_is_primary, false), COALESCE(p_status, 'ACTIVE'));
+    END IF;
+END;
+$fn$ LANGUAGE plpgsql;
+
 -- 1. table exists
 SELECT has_table('public', 'teacher_subject_assignments', 'teacher_subject_assignments table should exist');
 -- 2. columns exist
@@ -118,15 +134,13 @@ SELECT has_trigger('public', 'teacher_subject_assignments', 'update_tsa_updated_
 -- ==========================================
 -- 11. Valid class + subject succeeds
 SELECT lives_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary, status) VALUES 
-       ('00000000-0000-0000-0000-000000007001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006001', true, 'ACTIVE') $$,
+    $$ SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006001', true, 'ACTIVE') $$,
     'Valid assignment succeeds'
 );
 
 -- 12. Subject not offered by class fails (fk_tsa_class_subject)
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000007002', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003') $$,
+    $$ SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007002', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003', false, 'ACTIVE') $$,
     '23503',
     NULL,
     'Subject not offered by class is rejected'
@@ -134,8 +148,7 @@ SELECT throws_ok(
 
 -- 13. Wrong class/subject combination fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000007003', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002') $$,
+    $$ SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007003', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', false, 'ACTIVE') $$,
     '23503',
     NULL,
     'Wrong class combination is rejected'
@@ -143,72 +156,62 @@ SELECT throws_ok(
 
 -- 14. Branch A teacher + Branch A section + Branch A subject succeeds
 SELECT lives_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary, status) VALUES 
-       ('00000000-0000-0000-0000-000000007004', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006001', false, 'ACTIVE') $$,
+    $$ SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007004', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006001', false, 'ACTIVE') $$,
     'Branch A combination succeeds'
 );
 
 -- 15. Branch A teacher + Branch B section fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006001') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006001', false, 'ACTIVE') $$,
     '23503', NULL, 'Branch A teacher + Branch B section fails'
 );
 
 -- 16. Branch B teacher + Branch A section fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003', false, 'ACTIVE') $$,
     '23503', NULL, 'Branch B teacher + Branch A section fails'
 );
 
 -- 17. Branch A subject + Branch B section fails (Already covered by class_subject but let's test explicit branch mismatch)
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003', false, 'ACTIVE') $$,
     '23503', NULL, 'Branch A subject + Branch B section fails'
 );
 
 -- 18. Branch B subject + Branch A section fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006001') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006001', false, 'ACTIVE') $$,
     '23503', NULL, 'Branch B subject + Branch A section fails'
 );
 
 -- 19. Crafted cross-branch UUID injection fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006003', false, 'ACTIVE') $$,
     '23503', NULL, 'Cross-branch injection fails'
 );
 
 -- 20. Section/year mismatch fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', false, 'ACTIVE') $$,
     '23503', NULL, 'Section/year mismatch fails'
 );
 
 -- 21. Class/year mismatch fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', false, 'ACTIVE') $$,
     '23503', NULL, 'Class/year mismatch fails'
 );
 
 -- 22. First active primary teacher succeeds (Already created 7001)
 -- 23. Second active primary teacher fails
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', true) $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', true, 'ACTIVE') $$,
     '23505', NULL, 'Second active primary teacher fails'
 );
 
 -- 24. Multiple non-primary teachers are allowed
 SELECT lives_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', false) $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', false, 'ACTIVE') $$,
     'Multiple non-primary teachers allowed'
 );
 
@@ -221,8 +224,7 @@ SELECT lives_ok(
 
 -- 26. Same active teacher cannot be duplicated
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006001', false) $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006001', false, 'ACTIVE') $$,
     '23505', NULL, 'Same active teacher cannot be duplicated'
 );
 
@@ -234,8 +236,7 @@ SELECT lives_ok(
 
 -- 27. Historical inactive coexists with new active
 SELECT lives_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, is_primary) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006001', true) $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006001', true, 'ACTIVE') $$,
     'Historical inactive coexists with new active'
 );
 
@@ -244,8 +245,7 @@ SELECT lives_ok(
 UPDATE public.staff_branch_profiles SET status = 'ARCHIVED' WHERE id = '00000000-0000-0000-0000-000000006002';
 
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, status) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', 'ACTIVE') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000006002', false, 'ACTIVE') $$,
     'P0001', 'Teacher branch profile must be ACTIVE to be assigned.', 'Inactive teacher rejected'
 );
 
@@ -253,8 +253,7 @@ SELECT throws_ok(
 UPDATE public.subjects SET status = 'ARCHIVED' WHERE id = '00000000-0000-0000-0000-000000003002';
 
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id, status) VALUES 
-       ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006001', 'ACTIVE') $$,
+    $$ SELECT pg_temp.test_insert_tsa(NULL, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006001', false, 'ACTIVE') $$,
     'P0001', 'Subject must be ACTIVE to be assigned.', 'Archived subject rejected'
 );
 
@@ -322,8 +321,7 @@ SELECT set_config('role', 'postgres', true);
 UPDATE public.staff_branch_profiles SET status = 'ACTIVE' WHERE id = '00000000-0000-0000-0000-000000006002';
 SELECT set_config('role', 'authenticated', true);
 SELECT lives_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000007005', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006002') $$,
+    $$ SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007005', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006002', false, 'ACTIVE') $$,
     'Branch A admin can insert Branch A assignment'
 );
 
@@ -334,8 +332,7 @@ UPDATE public.staff_branch_profiles SET status = 'ACTIVE' WHERE id = '00000000-0
 SELECT set_config('role', 'authenticated', true);
 
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000007006', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006003') $$,
+    $$ SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007006', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006003', false, 'ACTIVE') $$,
     'P0001', 'Teacher branch profile must be ACTIVE to be assigned.', 'Branch A admin cannot insert Branch B assignment (cannot see teacher profile)'
 );
 
@@ -347,8 +344,7 @@ SELECT lives_ok(
 
 -- 42. Branch A admin cannot UPDATE Branch B assignment (Silent failure)
 SELECT set_config('role', 'postgres', true);
-INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-('00000000-0000-0000-0000-000000007007', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006003');
+SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007007', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', '00000000-0000-0000-0000-000000003003', '00000000-0000-0000-0000-000000006003', false, 'ACTIVE');
 SELECT set_config('role', 'authenticated', true);
 
 SELECT results_eq(
@@ -383,8 +379,7 @@ SELECT set_config('role', 'authenticated', true);
 SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000004"}', true);
 
 SELECT throws_ok(
-    $$ INSERT INTO public.teacher_subject_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, staff_branch_profile_id) VALUES 
-       ('00000000-0000-0000-0000-000000007008', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006001') $$,
+    $$ SELECT pg_temp.test_insert_tsa('00000000-0000-0000-0000-000000007008', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000006001', false, 'ACTIVE') $$,
     '42501', NULL, 'Teacher cannot insert'
 );
 
