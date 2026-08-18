@@ -180,19 +180,27 @@ SELECT results_eq(
     'authenticated role should have EXECUTE privilege'
 );
 
--- Test destination-only admin denied
-SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000005", "app_metadata": {"is_super_admin": false}}', true);
-SELECT throws_ok(
-    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
-    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Destination-only Branch Admin denied'
-);
+-- Helper for testing transfer with different JWT actors
+CREATE OR REPLACE FUNCTION pg_temp.test_transfer_with_role(
+    p_actor_id UUID, p_is_super_admin BOOLEAN, p_student_id UUID, p_src_branch UUID, p_dest_branch UUID, p_effective_date DATE, p_admission_no TEXT
+) RETURNS VOID AS $fn$
+BEGIN
+    PERFORM set_config('request.jwt.claims', format('{"sub": "%s", "app_metadata": {"is_super_admin": %s}}', p_actor_id, p_is_super_admin::text), true);
+    PERFORM public.rpc_transfer_student(p_student_id, p_src_branch, p_dest_branch, p_effective_date, p_admission_no);
+END;
+$fn$ LANGUAGE plpgsql;
 
--- Test teacher denied
-SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000006", "app_metadata": {"is_super_admin": false}}', true);
+-- Data-driven authorization tests
 SELECT throws_ok(
-    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
-    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Teacher denied'
-);
+    format('SELECT pg_temp.test_transfer_with_role(%L, %L, %L, %L, %L, %L, %L)', 
+           actor_id, is_super_admin, '00000000-0000-0000-0000-000000005001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000002002', '2026-02-01', 'ADM-002'),
+    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', descr
+)
+FROM (VALUES
+    ('00000000-0000-0000-0000-000000000005'::uuid, false, 'Destination-only Branch Admin denied'),
+    ('00000000-0000-0000-0000-000000000006'::uuid, false, 'Teacher denied'),
+    ('00000000-0000-0000-0000-000000000008'::uuid, true,  'Super admin from unrelated org denied')
+) as t(actor_id, is_super_admin, descr);
 
 -- Make admin's source membership inactive
 UPDATE public.branch_memberships SET status = 'SUSPENDED' WHERE user_id = '00000000-0000-0000-0000-000000000009' AND branch_id = '00000000-0000-0000-0000-000000000011';
@@ -208,13 +216,6 @@ UPDATE public.branch_memberships SET status = 'SUSPENDED' WHERE user_id = '00000
 SELECT throws_ok(
     $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
     'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Inactive dest membership denied'
-);
-
--- Super admin other org
-SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000008", "app_metadata": {"is_super_admin": true}}', true);
-SELECT throws_ok(
-    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
-    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Super admin from unrelated org denied'
 );
 
 -- Super admin inactive membership
