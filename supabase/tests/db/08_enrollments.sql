@@ -2,6 +2,23 @@ BEGIN;
 
 SELECT plan(20);
 
+-- Helper function to reduce duplication
+CREATE OR REPLACE FUNCTION create_test_enrollment(
+    p_org_id UUID, p_branch_id UUID, p_student_id UUID, p_profile_id UUID,
+    p_year_id UUID, p_class_id UUID, p_section_id UUID, p_roll_number INT, p_status TEXT
+) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO public.enrollments (
+        organization_id, branch_id, student_id, student_branch_profile_id,
+        academic_year_id, class_id, section_id, roll_number, status
+    ) VALUES (
+        p_org_id, p_branch_id, p_student_id, p_profile_id,
+        p_year_id, p_class_id, p_section_id, p_roll_number, p_status
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
 -- ==========================================
 -- 1. Setup & Context
 -- ==========================================
@@ -68,15 +85,13 @@ SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000
 
 -- Test: Valid enrollment creation
 SELECT lives_ok(
-    $$ INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, roll_number, status) 
-       VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 1, 'ACTIVE') $$,
+    $$ SELECT create_test_enrollment('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 1, 'ACTIVE') $$,
     'Valid enrollment creation should succeed'
 );
 
 -- Test: Invalid section/class mismatch
 SELECT throws_ok(
-    $$ INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, roll_number, status) 
-       VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000004002', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-999999999999', 2, 'ACTIVE') $$,
+    $$ SELECT create_test_enrollment('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000004002', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-999999999999', 2, 'ACTIVE') $$,
     '23503',
     NULL,
     'Enrollment with mismatched class_id and section_id should fail composite FK'
@@ -84,8 +99,7 @@ SELECT throws_ok(
 
 -- Test: Profile branch vs Enrollment branch mismatch
 SELECT throws_ok(
-    $$ INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, roll_number, status) 
-       VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', 3, 'ACTIVE') $$,
+    $$ SELECT create_test_enrollment('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000102', '00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000002002', 3, 'ACTIVE') $$,
     'P0001',
     'enrollment branch_id contradicts the profile branch_id',
     'Enrollment branch_id must match student_branch_profile branch_id'
@@ -93,8 +107,7 @@ SELECT throws_ok(
 
 -- Test: Profile student vs Enrollment student mismatch
 SELECT throws_ok(
-    $$ INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, roll_number, status) 
-       VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 4, 'ACTIVE') $$,
+    $$ SELECT create_test_enrollment('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 4, 'ACTIVE') $$,
     'P0001',
     'enrollment student_id contradicts the profile student_id',
     'Enrollment student_id must match student_branch_profile student_id'
@@ -107,8 +120,7 @@ SELECT throws_ok(
 
 -- Test: Duplicate ACTIVE enrollment
 SELECT throws_ok(
-    $$ INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, roll_number, status) 
-       VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 5, 'ACTIVE') $$,
+    $$ SELECT create_test_enrollment('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 5, 'ACTIVE') $$,
     '23505',
     NULL,
     'Duplicate ACTIVE enrollment in the same year should fail'
@@ -116,8 +128,7 @@ SELECT throws_ok(
 
 -- Test: Duplicate ACTIVE roll number
 SELECT lives_ok(
-    $$ INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, roll_number, status) 
-       VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000004002', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 2, 'ACTIVE') $$,
+    $$ SELECT create_test_enrollment('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003002', '00000000-0000-0000-0000-000000004002', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 2, 'ACTIVE') $$,
     'Second enrollment created'
 );
 
@@ -159,8 +170,7 @@ SELECT throws_ok(
 
 -- Test: Historical enrollment same year allowed
 SELECT lives_ok(
-    $$ INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, roll_number, status) 
-       VALUES ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 5, 'ACTIVE') $$,
+    $$ SELECT create_test_enrollment('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000003001', '00000000-0000-0000-0000-000000004001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000002001', 5, 'ACTIVE') $$,
     'Can insert new ACTIVE enrollment if old is TRANSFERRED in same year'
 );
 
