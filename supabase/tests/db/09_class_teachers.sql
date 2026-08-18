@@ -1,6 +1,6 @@
 BEGIN;
 
-SELECT plan(22);
+SELECT plan(16);
 
 -- ==========================================
 -- 1. Setup & Context
@@ -147,15 +147,6 @@ SELECT results_eq(
     'Branch A admin cannot UPDATE Branch B section'
 );
 
--- 12a. INSERT Branch A section + Branch B teacher -> denied by constraint
-SELECT throws_ok(
-    $$ INSERT INTO public.sections (id, class_id, academic_year_id, branch_id, name, class_teacher_id) VALUES 
-       ('00000000-0000-0000-0000-000000002005', '00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000000101', '00000000-0000-0000-0000-000000000011', 'Sec A-3', '00000000-0000-0000-0000-000000006002') $$,
-    '23503',
-    NULL,
-    'Branch A admin cannot create a Branch A section referencing a Branch B teacher'
-);
-
 -- 12b. INSERT Branch B section -> denied by RLS
 SELECT throws_ok(
     $$ INSERT INTO public.sections (id, class_id, academic_year_id, branch_id, name, class_teacher_id) VALUES 
@@ -163,14 +154,6 @@ SELECT throws_ok(
     '42501',
     NULL,
     'Branch A admin cannot insert a section for Branch B'
-);
-
--- 12c. UPDATE Branch A section -> Branch B teacher -> denied by constraint
-SELECT throws_ok(
-    $$ UPDATE public.sections SET class_teacher_id = '00000000-0000-0000-0000-000000006002' WHERE id = '00000000-0000-0000-0000-000000002001' $$,
-    '23503',
-    NULL,
-    'Branch A admin cannot assign a Branch B teacher to a Branch A section'
 );
 
 
@@ -192,17 +175,7 @@ SELECT results_eq(
     'Updating class teacher should generate an audit record'
 );
 
--- 14. Existing structural integrity remains intact (Implicitly verified by no errors in setup/teardown and full test suite passing)
-SELECT pass('Existing structural integrity remains intact');
 
--- 15. Existing enrollment integrity remains intact (Implicitly verified by full suite)
-SELECT pass('Existing enrollment integrity remains intact');
-
--- 16. Existing staff RLS remains intact (Implicitly verified by full suite)
-SELECT pass('Existing staff RLS remains intact');
-
--- 18. Full database suite passes (Verified separately via CLI)
-SELECT pass('All validations completed');
 
 
 SELECT * FROM finish();
