@@ -47,6 +47,20 @@ END $DO_BLOCK$;
 
 ALTER TABLE public.enrollments ALTER COLUMN student_branch_profile_id SET NOT NULL;
 
+-- Ensure consistency between enrollments.student_id and student_branch_profiles.student_id
+CREATE OR REPLACE FUNCTION public.verify_enrollment_student_identity() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.student_branch_profile_id IS NOT NULL THEN
+        IF NEW.student_id != (SELECT student_id FROM public.student_branch_profiles WHERE id = NEW.student_branch_profile_id) THEN
+            RAISE EXCEPTION 'enrollment student_id contradicts the profile student_id';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public;
+
+CREATE TRIGGER enforce_enrollment_identity_match BEFORE INSERT OR UPDATE ON public.enrollments FOR EACH ROW EXECUTE FUNCTION public.verify_enrollment_student_identity();
+
 -- 4. User Credentials
 CREATE TABLE public.user_credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -118,7 +132,7 @@ BEGIN
     END IF;
     RETURN NULL;
 END;
-$FUNC$ LANGUAGE plpgsql SECURITY DEFINER;
+$FUNC$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE TRIGGER audit_enrollments AFTER INSERT OR UPDATE OR DELETE ON public.enrollments FOR EACH ROW EXECUTE FUNCTION log_audit_event();
 CREATE TRIGGER audit_student_branch_profiles AFTER INSERT OR UPDATE OR DELETE ON public.student_branch_profiles FOR EACH ROW EXECUTE FUNCTION log_audit_event();
@@ -166,9 +180,9 @@ BEGIN
 
     -- 3. Create the enrollment to link them to the branch
     INSERT INTO public.enrollments (
-        organization_id, branch_id, student_id, student_branch_profile_id, status
+        organization_id, branch_id, student_id, student_branch_profile_id
     ) VALUES (
-        p_organization_id, p_branch_id, v_student_id, v_profile_id, 'ACTIVE'
+        p_organization_id, p_branch_id, v_student_id, v_profile_id
     );
 
     RETURN v_student_id;

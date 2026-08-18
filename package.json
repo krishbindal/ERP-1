@@ -20,5 +20,8 @@
     "supabase:reset": "npx supabase db reset",
     "supabase:test": "npx supabase test db",
     "validate": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "supabase": "^2.115.0"
   }
 }

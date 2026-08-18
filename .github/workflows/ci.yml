@@ -40,7 +40,7 @@ jobs:
         run: npm run test --workspaces --if-present
 
       - name: Start Local Supabase
-        run: npx supabase start
+        run: npx --no-install supabase start
 
       - name: Wait for PostgreSQL Readiness
         run: |
@@ -57,7 +57,7 @@ jobs:
           fi
 
       - name: Reset Database
-        run: npx supabase db reset --yes
+        run: npx --no-install supabase db reset --yes
 
       - name: Wait for PostgreSQL Readiness After Reset
         run: |
@@ -74,7 +74,7 @@ jobs:
           fi
 
       - name: Database Tests (pgTAP & RLS)
-        run: npx supabase test db
+        run: npx --no-install supabase test db
 
       - name: Build Web
         run: npm run build:web
@@ -90,7 +90,7 @@ jobs:
 
       - name: Stop Local Supabase
         if: always()
-        run: npx supabase stop
+        run: npx --no-install supabase stop
 
       - name: Cleanup Workspace
         if: always()
