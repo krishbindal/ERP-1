@@ -42,9 +42,21 @@ INSERT INTO student_branch_profiles (id, student_id, branch_id) VALUES
 ('aaaaaaaa-1111-2222-3333-000000000000', 'aaaaaaaa-0000-0000-0000-000000000000', '33333333-3333-3333-3333-333333333333'),
 ('bbbbbbbb-1111-2222-3333-000000000000', 'bbbbbbbb-0000-0000-0000-000000000000', '55555555-5555-5555-5555-555555555555');
 
-INSERT INTO enrollments (id, organization_id, branch_id, student_id, student_branch_profile_id, status) VALUES
-('aaaaaaaa-1111-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'aaaaaaaa-0000-0000-0000-000000000000', 'aaaaaaaa-1111-2222-3333-000000000000', 'ACTIVE'),
-('bbbbbbbb-1111-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-0000-0000-0000-000000000000', 'bbbbbbbb-1111-2222-3333-000000000000', 'ACTIVE');
+INSERT INTO academic_years (id, branch_id, name, start_date, end_date) VALUES 
+('aaaaaaaa-4444-0000-0000-000000000000', '33333333-3333-3333-3333-333333333333', 'Year A', '2026-01-01', '2026-12-31'),
+('bbbbbbbb-4444-0000-0000-000000000000', '55555555-5555-5555-5555-555555555555', 'Year B', '2026-01-01', '2026-12-31');
+
+INSERT INTO classes (id, academic_year_id, branch_id, name, level) VALUES 
+('aaaaaaaa-5555-0000-0000-000000000000', 'aaaaaaaa-4444-0000-0000-000000000000', '33333333-3333-3333-3333-333333333333', 'Class A', 1),
+('bbbbbbbb-5555-0000-0000-000000000000', 'bbbbbbbb-4444-0000-0000-000000000000', '55555555-5555-5555-5555-555555555555', 'Class B', 1);
+
+INSERT INTO sections (id, class_id, academic_year_id, branch_id, name) VALUES 
+('aaaaaaaa-6666-0000-0000-000000000000', 'aaaaaaaa-5555-0000-0000-000000000000', 'aaaaaaaa-4444-0000-0000-000000000000', '33333333-3333-3333-3333-333333333333', 'Section A'),
+('bbbbbbbb-6666-0000-0000-000000000000', 'bbbbbbbb-5555-0000-0000-000000000000', 'bbbbbbbb-4444-0000-0000-000000000000', '55555555-5555-5555-5555-555555555555', 'Section B');
+
+INSERT INTO enrollments (id, organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, status) VALUES
+('aaaaaaaa-1111-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'aaaaaaaa-0000-0000-0000-000000000000', 'aaaaaaaa-1111-2222-3333-000000000000', 'aaaaaaaa-4444-0000-0000-000000000000', 'aaaaaaaa-5555-0000-0000-000000000000', 'aaaaaaaa-6666-0000-0000-000000000000', 'ACTIVE'),
+('bbbbbbbb-1111-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-0000-0000-0000-000000000000', 'bbbbbbbb-1111-2222-3333-000000000000', 'bbbbbbbb-4444-0000-0000-000000000000', 'bbbbbbbb-5555-0000-0000-000000000000', 'bbbbbbbb-6666-0000-0000-000000000000', 'ACTIVE');
 
 INSERT INTO guardians (id, organization_id, first_name, last_name, status) VALUES
 ('aaaaaaaa-2222-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', 'Guardian', 'A1', 'ACTIVE'),
@@ -105,8 +117,8 @@ SELECT throws_ok(
 
 -- Placement creation for unauthorized branch
 SELECT throws_ok(
-    'INSERT INTO enrollments (organization_id, branch_id, student_id) VALUES (''11111111-1111-1111-1111-111111111111'', ''44444444-4444-4444-4444-444444444444'', ''aaaaaaaa-0000-0000-0000-000000000000'')',
-    '42501', 'new row violates row-level security policy for table "enrollments"', '14. Cannot create placement in unauthorized branch (A1 user -> A2 branch)'
+    'INSERT INTO enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id) VALUES (''11111111-1111-1111-1111-111111111111'', ''44444444-4444-4444-4444-444444444444'', ''aaaaaaaa-0000-0000-0000-000000000000'', ''aaaaaaaa-1111-2222-3333-000000000000'', ''aaaaaaaa-4444-0000-0000-000000000000'', ''aaaaaaaa-5555-0000-0000-000000000000'', ''aaaaaaaa-6666-0000-0000-000000000000'')',
+    'P0001', 'enrollment branch_id contradicts the profile branch_id', '14. Cannot create placement in unauthorized branch (A1 user -> A2 branch)'
 );
 
 -- Organization change test
@@ -118,7 +130,7 @@ SELECT throws_ok(
 -- Placement ownership modification
 SELECT throws_ok(
     'UPDATE enrollments SET branch_id = ''55555555-5555-5555-5555-555555555555'' WHERE id = ''aaaaaaaa-1111-0000-0000-000000000000''',
-    '42501', 'new row violates row-level security policy for table "enrollments"', '16. Cannot modify placement branch to unauthorized branch'
+    'P0001', 'enrollment branch_id contradicts the profile branch_id', '16. Cannot modify placement branch to unauthorized branch'
 );
 
 -- Structural RLS Checks

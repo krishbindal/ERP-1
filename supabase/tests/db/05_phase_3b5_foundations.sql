@@ -58,14 +58,29 @@ SELECT set_config('role', 'postgres', true);
 SELECT set_config('request.jwt.claims', '{"sub": "99999999-9999-9999-9999-999999999999"}', true);
 SELECT set_config('role', 'authenticated', true);
 
-SELECT create_student_with_initial_placement(get_org_id(), get_branch_1(), 'Branch', 'One');
--- Find the student id
+-- Find the student id and profile id
 DO $DO_BLOCK$
 DECLARE
     v_student_id UUID;
     v_profile_id UUID;
 BEGIN
-    SELECT id INTO v_student_id FROM public.students WHERE first_name = 'Branch' AND last_name = 'One' LIMIT 1;
+    v_student_id := create_student_with_initial_placement(get_org_id(), get_branch_1(), 'Branch', 'One');
+    SELECT id INTO v_profile_id FROM public.student_branch_profiles WHERE student_id = v_student_id LIMIT 1;
+    
+    -- Insert academic structure
+    INSERT INTO public.academic_years (id, branch_id, name, start_date, end_date) VALUES 
+    ('aaaaaaaa-4444-0000-0000-000000000000', get_branch_1(), 'Year A', '2026-01-01', '2026-12-31') ON CONFLICT DO NOTHING;
+    
+    INSERT INTO public.classes (id, academic_year_id, branch_id, name, level) VALUES 
+    ('aaaaaaaa-5555-0000-0000-000000000000', 'aaaaaaaa-4444-0000-0000-000000000000', get_branch_1(), 'Class A', 1) ON CONFLICT DO NOTHING;
+    
+    INSERT INTO public.sections (id, class_id, academic_year_id, branch_id, name) VALUES 
+    ('aaaaaaaa-6666-0000-0000-000000000000', 'aaaaaaaa-5555-0000-0000-000000000000', 'aaaaaaaa-4444-0000-0000-000000000000', get_branch_1(), 'Section A') ON CONFLICT DO NOTHING;
+
+    -- Insert enrollment
+    INSERT INTO public.enrollments (organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, status) VALUES
+    (get_org_id(), get_branch_1(), v_student_id, v_profile_id, 'aaaaaaaa-4444-0000-0000-000000000000', 'aaaaaaaa-5555-0000-0000-000000000000', 'aaaaaaaa-6666-0000-0000-000000000000', 'ACTIVE');
+
     -- Link guardian
     INSERT INTO public.student_guardians (student_id, guardian_id, relationship) VALUES (v_student_id, 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Parent') ON CONFLICT DO NOTHING;
 END $DO_BLOCK$;
