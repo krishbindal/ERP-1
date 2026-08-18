@@ -39,6 +39,8 @@ DECLARE
     v_dest_year_id UUID;
     v_dest_branch_id UUID;
     v_dest_org_id UUID;
+    v_dest_branch_status TEXT;
+    v_dest_year_status TEXT;
     v_source_org_id UUID;
     v_source_enrollment RECORD;
     v_source_profile RECORD;
@@ -47,14 +49,23 @@ DECLARE
     v_update_count INT;
 BEGIN
     -- 1. Derive destination structure exclusively from section
-    SELECT s.class_id, s.academic_year_id, s.branch_id, b.organization_id 
-    INTO v_dest_class_id, v_dest_year_id, v_dest_branch_id, v_dest_org_id 
+    SELECT s.class_id, s.academic_year_id, s.branch_id, b.organization_id, b.status, ay.status
+    INTO v_dest_class_id, v_dest_year_id, v_dest_branch_id, v_dest_org_id, v_dest_branch_status, v_dest_year_status
     FROM public.sections s
     JOIN public.branches b ON b.id = s.branch_id
+    JOIN public.academic_years ay ON ay.id = s.academic_year_id
     WHERE s.id = p_destination_section_id;
 
     IF v_dest_branch_id IS NULL THEN
         RAISE EXCEPTION 'Destination section not found';
+    END IF;
+
+    IF v_dest_branch_status != 'ACTIVE' THEN
+        RAISE EXCEPTION 'Destination branch is not active';
+    END IF;
+
+    IF v_dest_year_status NOT IN ('ACTIVE', 'PLANNED') THEN
+        RAISE EXCEPTION 'Destination academic year is not active or planned';
     END IF;
 
     -- 2. Verify source branch
@@ -190,6 +201,9 @@ BEGIN
     RETURN v_new_enrollment_id;
 END;
 $$;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_transfer_student(UUID, UUID, UUID, DATE, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_transfer_student(UUID, UUID, UUID, DATE, TEXT) TO authenticated;
 
 -- 9. Delete Protection
 CREATE OR REPLACE FUNCTION public.prevent_hard_delete()

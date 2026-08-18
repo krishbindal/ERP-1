@@ -1,6 +1,6 @@
 BEGIN;
 
-SELECT plan(15);
+SELECT plan(31);
 
 -- ==========================================
 -- 1. Setup & Context
@@ -58,7 +58,12 @@ WITH
   a_users (id, email, is_super_admin) AS (VALUES 
     ('00000000-0000-0000-0000-000000000003'::uuid, 'branch_admin_both@test.com', false),
     ('00000000-0000-0000-0000-000000000004'::uuid, 'branch_admin_one@test.com', false),
-    ('00000000-0000-0000-0000-000000000007'::uuid, 'superadmin@test.com', true)
+    ('00000000-0000-0000-0000-000000000007'::uuid, 'superadmin@test.com', true),
+    ('00000000-0000-0000-0000-000000000005'::uuid, 'branch_admin_dest@test.com', false),
+    ('00000000-0000-0000-0000-000000000006'::uuid, 'teacher@test.com', false),
+    ('00000000-0000-0000-0000-000000000008'::uuid, 'superadmin2@test.com', true),
+    ('00000000-0000-0000-0000-000000000009'::uuid, 'inactive_admin@test.com', false)
+
   ),
   ins_a_users AS (
     INSERT INTO auth.users (id, email, raw_app_meta_data)
@@ -68,7 +73,12 @@ WITH
   profs (id, first_name, last_name) AS (VALUES 
     ('00000000-0000-0000-0000-000000000003'::uuid, 'Admin', 'Both'),
     ('00000000-0000-0000-0000-000000000004'::uuid, 'Admin', 'One'),
-    ('00000000-0000-0000-0000-000000000007'::uuid, 'Super', 'Admin')
+    ('00000000-0000-0000-0000-000000000007'::uuid, 'Super', 'Admin'),
+    ('00000000-0000-0000-0000-000000000005'::uuid, 'Admin', 'Dest'),
+    ('00000000-0000-0000-0000-000000000006'::uuid, 'Teacher', 'One'),
+    ('00000000-0000-0000-0000-000000000008'::uuid, 'Super', 'Admin2'),
+    ('00000000-0000-0000-0000-000000000009'::uuid, 'Inactive', 'Admin')
+
   ),
   ins_profs AS (
     INSERT INTO public.profiles (id, first_name, last_name)
@@ -78,7 +88,12 @@ WITH
   o_mems (id, organization_id, user_id) AS (VALUES 
     ('00000000-0000-0000-0000-000000000003'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000003'::uuid),
     ('00000000-0000-0000-0000-000000000004'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000004'::uuid),
-    ('00000000-0000-0000-0000-000000000007'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000007'::uuid)
+    ('00000000-0000-0000-0000-000000000007'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000007'::uuid),
+    ('00000000-0000-0000-0000-000000000005'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000005'::uuid),
+    ('00000000-0000-0000-0000-000000000006'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000006'::uuid),
+    ('00000000-0000-0000-0000-000000000008'::uuid, '00000000-0000-0000-0000-000000000002'::uuid, '00000000-0000-0000-0000-000000000008'::uuid),
+    ('00000000-0000-0000-0000-000000000009'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000009'::uuid)
+
   ),
   ins_o_mems AS (
     INSERT INTO public.organization_memberships (id, organization_id, user_id)
@@ -91,6 +106,11 @@ WITH
     ('00000000-0000-0000-0000-000000000002'::uuid, '00000000-0000-0000-0000-000000000012'::uuid, '00000000-0000-0000-0000-000000000003'::uuid),
     -- Admin One in A only
     ('00000000-0000-0000-0000-000000000003'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000000004'::uuid)
+    ,('00000000-0000-0000-0000-000000000004'::uuid, '00000000-0000-0000-0000-000000000012'::uuid, '00000000-0000-0000-0000-000000000005'::uuid),
+    ('00000000-0000-0000-0000-000000000005'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000000006'::uuid),
+    ('00000000-0000-0000-0000-000000000006'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000000009'::uuid),
+    ('00000000-0000-0000-0000-000000000007'::uuid, '00000000-0000-0000-0000-000000000012'::uuid, '00000000-0000-0000-0000-000000000009'::uuid)
+
   ),
   ins_b_mems AS (
     INSERT INTO public.branch_memberships (id, branch_id, user_id)
@@ -99,6 +119,8 @@ WITH
   ),
   rls_def (id, organization_id, name) AS (VALUES 
     ('00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, 'Branch Admin')
+    ,('00000000-0000-0000-0000-000000000002'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, 'Teacher')
+
   ),
   ins_roles AS (
     INSERT INTO public.roles (id, organization_id, name)
@@ -109,9 +131,18 @@ WITH
     ('00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
     ('00000000-0000-0000-0000-000000000002'::uuid, '00000000-0000-0000-0000-000000000002'::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
     ('00000000-0000-0000-0000-000000000003'::uuid, '00000000-0000-0000-0000-000000000003'::uuid, '00000000-0000-0000-0000-000000000001'::uuid)
+    ,('00000000-0000-0000-0000-000000000004'::uuid, '00000000-0000-0000-0000-000000000004'::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
+    ('00000000-0000-0000-0000-000000000005'::uuid, '00000000-0000-0000-0000-000000000005'::uuid, '00000000-0000-0000-0000-000000000002'::uuid),
+    ('00000000-0000-0000-0000-000000000006'::uuid, '00000000-0000-0000-0000-000000000006'::uuid, '00000000-0000-0000-0000-000000000001'::uuid),
+    ('00000000-0000-0000-0000-000000000007'::uuid, '00000000-0000-0000-0000-000000000007'::uuid, '00000000-0000-0000-0000-000000000001'::uuid)
+
   )
   INSERT INTO public.user_role_assignments (id, branch_membership_id, role_id)
   SELECT * FROM ura;
+
+-- Create Inactive Student
+INSERT INTO public.students (id, organization_id, first_name, last_name, status)
+VALUES ('00000000-0000-0000-0000-000000005002'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, 'Inactive', 'Student', 'ARCHIVED');
 
 -- Create Student
 INSERT INTO public.students (id, organization_id, first_name, last_name, status)
@@ -126,6 +157,101 @@ INSERT INTO public.enrollments (id, organization_id, branch_id, student_id, stud
 VALUES ('00000000-0000-0000-0000-000000007001'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000006001'::uuid, '00000000-0000-0000-0000-000000000101'::uuid, '00000000-0000-0000-0000-000000001001'::uuid, '00000000-0000-0000-0000-000000002001'::uuid, 'ACTIVE', '2026-01-01');
 
 -- Set actor to branch_admin_one (who only has Branch A access)
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000004", "app_metadata": {"is_super_admin": false}}', true);
+
+
+
+-- Verify function properties
+SELECT is_definer('public', 'rpc_transfer_student', ARRAY['uuid', 'uuid', 'uuid', 'date', 'text'], 'Function should be SECURITY DEFINER');
+SELECT function_returns('public', 'rpc_transfer_student', ARRAY['uuid', 'uuid', 'uuid', 'date', 'text'], 'uuid', 'Function should return UUID');
+SELECT function_owner_is('public', 'rpc_transfer_student', ARRAY['uuid', 'uuid', 'uuid', 'date', 'text'], 'postgres', 'Function should be owned by postgres');
+
+-- Check that EXECUTE is revoked from PUBLIC
+SELECT results_eq(
+    $$ SELECT has_function_privilege('public', 'public.rpc_transfer_student(uuid, uuid, uuid, date, text)', 'EXECUTE') $$,
+    $$ VALUES (false) $$,
+    'PUBLIC should not have EXECUTE privilege'
+);
+
+-- Check that EXECUTE is granted to authenticated
+SELECT results_eq(
+    $$ SELECT has_function_privilege('authenticated', 'public.rpc_transfer_student(uuid, uuid, uuid, date, text)', 'EXECUTE') $$,
+    $$ VALUES (true) $$,
+    'authenticated role should have EXECUTE privilege'
+);
+
+-- Test destination-only admin denied
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000005", "app_metadata": {"is_super_admin": false}}', true);
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Destination-only Branch Admin denied'
+);
+
+-- Test teacher denied
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000006", "app_metadata": {"is_super_admin": false}}', true);
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Teacher denied'
+);
+
+-- Make admin's source membership inactive
+UPDATE public.branch_memberships SET status = 'SUSPENDED' WHERE user_id = '00000000-0000-0000-0000-000000000009' AND branch_id = '00000000-0000-0000-0000-000000000011';
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000009", "app_metadata": {"is_super_admin": false}}', true);
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Inactive source membership denied'
+);
+
+-- Make admin's dest membership inactive (after restoring source)
+UPDATE public.branch_memberships SET status = 'ACTIVE' WHERE user_id = '00000000-0000-0000-0000-000000000009' AND branch_id = '00000000-0000-0000-0000-000000000011';
+UPDATE public.branch_memberships SET status = 'SUSPENDED' WHERE user_id = '00000000-0000-0000-0000-000000000009' AND branch_id = '00000000-0000-0000-0000-000000000012';
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Inactive dest membership denied'
+);
+
+-- Super admin other org
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000008", "app_metadata": {"is_super_admin": true}}', true);
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Super admin from unrelated org denied'
+);
+
+-- Super admin inactive membership
+UPDATE public.organization_memberships SET status = 'SUSPENDED' WHERE user_id = '00000000-0000-0000-0000-000000000007';
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000007", "app_metadata": {"is_super_admin": true}}', true);
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Not authorized: Must be Super Admin or Branch Admin for both branches', 'Inactive super admin membership denied'
+);
+UPDATE public.organization_memberships SET status = 'ACTIVE' WHERE user_id = '00000000-0000-0000-0000-000000000007';
+
+-- Switch to active super admin for remaining error cases
+SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000007", "app_metadata": {"is_super_admin": true}}', true);
+
+-- Inactive student
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005002'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Student is not active or does not exist', 'Inactive student denied'
+);
+
+-- Inactive destination branch
+UPDATE public.branches SET status = 'ARCHIVED' WHERE id = '00000000-0000-0000-0000-000000000012';
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Destination branch is not active', 'Inactive destination branch denied'
+);
+UPDATE public.branches SET status = 'ACTIVE' WHERE id = '00000000-0000-0000-0000-000000000012';
+
+-- Inactive academic year
+UPDATE public.academic_years SET status = 'ARCHIVED' WHERE id = '00000000-0000-0000-0000-000000000102';
+SELECT throws_ok(
+    $$ SELECT public.rpc_transfer_student('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid, '00000000-0000-0000-0000-000000002002'::uuid, '2026-02-01'::date, 'ADM-002') $$,
+    'P0001', 'Destination academic year is not active or planned', 'Inactive academic year denied'
+);
+UPDATE public.academic_years SET status = 'ACTIVE' WHERE id = '00000000-0000-0000-0000-000000000102';
+
+-- Switch back to branch_admin_one (who only has Branch A access) for the original test
 SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000004", "app_metadata": {"is_super_admin": false}}', true);
 
 SELECT throws_ok(
@@ -230,6 +356,14 @@ SELECT results_eq(
     'Audit log is created with correct reason'
 );
 
+
+-- Verify audit log actor
+SELECT results_eq(
+    $$ SELECT actor_id FROM public.audit_logs WHERE action = 'INSERT' AND table_name = 'enrollments' AND new_data->>'branch_id' = '00000000-0000-0000-0000-000000000012' LIMIT 1 $$,
+    $$ VALUES ('00000000-0000-0000-0000-000000000003'::uuid) $$,
+    'Audit log is created with correct actor'
+);
+
 -- Verify unique constraints by trying to add a second ACTIVE profile
 SELECT throws_ok(
     $$ INSERT INTO public.student_branch_profiles (student_id, branch_id, status) VALUES ('00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000013'::uuid, 'ACTIVE') $$,
@@ -275,6 +409,15 @@ SELECT throws_ok(
     'P0001',
     'Hard deletion of student_branch_profiles is not allowed',
     'Delete protection on student branch profiles'
+);
+
+
+-- Verify parent deletion triggers RESTRICT or trigger exception
+SELECT throws_ok(
+    $$ DELETE FROM public.students WHERE id = '00000000-0000-0000-0000-000000005001'::uuid $$,
+    'P0001',
+    NULL,
+    'Deletion of parent records with dependents protected'
 );
 
 SELECT * FROM finish();
