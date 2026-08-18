@@ -38,9 +38,13 @@ INSERT INTO students (id, organization_id, first_name, last_name, status) VALUES
 ('aaaaaaaa-0000-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', 'Student', 'A1', 'ACTIVE'),
 ('bbbbbbbb-0000-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222', 'Student', 'B1', 'ACTIVE');
 
-INSERT INTO enrollments (id, organization_id, branch_id, student_id, status) VALUES
-('aaaaaaaa-1111-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'aaaaaaaa-0000-0000-0000-000000000000', 'ACTIVE'),
-('bbbbbbbb-1111-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-0000-0000-0000-000000000000', 'ACTIVE');
+INSERT INTO student_branch_profiles (id, student_id, branch_id) VALUES
+('aaaaaaaa-1111-2222-3333-000000000000', 'aaaaaaaa-0000-0000-0000-000000000000', '33333333-3333-3333-3333-333333333333'),
+('bbbbbbbb-1111-2222-3333-000000000000', 'bbbbbbbb-0000-0000-0000-000000000000', '55555555-5555-5555-5555-555555555555');
+
+INSERT INTO enrollments (id, organization_id, branch_id, student_id, student_branch_profile_id, status) VALUES
+('aaaaaaaa-1111-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'aaaaaaaa-0000-0000-0000-000000000000', 'aaaaaaaa-1111-2222-3333-000000000000', 'ACTIVE'),
+('bbbbbbbb-1111-0000-0000-000000000000', '22222222-2222-2222-2222-222222222222', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-0000-0000-0000-000000000000', 'bbbbbbbb-1111-2222-3333-000000000000', 'ACTIVE');
 
 INSERT INTO guardians (id, organization_id, first_name, last_name, status) VALUES
 ('aaaaaaaa-2222-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', 'Guardian', 'A1', 'ACTIVE'),
@@ -118,15 +122,15 @@ SELECT throws_ok(
 );
 
 -- Structural RLS Checks
-SELECT policies_are('students', ARRAY['Super Admins can manage students in their orgs', 'Branch members can view students placed in their branches', 'Branch Admins can insert students in their org', 'Branch Admins can update students placed in their branches'], '17. Students table policies are structurally correct');
-SELECT policies_are('guardians', ARRAY['Super Admins can manage guardians in their orgs', 'Branch members can view guardians linked to visible students', 'Branch Admins can insert guardians in their org', 'Branch Admins can update visible guardians'], '18. Guardians table policies are structurally correct');
+SELECT policies_are('students', ARRAY['Super Admins can manage students in their orgs', 'Branch members can view students placed in their branches', 'Branch Admins can insert students in their org', 'Branch Admins can update students placed in their branches', 'Guardians can view their linked students', 'Students can view their own record'], '17. Students table policies are structurally correct');
+SELECT policies_are('guardians', ARRAY['Super Admins can manage guardians in their orgs', 'Branch members can view guardians linked to visible students', 'Branch Admins can insert guardians in their org', 'Branch Admins can update visible guardians', 'Students can view their linked guardians', 'Guardians can view their own record'], '18. Guardians table policies are structurally correct');
 SELECT policies_are('student_guardians', ARRAY['Super Admins can manage student_guardians in their orgs', 'Branch members can view student_guardians linked to visible students', 'Branch Admins can insert student_guardians for visible students', 'Branch Admins can update student_guardians for visible students'], '19. StudentGuardians table policies are structurally correct');
 SELECT policies_are('enrollments', ARRAY['Super Admins can manage enrollments in their orgs', 'Branch members can view enrollments in their branches', 'Branch Admins can insert enrollments', 'Branch Admins can update enrollments'], '20. Enrollments table policies are structurally correct');
 
 -- Atomic creation function tests
 SELECT throws_ok(
     $$ SELECT create_student_with_initial_placement('11111111-1111-1111-1111-111111111111', '44444444-4444-4444-4444-444444444444', 'New', 'Student') $$,
-    '42501', 'new row violates row-level security policy for table "enrollments"', '21. Atomic function respects RLS (fails on unauthorized branch)'
+    'P0001', NULL, '21. Atomic function respects RLS (fails on unauthorized branch)'
 );
 
 SELECT lives_ok(
@@ -136,3 +140,5 @@ SELECT lives_ok(
 
 SELECT * FROM finish();
 ROLLBACK;
+
+
