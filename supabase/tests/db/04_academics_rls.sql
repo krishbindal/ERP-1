@@ -1,6 +1,6 @@
 BEGIN;
 
-SELECT plan(40);
+SELECT plan(41);
 
 -- 1. Setup Test Data
 -- Organizations & Branches already exist from 01/02/03 tests:
@@ -39,9 +39,9 @@ INSERT INTO public.classes (id, branch_id, academic_year_id, name, level) VALUES
 ('cccccccc-cccc-cccc-cccc-cccccccccccc', '33333333-3333-3333-3333-333333333333', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Class 1 A1', 1),
 ('dddddddd-dddd-dddd-dddd-dddddddddddd', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Class 1 B1', 1);
 
-INSERT INTO public.sections (id, branch_id, class_id, name) VALUES
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '33333333-3333-3333-3333-333333333333', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Section A A1'),
-('ffffffff-ffff-ffff-ffff-ffffffffffff', '55555555-5555-5555-5555-555555555555', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'Section A B1');
+INSERT INTO public.sections (id, branch_id, academic_year_id, class_id, name) VALUES
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '33333333-3333-3333-3333-333333333333', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'Section A A1'),
+('ffffffff-ffff-ffff-ffff-ffffffffffff', '55555555-5555-5555-5555-555555555555', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'Section A B1');
 
 INSERT INTO public.subjects (id, branch_id, name, code) VALUES
 ('11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', 'Math A1', 'MATH-A1'),
@@ -99,8 +99,13 @@ SELECT throws_ok(
 );
 
 SELECT throws_ok(
-    $$ INSERT INTO public.sections (branch_id, class_id, name) VALUES ('33333333-3333-3333-3333-333333333333', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'Mismatch Section') $$,
+    $$ INSERT INTO public.sections (branch_id, academic_year_id, class_id, name) VALUES ('33333333-3333-3333-3333-333333333333', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 'Mismatch Section') $$,
     '23503', NULL, '14. User A1 CANNOT INSERT section (Branch A1) pointing to class (Branch B1) due to composite FK'
+);
+
+SELECT lives_ok(
+    $$ INSERT INTO public.sections (branch_id, academic_year_id, class_id, name) VALUES ('33333333-3333-3333-3333-333333333333', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'New Section A1') $$,
+    '18. User A1 CAN INSERT section into Class A1'
 );
 
 SELECT throws_ok(
