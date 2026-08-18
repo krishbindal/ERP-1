@@ -74,7 +74,54 @@ jobs:
           fi
 
       - name: Database Tests (pgTAP & RLS)
-        run: npx --no-install supabase test db
+        run: |
+          echo "Discovering Supabase configuration..."
+          DB_CONTAINER=$(docker ps -qf name="supabase_db_")
+          if [ -z "$DB_CONTAINER" ]; then
+            echo "Supabase DB container not found!"
+            exit 1
+          fi
+          
+          NETWORK_NAME=$(docker inspect $DB_CONTAINER --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+          DB_NAME=$(docker inspect $DB_CONTAINER --format='{{.Name}}' | sed 's/^\///')
+          
+          echo "Network: $NETWORK_NAME"
+          echo "DB Host: $DB_NAME"
+          
+          echo "Initializing pgTAP..."
+          docker exec "$DB_NAME" psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;"
+          
+          echo "Running pg_prove tests..."
+          TEST_EXIT=0
+          
+          set +e
+          docker run --rm \
+            --network "$NETWORK_NAME" \
+            -v "${{ github.workspace }}/supabase/tests:/tests:ro" \
+            -e PGHOST="$DB_NAME" \
+            -e PGUSER=postgres \
+            -e PGPASSWORD=postgres \
+            -e PGDATABASE=postgres \
+            public.ecr.aws/supabase/pg_prove:3.36 \
+            pg_prove --ext .sql -r /tests/db
+          TEST_EXIT=$?
+          set -e
+          
+          echo "Cleaning up pgTAP..."
+          CLEANUP_EXIT=0
+          docker exec "$DB_NAME" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DROP EXTENSION IF EXISTS pgtap;" || CLEANUP_EXIT=$?
+          
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo "Database tests FAILED with exit code $TEST_EXIT"
+            exit "$TEST_EXIT"
+          fi
+          
+          if [ "$CLEANUP_EXIT" -ne 0 ]; then
+            echo "pgTAP cleanup FAILED with exit code $CLEANUP_EXIT"
+            exit "$CLEANUP_EXIT"
+          fi
+          
+          echo "Database tests and pgTAP cleanup completed successfully."
 
       - name: Build Web
         run: npm run build:web
