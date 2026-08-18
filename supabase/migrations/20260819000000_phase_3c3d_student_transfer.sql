@@ -75,19 +75,27 @@ BEGIN
 
     -- 4. Authorization: Super Admin OR Branch Admin in BOTH branches
     IF NOT (
-        (auth_is_super_admin() AND EXISTS (SELECT 1 FROM public.organization_memberships WHERE user_id = auth.uid() AND organization_id = v_source_org_id)) OR
+        (auth_is_super_admin() AND EXISTS (SELECT 1 FROM public.organization_memberships WHERE user_id = auth.uid() AND organization_id = v_source_org_id AND status = 'ACTIVE')) OR
         (
             EXISTS (
                 SELECT 1 FROM public.branch_memberships bm
                 JOIN public.user_role_assignments ura ON ura.branch_membership_id = bm.id
                 JOIN public.roles r ON r.id = ura.role_id
-                WHERE bm.user_id = auth.uid() AND bm.branch_id = p_source_branch_id AND r.name = 'Branch Admin'
+                WHERE bm.user_id = auth.uid() 
+                  AND bm.branch_id = p_source_branch_id 
+                  AND bm.status = 'ACTIVE'
+                  AND r.name = 'Branch Admin'
+                  AND r.organization_id = v_source_org_id
             ) AND
             EXISTS (
                 SELECT 1 FROM public.branch_memberships bm
                 JOIN public.user_role_assignments ura ON ura.branch_membership_id = bm.id
                 JOIN public.roles r ON r.id = ura.role_id
-                WHERE bm.user_id = auth.uid() AND bm.branch_id = v_dest_branch_id AND r.name = 'Branch Admin'
+                WHERE bm.user_id = auth.uid() 
+                  AND bm.branch_id = v_dest_branch_id 
+                  AND bm.status = 'ACTIVE'
+                  AND r.name = 'Branch Admin'
+                  AND r.organization_id = v_dest_org_id
             )
         )
     ) THEN
@@ -182,3 +190,21 @@ BEGIN
     RETURN v_new_enrollment_id;
 END;
 $$;
+
+-- 9. Delete Protection
+CREATE OR REPLACE FUNCTION public.prevent_hard_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RAISE EXCEPTION 'Hard deletion of % is not allowed', TG_TABLE_NAME;
+END;
+$$;
+
+CREATE TRIGGER prevent_enrollments_delete
+BEFORE DELETE ON public.enrollments
+FOR EACH ROW EXECUTE FUNCTION public.prevent_hard_delete();
+
+CREATE TRIGGER prevent_student_branch_profiles_delete
+BEFORE DELETE ON public.student_branch_profiles
+FOR EACH ROW EXECUTE FUNCTION public.prevent_hard_delete();
