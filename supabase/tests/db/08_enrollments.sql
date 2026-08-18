@@ -186,14 +186,14 @@ SELECT throws_ok(
     'Deleting section with enrollments should fail due to RESTRICT'
 );
 
--- Try to delete the profile, it should fail because of RESTRICT
+-- Try to delete the profile, it should fail because of RESTRICT (now P0001 from trigger)
 SELECT throws_ok(
     $$ 
     SELECT set_config('role', 'postgres', true);
     DELETE FROM public.student_branch_profiles WHERE id = '00000000-0000-0000-0000-000000004001'; 
     $$,
-    '23503',
-    NULL,
+    'P0001',
+    'Hard deletion of student_branch_profiles is not allowed',
     'Deleting profile with enrollments should fail due to RESTRICT'
 );
 
@@ -265,16 +265,7 @@ SELECT results_eq(
 
 -- Cleanup
 SELECT set_config('role', 'postgres', true);
--- Use NO ACTION instead of CASCADE for teardown manually
-DELETE FROM public.enrollments;
-DELETE FROM public.sections;
-DELETE FROM public.classes;
-DELETE FROM public.academic_years;
-DELETE FROM public.student_branch_profiles;
-DELETE FROM public.students;
-DELETE FROM auth.users WHERE id IN ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004');
-DELETE FROM public.branches;
-DELETE FROM public.organizations;
+-- Cleanup handled by transaction rollback
 
 SELECT * FROM finish();
 ROLLBACK;
