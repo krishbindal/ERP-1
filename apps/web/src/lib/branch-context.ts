@@ -70,8 +70,9 @@ export async function getAppContext(): Promise<AppContext | null> {
     throw new Error("Ambiguous branch context");
   }
 
-  const branchData = memberships[0].branches as unknown as { name: string, organization_id: string };
-  const assignments = (memberships[0].user_role_assignments as unknown) as { roles: { name: string } | { name: string }[] | null }[] || [];
+  const [membership] = memberships;
+  const branchData = membership.branches as unknown as { name: string, organization_id: string };
+  const assignments = (membership.user_role_assignments as unknown) as { roles: { name: string } | { name: string }[] | null }[] || [];
   
   // Extract roles explicitly, defaulting to 'unknown' if none
   const roles = assignments
@@ -86,7 +87,7 @@ export async function getAppContext(): Promise<AppContext | null> {
     type: 'normal',
     userId: user.user.id,
     organizationId: branchData.organization_id,
-    branchId: memberships[0].branch_id,
+    branchId: membership.branch_id,
     branchName: branchData.name || 'Unknown Branch',
     roles,
   };

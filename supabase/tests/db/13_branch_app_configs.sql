@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(9);
+SELECT plan(10);
 
 -- 1. Test tables exist
 SELECT has_table('branch_app_configs', 'branch_app_configs table exists');
@@ -58,13 +58,24 @@ SELECT results_eq(
 -- Assign super admin
 SELECT set_config('request.jwt.claims', '{"sub": "00000000-0000-0000-0000-000000000000", "app_metadata": {"is_super_admin": true}}', true);
 
--- Even super admin needs org membership to see it according to our policy:
--- Using (branch_id = ANY(auth_user_branches()) OR organization_id = ANY(auth_user_organizations()) OR auth_is_super_admin())
--- Actually, the policy says OR auth_is_super_admin(), so super admins see all.
+-- In Slice B, we tightened the policy so Super Admins ONLY see configs for their authorized organizations.
+-- This user has NO organization memberships yet.
+SELECT is(
+    (SELECT count(*) > 0 FROM branch_app_configs),
+    false,
+    'Super admin cannot see configs outside their authorized organizations'
+);
+
+-- Give the super admin membership to Test Org 1
+SELECT set_config('role', 'postgres', true);
+INSERT INTO auth.users (id) VALUES ('00000000-0000-0000-0000-000000000000') ON CONFLICT DO NOTHING;
+INSERT INTO organization_memberships (user_id, organization_id) VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000001') ON CONFLICT DO NOTHING;
+SELECT set_config('role', 'authenticated', true);
+
 SELECT is(
     (SELECT count(*) > 0 FROM branch_app_configs),
     true,
-    'Super admin can see configs'
+    'Super admin can see configs inside their authorized organizations'
 );
 
 -- Back to postgres to clean up
