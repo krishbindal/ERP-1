@@ -14,7 +14,7 @@ permissions:
 jobs:
   prepare:
     name: Prepare
-    runs-on: [self-hosted, linux, x64, schoolos-ci]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout commit
         uses: actions/checkout@v5
@@ -31,7 +31,7 @@ jobs:
   e2e:
     name: E2E - ${{ matrix.browser }}
     needs: prepare
-    runs-on: [self-hosted, linux, x64, schoolos-ci]
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -101,14 +101,11 @@ jobs:
         if: always()
         run: git clean -ffdx && git reset --hard HEAD
 
-
   publish:
     name: Publish Reports
     needs: e2e
     if: always()
-    runs-on: [self-hosted, linux, x64, schoolos-ci]
+    runs-on: ubuntu-latest
     steps:
       - name: Echo Publish
         run: echo "Publishing E2E Results"
-
-
