@@ -2,55 +2,75 @@ import { AcademicYearsTable } from './components/AcademicYearsTable';
 import { ClassesTable } from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
-import { getCurrentAppBranch } from '@/lib/branch-context';
+import { getAppContext } from '@/lib/branch-context';
 import { AcademicYear, ClassWithYear, SectionWithClass } from './components/types';
 
-export default async function AcademicStructurePage(props: { searchParams: Promise<{ tab?: string }> }) {
+export default async function AcademicStructurePage(props: { searchParams: Promise<{ tab?: string; branchId?: string }> }) {
   const searchParams = await props.searchParams;
   const tab = searchParams.tab || 'years';
+  const explicitBranchId = searchParams.branchId;
   
   const supabase = await createClient();
-  const currentBranch = await getCurrentAppBranch();
-  const branchId = currentBranch?.id;
+  const context = await getAppContext();
 
-  const { data: user, error: authError } = await supabase.auth.getUser();
-  
-  let isReadOnly = false;
-  if (!authError && user?.user?.id && branchId) {
-    const { data: membership, error: membershipError } = await supabase
-      .from('branch_memberships')
-      .select('id, user_role_assignments(roles(name))')
-      .eq('user_id', user.user.id)
-      .eq('branch_id', branchId)
-      .single();
+  if (!context) {
+    return <div className="text-gray-500">No context available.</div>;
+  }
 
-    if (membershipError) {
-      throw new Error(membershipError.message);
+  let branchId = context.type === 'normal' ? context.branchId : explicitBranchId;
+
+  if (!branchId) {
+    if (context.type === 'superadmin') {
+      return <div className="text-gray-500">Please select a branch to view its academic structure.</div>;
     }
+    return <div className="text-gray-500">No branch context. Ensure you are accessing a valid branch application.</div>;
+  }
 
-    const assignments = (membership as unknown as { user_role_assignments: { roles: { name: string } }[] })?.user_role_assignments;
-    const roleName = assignments?.[0]?.roles?.name;
-    isReadOnly = roleName === 'Teacher';
+  // Authorize Super Admin cross-branch access
+  let isAuthorized = false;
+  let isReadOnly = true;
+
+  if (context.type === 'superadmin') {
+    const { data: branch } = await supabase.from('branches').select('name, organization_id').eq('id', branchId).single();
+    if (branch && branch.organization_id === context.organizationId) {
+      isAuthorized = true;
+      isReadOnly = false; // Super Admins can edit
+    }
+  } else if (context.type === 'normal') {
+    if (explicitBranchId && explicitBranchId !== context.branchId) {
+      return <div className="text-red-500">You are not authorized to view this branch.</div>;
+    }
+    isAuthorized = true; // all normal users can VIEW their branch academic structure
+    isReadOnly = context.role === 'teacher' || context.role === 'student' || context.role === 'parent';
+  }
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
+          <p className="mt-2 text-gray-600">You do not have permission to view this branch's academic structure.</p>
+        </div>
+      </div>
+    );
   }
 
   let years: AcademicYear[] = [];
   let classes: ClassWithYear[] = [];
   let sections: SectionWithClass[] = [];
 
-  if (branchId) {
-    if (tab === 'years') {
-      const { data, error } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
-      if (error) throw new Error(error.message);
-      years = (data as unknown as AcademicYear[]) || [];
-    } else if (tab === 'classes') {
-      const { data, error } = await supabase.from('classes').select('*, academic_years(name)').eq('branch_id', branchId).order('level', { ascending: true });
-      if (error) throw new Error(error.message);
-      classes = (data as unknown as ClassWithYear[]) || [];
-    } else if (tab === 'sections') {
-      const { data, error } = await supabase.from('sections').select('*, classes(name, academic_years(name))').eq('branch_id', branchId).order('name', { ascending: true });
-      if (error) throw new Error(error.message);
-      sections = (data as unknown as SectionWithClass[]) || [];
-    }
+  if (tab === 'years') {
+    const { data, error } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
+    if (error) throw new Error(error.message);
+    years = (data as unknown as AcademicYear[]) || [];
+  } else if (tab === 'classes') {
+    const { data, error } = await supabase.from('classes').select('*, academic_years(name)').eq('branch_id', branchId).order('level', { ascending: true });
+    if (error) throw new Error(error.message);
+    classes = (data as unknown as ClassWithYear[]) || [];
+  } else if (tab === 'sections') {
+    const { data, error } = await supabase.from('sections').select('*, classes(name, academic_years(name))').eq('branch_id', branchId).order('name', { ascending: true });
+    if (error) throw new Error(error.message);
+    sections = (data as unknown as SectionWithClass[]) || [];
   }
 
   return (
@@ -58,21 +78,15 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       <h1 className="text-2xl font-bold">Academic Structure</h1>
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
-          <a href="?tab=years" className={`${tab === 'years' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Academic Years</a>
-          <a href="?tab=classes" className={`${tab === 'classes' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Classes</a>
-          <a href="?tab=sections" className={`${tab === 'sections' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Sections</a>
+          <a href={`?tab=years${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`} className={`${tab === 'years' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Academic Years</a>
+          <a href={`?tab=classes${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`} className={`${tab === 'classes' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Classes</a>
+          <a href={`?tab=sections${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`} className={`${tab === 'sections' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Sections</a>
         </nav>
       </div>
       <div>
-        {!branchId ? (
-          <div className="text-gray-500">No branch context. Ensure you are accessing a valid branch application.</div>
-        ) : (
-          <>
-            {tab === 'years' && <AcademicYearsTable data={years} isReadOnly={isReadOnly} />}
-            {tab === 'classes' && <ClassesTable data={classes} isReadOnly={isReadOnly} />}
-            {tab === 'sections' && <SectionsTable data={sections} isReadOnly={isReadOnly} />}
-          </>
-        )}
+        {tab === 'years' && <AcademicYearsTable data={years} isReadOnly={isReadOnly} explicitBranchId={branchId} />}
+        {tab === 'classes' && <ClassesTable data={classes} isReadOnly={isReadOnly} explicitBranchId={branchId} />}
+        {tab === 'sections' && <SectionsTable data={sections} isReadOnly={isReadOnly} explicitBranchId={branchId} />}
       </div>
     </div>
   );

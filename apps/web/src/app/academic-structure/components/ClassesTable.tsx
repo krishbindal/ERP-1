@@ -4,14 +4,14 @@ import { ClassForm } from './ClassForm';
 import { deleteClass } from '../actions';
 import { ClassWithYear } from './types';
 
-export function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isReadOnly: boolean }) {
+export function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isReadOnly: boolean , explicitBranchId?: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ClassWithYear | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this class?')) {
       try {
-        const result = await deleteClass(id);
+        const result = await deleteClass(id, explicitBranchId);
         if (result.error) {
           alert(result.error);
         }
@@ -77,11 +77,14 @@ export function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isRe
         <ClassForm 
           onClose={() => setIsDrawerOpen(false)} 
           initialData={editingItem}
+          explicitBranchId={explicitBranchId}
         />
       )}
     </div>
   );
 }
+
+
 
 
 

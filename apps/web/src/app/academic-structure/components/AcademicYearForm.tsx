@@ -4,7 +4,7 @@ import { createAcademicYear, updateAcademicYear } from '../actions';
 import { AcademicYear } from './types';
 import { DrawerForm } from './DrawerForm';
 
-export function AcademicYearForm({ onClose, initialData }: { onClose: () => void, initialData?: AcademicYear | null }) {
+export function AcademicYearForm({ onClose, initialData, explicitBranchId }: { onClose: () => void, initialData?: AcademicYear | null }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -24,9 +24,9 @@ export function AcademicYearForm({ onClose, initialData }: { onClose: () => void
     try {
       let result;
       if (initialData) {
-        result = await updateAcademicYear(initialData.id, data);
+        result = await updateAcademicYear(initialData.id, data, explicitBranchId);
       } else {
-        result = await createAcademicYear(data);
+        result = await createAcademicYear(data, explicitBranchId);
       }
 
       if (result.error) {
@@ -85,6 +85,7 @@ export function AcademicYearForm({ onClose, initialData }: { onClose: () => void
     </DrawerForm>
   );
 }
+
 
 
 

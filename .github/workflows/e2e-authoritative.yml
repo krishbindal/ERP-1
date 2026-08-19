@@ -3,10 +3,10 @@ name: Authoritative E2E
 on:
   push:
     branches:
-      - master
+      - '*'
   pull_request:
     branches:
-      - master
+      - '*'
 
 permissions:
   contents: read
@@ -100,4 +100,15 @@ jobs:
       - name: Cleanup Workspace
         if: always()
         run: git clean -ffdx && git reset --hard HEAD
+
+
+  publish:
+    name: Publish Reports
+    needs: e2e
+    if: always()
+    runs-on: [self-hosted, linux, x64, schoolos-ci]
+    steps:
+      - name: Echo Publish
+        run: echo "Publishing E2E Results"
+
 

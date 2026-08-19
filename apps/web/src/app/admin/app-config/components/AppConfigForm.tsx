@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { updateBranchAppConfig, AppConfigPayload } from '../actions';
 
 type AppConfigFormProps = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialData: any;
+  initialData: Partial<AppConfigPayload>;
+  explicitBranchId?: string;
 };
 
-export function AppConfigForm({ initialData }: AppConfigFormProps) {
+export function AppConfigForm({ initialData, explicitBranchId }: AppConfigFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +29,7 @@ export function AppConfigForm({ initialData }: AppConfigFormProps) {
     };
 
     try {
-      const result = await updateBranchAppConfig(data);
+      const result = await updateBranchAppConfig(data, explicitBranchId);
 
       if (result.error) {
         setError(result.error);

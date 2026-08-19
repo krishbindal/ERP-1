@@ -1,39 +1,47 @@
 import { createClient } from '@/lib/supabase/server';
-import { getCurrentAppBranch } from '@/lib/branch-context';
+import { getAppContext } from '@/lib/branch-context';
 import { getBranchAppConfig } from './actions';
 import { AppConfigForm } from './components/AppConfigForm';
 
-export default async function AppConfigPage() {
+export default async function AppConfigPage(props: { searchParams: Promise<{ branchId?: string }> }) {
+  const searchParams = await props.searchParams;
+  const explicitBranchId = searchParams.branchId;
+
   const supabase = await createClient();
-  const currentBranch = await getCurrentAppBranch();
-  const branchId = currentBranch?.id;
+  const context = await getAppContext();
+  
+  if (!context) {
+    return <div className="text-gray-500">No context available.</div>;
+  }
+
+  let branchId = context.type === 'normal' ? context.branchId : explicitBranchId;
 
   if (!branchId) {
+    if (context.type === 'superadmin') {
+      return <div className="text-gray-500">Please select a branch to view its configuration.</div>;
+    }
     return <div className="text-gray-500">No branch context. Ensure you are accessing a valid branch application.</div>;
   }
 
-  const { data: user, error: authError } = await supabase.auth.getUser();
-  if (authError || !user?.user) {
-    return <div className="text-red-500">Authentication required.</div>;
+  // Authorize Super Admin cross-branch access
+  let isAuthorized = false;
+  let branchName = 'Unknown Branch';
+
+  if (context.type === 'superadmin') {
+    const { data: branch } = await supabase.from('branches').select('name, organization_id').eq('id', branchId).single();
+    if (branch && branch.organization_id === context.organizationId) {
+      isAuthorized = true;
+      branchName = branch.name;
+    }
+  } else if (context.type === 'normal') {
+    if (explicitBranchId && explicitBranchId !== context.branchId) {
+      return <div className="text-red-500">You are not authorized to view this branch.</div>;
+    }
+    isAuthorized = context.role === 'branchadmin';
+    branchName = context.branchName;
   }
 
-  // Explicitly check for Super Admin or Branch Admin role
-  const isSuperAdmin = user.user.app_metadata?.is_super_admin === true;
-
-  let isBranchAdmin = false;
-  if (!isSuperAdmin) {
-    const { data: branchMembership } = await supabase
-      .from('branch_memberships')
-      .select('id, user_role_assignments!inner(roles!inner(name))')
-      .eq('user_id', user.user.id)
-      .eq('branch_id', branchId)
-      .eq('user_role_assignments.roles.name', 'Branch Admin')
-      .maybeSingle();
-      
-    isBranchAdmin = !!branchMembership;
-  }
-
-  if (!isSuperAdmin && !isBranchAdmin) {
+  if (!isAuthorized) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -44,7 +52,7 @@ export default async function AppConfigPage() {
     );
   }
 
-  const { data: appConfig, error } = await getBranchAppConfig();
+  const { data: appConfig, error } = await getBranchAppConfig(branchId);
 
   if (error) {
     return <div className="text-red-500">Error loading configuration: {error}</div>;
@@ -66,13 +74,13 @@ export default async function AppConfigPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Branch App Configuration</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Manage the mobile app configuration for {currentBranch.name}.
+          Manage the mobile app configuration for {branchName}.
         </p>
       </div>
 
       <div className="bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <AppConfigForm initialData={appConfig} />
+          <AppConfigForm initialData={appConfig} explicitBranchId={branchId} />
         </div>
       </div>
     </div>

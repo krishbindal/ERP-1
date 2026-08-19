@@ -42,11 +42,18 @@ test.describe('App Config Admin Tests', () => {
     
     await page.goto('/admin/app-config');
     
-    // Verify page loads
-    await expect(page.locator('h1', { hasText: 'Branch App Configuration' })).toBeVisible();
+    // Initial state: super admin has no branch selected
+    await expect(page.locator('text=Please select a branch to view its configuration.')).toBeVisible();
     
-    // We assume the Super Admin uses the branch selector to change branches
-    // Since we don't have the explicit test for changing branches here, we just verify they have access
+    // Select a branch from the global selector
+    await page.getByRole('combobox', { name: 'Branch' }).selectOption({ index: 1 });
+    
+    // Verify page loads for that branch
+    await expect(page.locator('h1', { hasText: 'Branch App Configuration' })).toBeVisible();
+    await expect(page.locator('input[name="app_name"]')).toBeVisible();
+
+    // Select another branch
+    await page.getByRole('combobox', { name: 'Branch' }).selectOption({ index: 2 });
     await expect(page.locator('input[name="app_name"]')).toBeVisible();
   });
 

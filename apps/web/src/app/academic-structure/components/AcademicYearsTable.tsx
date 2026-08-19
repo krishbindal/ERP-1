@@ -4,14 +4,14 @@ import { AcademicYearForm } from './AcademicYearForm';
 import { deleteAcademicYear } from '../actions';
 import { AcademicYear } from './types';
 
-export function AcademicYearsTable({ data, isReadOnly }: { data: AcademicYear[], isReadOnly: boolean }) {
+export function AcademicYearsTable({ data, isReadOnly }: { data: AcademicYear[], isReadOnly: boolean , explicitBranchId?: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AcademicYear | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this academic year?')) {
       try {
-        const result = await deleteAcademicYear(id);
+        const result = await deleteAcademicYear(id, explicitBranchId);
         if (result.error) {
           alert(result.error);
         }
@@ -83,11 +83,14 @@ export function AcademicYearsTable({ data, isReadOnly }: { data: AcademicYear[],
         <AcademicYearForm 
           onClose={() => setIsDrawerOpen(false)} 
           initialData={editingItem}
+          explicitBranchId={explicitBranchId}
         />
       )}
     </div>
   );
 }
+
+
 
 
 

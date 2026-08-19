@@ -4,7 +4,7 @@ import { createSection, updateSection, getClasses } from '../actions';
 import { SectionWithClass } from './types';
 import { DrawerForm } from './DrawerForm';
 
-export function SectionForm({ onClose, initialData }: { onClose: () => void, initialData?: SectionWithClass | null }) {
+export function SectionForm({ onClose, initialData, explicitBranchId }: { onClose: () => void, initialData?: SectionWithClass | null }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<{id: string, name: string}[]>([]);
@@ -38,9 +38,9 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
     try {
       let result;
       if (initialData) {
-        result = await updateSection(initialData.id, { name: data.name, capacity: data.capacity });
+        result = await updateSection(initialData.id, { name: data.name, capacity: data.capacity }, explicitBranchId);
       } else {
-        result = await createSection(data);
+        result = await createSection(data, explicitBranchId);
       }
 
       if (result.error) {
@@ -94,6 +94,7 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
     </DrawerForm>
   );
 }
+
 
 
 

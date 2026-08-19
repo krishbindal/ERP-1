@@ -1,10 +1,28 @@
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
+  const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  
+  const branchId = process.env.EXPO_PUBLIC_BRANCH_ID;
+  const appName = process.env.EXPO_PUBLIC_APP_NAME;
+  const appSlug = process.env.EXPO_PUBLIC_APP_SLUG;
+  const androidPackage = process.env.EXPO_PUBLIC_ANDROID_PACKAGE;
+  const iosBundle = process.env.EXPO_PUBLIC_IOS_BUNDLE;
+
+  if (!isDev) {
+    if (!branchId || !appName || !appSlug || !androidPackage || !iosBundle) {
+      throw new Error(
+        "Production builds require all branch identity variables to be set: " +
+        "EXPO_PUBLIC_BRANCH_ID, EXPO_PUBLIC_APP_NAME, EXPO_PUBLIC_APP_SLUG, " +
+        "EXPO_PUBLIC_ANDROID_PACKAGE, EXPO_PUBLIC_IOS_BUNDLE"
+      );
+    }
+  }
+
   return {
     ...config,
-    name: process.env.EXPO_PUBLIC_APP_NAME || "SchoolOS Default",
-    slug: process.env.EXPO_PUBLIC_APP_SLUG || "schoolos-default",
+    name: appName || "SchoolOS Default",
+    slug: appSlug || "schoolos-default",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
@@ -12,7 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     userInterfaceStyle: "automatic",
     ios: {
       icon: "./assets/expo.icon",
-      bundleIdentifier: process.env.EXPO_PUBLIC_IOS_BUNDLE || "com.schoolos.default",
+      bundleIdentifier: iosBundle || "com.schoolos.default",
     },
     android: {
       adaptiveIcon: {
@@ -22,7 +40,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         monochromeImage: "./assets/images/android-icon-monochrome.png"
       },
       predictiveBackGestureEnabled: false,
-      package: process.env.EXPO_PUBLIC_ANDROID_PACKAGE || "com.schoolos.default",
+      package: androidPackage || "com.schoolos.default",
     },
     web: {
       output: "static",

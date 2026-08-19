@@ -4,14 +4,14 @@ import { SectionForm } from './SectionForm';
 import { deleteSection } from '../actions';
 import { SectionWithClass } from './types';
 
-export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], isReadOnly: boolean }) {
+export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], isReadOnly: boolean , explicitBranchId?: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<SectionWithClass | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this section?')) {
       try {
-        const result = await deleteSection(id);
+        const result = await deleteSection(id, explicitBranchId);
         if (result.error) {
           alert(result.error);
         }
@@ -77,11 +77,14 @@ export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], 
         <SectionForm 
           onClose={() => setIsDrawerOpen(false)} 
           initialData={editingItem}
+          explicitBranchId={explicitBranchId}
         />
       )}
     </div>
   );
 }
+
+
 
 
 
