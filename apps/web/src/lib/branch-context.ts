@@ -121,13 +121,17 @@ export function auth_has_branch_membership(context: AppContext | null, branch: {
   if (context.type === 'superadmin') {
     return context.organizationScopes.includes(branch.organization_id);
   }
-  return context.branchId === branch.id;
+  return context.branchId === branch.id && context.organizationId === branch.organization_id;
 }
 
 export function auth_has_branch_role(context: AppContext | null, branch: { id: string, organization_id: string }, roleName: UserRole): boolean {
   if (!context) return false;
+  
   if (context.type === 'superadmin') {
-    return context.organizationScopes.includes(branch.organization_id);
+    return context.organizationScopes.includes(branch.organization_id) && (context.roles as UserRole[]).includes(roleName);
   }
-  return context.branchId === branch.id && context.roles.includes(roleName);
+  
+  return context.branchId === branch.id && 
+         context.organizationId === branch.organization_id && 
+         context.roles.includes(roleName);
 }
