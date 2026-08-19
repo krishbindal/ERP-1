@@ -14,7 +14,7 @@ permissions:
 jobs:
   prepare:
     name: Prepare
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, schoolos-ci]
     steps:
       - name: Checkout commit
         uses: actions/checkout@v4
@@ -26,11 +26,12 @@ jobs:
           
       - name: Verify Prerequisites
         run: |
-          echo "Prerequisites verified."
+          chmod +x scripts/ci-runner-preflight.sh
+          ./scripts/ci-runner-preflight.sh
 
   e2e:
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, schoolos-ci]
 
     strategy:
       fail-fast: false
@@ -59,9 +60,9 @@ jobs:
       - name: Install Playwright Browsers
         run: |
           if [ "${{ matrix.browser }}" = "mobile-chrome" ]; then
-            npx playwright install --with-deps chromium
+            npx playwright install chromium
           else
-            npx playwright install --with-deps ${{ matrix.browser }}
+            npx playwright install ${{ matrix.browser }}
           fi
 
       - name: Start Local Supabase
