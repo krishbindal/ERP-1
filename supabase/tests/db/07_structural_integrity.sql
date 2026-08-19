@@ -44,6 +44,13 @@ INSERT INTO branch_memberships (id, user_id, branch_id) VALUES
 ('12345678-1234-1234-1234-123456789012', get_admin_a1(), get_branch_1()),
 ('12345678-1234-1234-1234-123456789013', get_admin_a2(), get_branch_2()) ON CONFLICT DO NOTHING;
 
+INSERT INTO public.roles (id, organization_id, name) VALUES 
+('00000000-0000-0000-0000-000000000004', get_org_id(), 'Branch Admin') ON CONFLICT DO NOTHING;
+
+INSERT INTO public.user_role_assignments (branch_membership_id, role_id) VALUES 
+('12345678-1234-1234-1234-123456789012', '00000000-0000-0000-0000-000000000004'),
+('12345678-1234-1234-1234-123456789013', '00000000-0000-0000-0000-000000000004') ON CONFLICT DO NOTHING;
+
 -- Authenticate as Branch Admin 1
 SELECT set_config('role', 'authenticated', true);
 SELECT set_config('request.jwt.claims', format('{"sub": "%s"}', get_admin_a1()), true);

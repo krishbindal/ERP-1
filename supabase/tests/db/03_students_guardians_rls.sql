@@ -33,6 +33,14 @@ INSERT INTO branch_memberships (id, branch_id, user_id, status) VALUES
 ('11111111-1111-0000-0000-000000000000', '33333333-3333-3333-3333-333333333333', '77777777-7777-7777-7777-777777777777', 'ACTIVE'),
 ('22222222-2222-0000-0000-000000000000', '55555555-5555-5555-5555-555555555555', '88888888-8888-8888-8888-888888888888', 'ACTIVE');
 
+INSERT INTO public.roles (id, organization_id, name) VALUES 
+('00000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'Branch Admin'),
+('00000000-0000-0000-0000-000000000005', '22222222-2222-2222-2222-222222222222', 'Branch Admin');
+
+INSERT INTO public.user_role_assignments (branch_membership_id, role_id) VALUES 
+('11111111-1111-0000-0000-000000000000', '00000000-0000-0000-0000-000000000004'),
+('22222222-2222-0000-0000-000000000000', '00000000-0000-0000-0000-000000000005');
+
 -- Phase 3A Mock Data: Students, Guardians, Enrollments
 INSERT INTO students (id, organization_id, first_name, last_name, status) VALUES
 ('aaaaaaaa-0000-0000-0000-000000000000', '11111111-1111-1111-1111-111111111111', 'Student', 'A1', 'ACTIVE'),
@@ -124,7 +132,7 @@ SELECT throws_ok(
 -- Organization change test
 SELECT throws_ok(
     'UPDATE students SET organization_id = ''22222222-2222-2222-2222-222222222222'' WHERE id = ''aaaaaaaa-0000-0000-0000-000000000000''',
-    '42501', 'new row violates row-level security policy for table "students"', '15. Cannot change organization_id on students'
+    '23503', NULL, '15. Cannot change organization_id on students (FK prevents changing organization_id before RLS)'
 );
 
 -- Placement ownership modification
@@ -134,10 +142,10 @@ SELECT throws_ok(
 );
 
 -- Structural RLS Checks
-SELECT policies_are('students', ARRAY['Super Admins can manage students in their orgs', 'Branch members can view students placed in their branches', 'Branch Admins can insert students in their org', 'Branch Admins can update students placed in their branches', 'Guardians can view their linked students', 'Students can view their own record'], '17. Students table policies are structurally correct');
-SELECT policies_are('guardians', ARRAY['Super Admins can manage guardians in their orgs', 'Branch members can view guardians linked to visible students', 'Branch Admins can insert guardians in their org', 'Branch Admins can update visible guardians', 'Students can view their linked guardians', 'Guardians can view their own record'], '18. Guardians table policies are structurally correct');
-SELECT policies_are('student_guardians', ARRAY['Super Admins can manage student_guardians in their orgs', 'Branch members can view student_guardians linked to visible students', 'Branch Admins can insert student_guardians for visible students', 'Branch Admins can update student_guardians for visible students'], '19. StudentGuardians table policies are structurally correct');
-SELECT policies_are('enrollments', ARRAY['Super Admins can manage enrollments in their orgs', 'Branch members can view enrollments in their branches', 'Branch Admins can insert enrollments', 'Branch Admins can update enrollments'], '20. Enrollments table policies are structurally correct');
+SELECT policies_are('students', ARRAY['Super Admins can manage students', 'Branch members can view students placed in their branches', 'Branch Admins can insert students', 'Branch Admins can update students', 'Guardians can view their linked students', 'Students can view their own record'], '17. Students table policies are structurally correct');
+SELECT policies_are('guardians', ARRAY['Super Admins can manage guardians', 'Branch members can view guardians linked to visible students', 'Branch Admins can insert guardians', 'Branch Admins can update guardians', 'Students can view their linked guardians', 'Guardians can view their own record'], '18. Guardians table policies are structurally correct');
+SELECT policies_are('student_guardians', ARRAY['Super Admins can manage student_guardians', 'Branch members can view student_guardians linked to visible students', 'Branch Admins can insert student_guardians', 'Branch Admins can update student_guardians'], '19. StudentGuardians table policies are structurally correct');
+SELECT policies_are('enrollments', ARRAY['Super Admins can manage enrollments', 'Branch members can view enrollments in their branches', 'Branch Admins can insert enrollments', 'Branch Admins can update enrollments'], '20. Enrollments table policies are structurally correct');
 
 -- Atomic creation function tests
 SELECT throws_ok(
