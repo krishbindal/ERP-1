@@ -10,7 +10,13 @@ export function ClassForm({ onClose, initialData }: { onClose: () => void, initi
   const [academicYears, setAcademicYears] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
-    getAcademicYears().then(res => setAcademicYears(res.data || []));
+    getAcademicYears().then(res => {
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setAcademicYears(res.data || []);
+      }
+    });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

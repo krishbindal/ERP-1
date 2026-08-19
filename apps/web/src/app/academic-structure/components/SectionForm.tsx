@@ -10,7 +10,13 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
   const [classes, setClasses] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
-    getClasses().then(res => setClasses(res.data || []));
+    getClasses().then(res => {
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setClasses(res.data || []);
+      }
+    });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

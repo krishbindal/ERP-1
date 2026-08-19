@@ -66,7 +66,7 @@ export async function deleteClass(id: string) {
 // Sections
 export async function createSection(data: { class_id: string; name: string; capacity: number }) {
   const supabase = await createClient();
-  const branch_id = await getContextBranchId(); // Sections might not even have branch_id on their schema if joined, but just in case we insert if needed. Actually it does have branch_id on schema in standard SchoolOS usually or not. Let's pass it if needed, or if it errors, we'll see. Wait, we passed branch_id before.
+  const branch_id = await getContextBranchId();
   const { error } = await supabase.from('sections').insert({ ...data, branch_id });
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
@@ -92,13 +92,15 @@ export async function deleteSection(id: string) {
 export async function getAcademicYears() {
   const supabase = await createClient();
   const branch_id = await getContextBranchId();
-  const { data } = await supabase.from('academic_years').select('id, name').eq('branch_id', branch_id);
+  const { data, error } = await supabase.from('academic_years').select('id, name').eq('branch_id', branch_id);
+  if (error) return { error: mapDatabaseError(error) };
   return { data };
 }
 
 export async function getClasses() {
   const supabase = await createClient();
   const branch_id = await getContextBranchId();
-  const { data } = await supabase.from('classes').select('id, name').eq('branch_id', branch_id);
+  const { data, error } = await supabase.from('classes').select('id, name').eq('branch_id', branch_id);
+  if (error) return { error: mapDatabaseError(error) };
   return { data };
 }

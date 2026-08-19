@@ -17,12 +17,16 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   
   let isReadOnly = false;
   if (user?.user?.id && branchId) {
-    const { data: membership } = await supabase
+    const { data: membership, error: membershipError } = await supabase
       .from('branch_memberships')
       .select('id, user_role_assignments(roles(name))')
       .eq('user_id', user.user.id)
       .eq('branch_id', branchId)
       .single();
+
+    if (membershipError) {
+      throw new Error(membershipError.message);
+    }
 
     const assignments = (membership as unknown as { user_role_assignments: { roles: { name: string } }[] })?.user_role_assignments;
     const roleName = assignments?.[0]?.roles?.name;
@@ -35,13 +39,16 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
 
   if (branchId) {
     if (tab === 'years') {
-      const { data } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
+      const { data, error } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
+      if (error) throw new Error(error.message);
       years = (data as unknown as AcademicYear[]) || [];
     } else if (tab === 'classes') {
-      const { data } = await supabase.from('classes').select('*, academic_years(name)').eq('branch_id', branchId).order('level', { ascending: true });
+      const { data, error } = await supabase.from('classes').select('*, academic_years(name)').eq('branch_id', branchId).order('level', { ascending: true });
+      if (error) throw new Error(error.message);
       classes = (data as unknown as ClassWithYear[]) || [];
     } else if (tab === 'sections') {
-      const { data } = await supabase.from('sections').select('*, classes(name, academic_years(name))').order('name', { ascending: true });
+      const { data, error } = await supabase.from('sections').select('*, classes(name, academic_years(name))').order('name', { ascending: true });
+      if (error) throw new Error(error.message);
       sections = (data as unknown as SectionWithClass[]) || [];
     }
   }
