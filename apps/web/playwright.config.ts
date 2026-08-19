@@ -26,7 +26,7 @@ export default defineConfig({
   projects: [
     {
       name: 'setup',
-      testMatch: /.*\.setup\.ts/,
+      testMatch: '**/*.setup.ts',
     },
     {
       name: 'superadmin',
@@ -62,3 +62,4 @@ export default defineConfig({
     timeout: 120 * 1000,
   },
 });
+

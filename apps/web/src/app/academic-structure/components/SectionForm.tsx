@@ -32,7 +32,7 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
     const data = {
       class_id: formData.get('class_id') as string,
       name: formData.get('name') as string,
-      capacity: parseInt(formData.get('capacity') as string, 10),
+      capacity: Number.parseInt(formData.get('capacity') as string, 10),
     };
 
     try {
@@ -94,6 +94,7 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
     </DrawerForm>
   );
 }
+
 
 
 

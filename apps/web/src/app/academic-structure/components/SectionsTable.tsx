@@ -30,7 +30,7 @@ export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], 
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium">Sections</h2>
         {!isReadOnly && (
-          <button 
+          <button type="button" 
             onClick={() => { setEditingItem(null); setIsDrawerOpen(true); }}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
           >
@@ -63,8 +63,8 @@ export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], 
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{sec.capacity}</td>
                 {!isReadOnly && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => { setEditingItem(sec); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                    <button onClick={() => handleDelete(sec.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                    <button type="button" onClick={() => { setEditingItem(sec); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                    <button type="button" onClick={() => handleDelete(sec.id)} className="text-red-600 hover:text-red-900">Delete</button>
                   </td>
                 )}
               </tr>
@@ -82,6 +82,8 @@ export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], 
     </div>
   );
 }
+
+
 
 
 

@@ -30,7 +30,7 @@ export function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isRe
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-medium">Classes</h2>
         {!isReadOnly && (
-          <button 
+          <button type="button" 
             onClick={() => { setEditingItem(null); setIsDrawerOpen(true); }}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
           >
@@ -63,8 +63,8 @@ export function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isRe
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cls.level}</td>
                 {!isReadOnly && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => { setEditingItem(cls); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                    <button onClick={() => handleDelete(cls.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                    <button type="button" onClick={() => { setEditingItem(cls); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                    <button type="button" onClick={() => handleDelete(cls.id)} className="text-red-600 hover:text-red-900">Delete</button>
                   </td>
                 )}
               </tr>
@@ -82,6 +82,8 @@ export function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isRe
     </div>
   );
 }
+
+
 
 
 

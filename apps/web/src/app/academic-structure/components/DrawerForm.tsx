@@ -13,7 +13,7 @@ export function DrawerForm({ title, onClose, onSubmit, loading, error, children 
   return (
     <div className="fixed inset-0 overflow-hidden z-50">
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose}></div>
+        <button type="button" aria-label="Close drawer" className="absolute inset-0 w-full h-full bg-gray-500 bg-opacity-75 transition-opacity cursor-default outline-none border-none" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}></button>
         <section className="absolute inset-y-0 right-0 pl-10 max-w-full flex">
           <div className="w-screen max-w-md">
             <form onSubmit={onSubmit} className="h-full divide-y divide-gray-200 flex flex-col bg-white shadow-xl">
@@ -44,3 +44,4 @@ export function DrawerForm({ title, onClose, onSubmit, loading, error, children 
     </div>
   );
 }
+

@@ -32,7 +32,7 @@ export function ClassForm({ onClose, initialData }: { onClose: () => void, initi
     const data = {
       academic_year_id: formData.get('academic_year_id') as string,
       name: formData.get('name') as string,
-      level: parseInt(formData.get('level') as string, 10),
+      level: Number.parseInt(formData.get('level') as string, 10),
     };
 
     try {
@@ -94,6 +94,7 @@ export function ClassForm({ onClose, initialData }: { onClose: () => void, initi
     </DrawerForm>
   );
 }
+
 
 
 
