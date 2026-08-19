@@ -22,7 +22,7 @@ export async function TopBar() {
         )}
       </div>
       <div className="flex items-center gap-4">
-        <div className="text-sm font-medium text-gray-700">{user?.user?.email || 'User'}</div>
+        <div className="text-sm font-medium text-gray-700 hidden sm:block">{user?.user?.email || 'User'}</div>
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
           U
         </div>

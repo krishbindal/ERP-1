@@ -3,15 +3,15 @@ import { test, expect } from '@playwright/test';
 test.describe('Academic Structure Role Tests', () => {
 
   test('Teacher gets Access Denied when trying to create and sees branch identity without switching', async ({ page }) => {
-    if (test.info().project.name !== 'teacher') test.skip();
+    if (test.info().project.metadata?.role !== 'teacher') test.skip();
     
     await page.goto('/academic-structure');
     
     // Verify branch identity and no selector
-    await expect(page.locator('text=Noida')).toBeVisible();
+    await expect(page.locator('text=Test Branch')).toBeVisible();
     await expect(page.locator('select')).not.toBeVisible();
     
-    await expect(page.locator('text=Academic Years')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Academic Years' })).toBeVisible();
     await expect(page.locator('button:has-text("Create Academic Year")')).not.toBeVisible();
     
     await page.goto('/academic-structure?tab=classes');
@@ -19,12 +19,12 @@ test.describe('Academic Structure Role Tests', () => {
   });
 
   test('Branch Admin can create, edit, and delete an Academic Year but cannot switch branch', async ({ page }) => {
-    if (test.info().project.name !== 'branchadmin') test.skip();
+    if (test.info().project.metadata?.role !== 'branchadmin') test.skip();
     
     await page.goto('/academic-structure');
 
     // Verify branch identity and no selector
-    await expect(page.locator('text=Noida')).toBeVisible();
+    await expect(page.locator('text=Test Branch')).toBeVisible();
     await expect(page.locator('select')).not.toBeVisible();
     
     // Create
@@ -55,7 +55,7 @@ test.describe('Academic Structure Role Tests', () => {
   });
   
   test('Branch Admin attempting to access another branch resource is denied', async ({ request }) => {
-    if (test.info().project.name !== 'branchadmin') test.skip();
+    if (test.info().project.metadata?.role !== 'branchadmin') test.skip();
   });
 
 });
