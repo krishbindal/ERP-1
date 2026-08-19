@@ -116,21 +116,18 @@ export function auth_has_org_access(context: AppContext | null, orgId: string): 
   return context.organizationId === orgId;
 }
 
-export function auth_has_branch_membership(context: AppContext | null, branchId: string): boolean {
+export function auth_has_branch_membership(context: AppContext | null, branch: { id: string, organization_id: string }): boolean {
   if (!context) return false;
   if (context.type === 'superadmin') {
-    // Super admin has access to all branches in their allowed orgs, but we usually 
-    // want to verify if the branch belongs to the org first via a DB check.
-    // At the app context level, we just acknowledge they are super admin.
-    return true; 
+    return context.organizationScopes.includes(branch.organization_id);
   }
-  return context.branchId === branchId;
+  return context.branchId === branch.id;
 }
 
-export function auth_has_branch_role(context: AppContext | null, branchId: string, roleName: UserRole): boolean {
+export function auth_has_branch_role(context: AppContext | null, branch: { id: string, organization_id: string }, roleName: UserRole): boolean {
   if (!context) return false;
   if (context.type === 'superadmin') {
-    return true; // Super admins effectively have all roles for branches in their orgs
+    return context.organizationScopes.includes(branch.organization_id);
   }
-  return context.branchId === branchId && context.roles.includes(roleName);
+  return context.branchId === branch.id && context.roles.includes(roleName);
 }
