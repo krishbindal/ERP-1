@@ -42,7 +42,7 @@ export async function createAcademicYear(data: { name: string; start_date: strin
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('academic_years').insert({ ...data, branch_id });
@@ -56,7 +56,7 @@ export async function updateAcademicYear(id: string, data: { name: string; start
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('academic_years').update(data).eq('id', id);
@@ -70,7 +70,7 @@ export async function deleteAcademicYear(id: string, explicitBranchId?: string) 
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('academic_years').delete().eq('id', id);
@@ -85,7 +85,7 @@ export async function createClass(data: { academic_year_id: string; name: string
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('classes').insert({ ...data, branch_id });
@@ -99,7 +99,7 @@ export async function updateClass(id: string, data: { name: string; level: numbe
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('classes').update(data).eq('id', id);
@@ -113,7 +113,7 @@ export async function deleteClass(id: string, explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('classes').delete().eq('id', id);
@@ -128,7 +128,7 @@ export async function createSection(data: { class_id: string; name: string; capa
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('sections').insert({ ...data, branch_id });
@@ -142,7 +142,7 @@ export async function updateSection(id: string, data: { name: string; capacity: 
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('sections').update(data).eq('id', id);
@@ -156,7 +156,7 @@ export async function deleteSection(id: string, explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { error } = await supabase.from('sections').delete().eq('id', id);
@@ -170,7 +170,7 @@ export async function getAcademicYears(explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { data, error } = await supabase.from('academic_years').select('id, name').eq('branch_id', branch_id);
@@ -183,10 +183,11 @@ export async function getClasses(explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   const { data, error } = await supabase.from('classes').select('id, name').eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   return { data };
 }
+

@@ -50,7 +50,7 @@ export async function getBranchAppConfig(explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
   
@@ -74,7 +74,7 @@ export async function updateBranchAppConfig(payload: AppConfigPayload, explicitB
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { error: e.message };
   }
 
@@ -99,3 +99,4 @@ export async function updateBranchAppConfig(payload: AppConfigPayload, explicitB
   revalidatePath('/admin/app-config');
   return { success: true };
 }
+

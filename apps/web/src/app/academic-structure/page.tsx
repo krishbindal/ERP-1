@@ -17,7 +17,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
     return <div className="text-gray-500">No context available.</div>;
   }
 
-  let branchId = context.type === 'normal' ? context.branchId : explicitBranchId;
+  const branchId = context.type === 'normal' ? context.branchId : explicitBranchId;
 
   if (!branchId) {
     if (context.type === 'superadmin') {
@@ -49,7 +49,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">You do not have permission to view this branch's academic structure.</p>
+          <p className="mt-2 text-gray-600">You do not have permission to view this branch&apos;s academic structure.</p>
         </div>
       </div>
     );
@@ -91,3 +91,4 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
     </div>
   );
 }
+

@@ -14,7 +14,7 @@ export default async function AppConfigPage(props: { searchParams: Promise<{ bra
     return <div className="text-gray-500">No context available.</div>;
   }
 
-  let branchId = context.type === 'normal' ? context.branchId : explicitBranchId;
+  const branchId = context.type === 'normal' ? context.branchId : explicitBranchId;
 
   if (!branchId) {
     if (context.type === 'superadmin') {
