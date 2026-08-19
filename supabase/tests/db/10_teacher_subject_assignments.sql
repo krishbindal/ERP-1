@@ -133,9 +133,25 @@ WITH
     ('00000000-0000-0000-0000-000000006001'::uuid, '00000000-0000-0000-0000-000000005001'::uuid, '00000000-0000-0000-0000-000000000011'::uuid),
     ('00000000-0000-0000-0000-000000006002'::uuid, '00000000-0000-0000-0000-000000005002'::uuid, '00000000-0000-0000-0000-000000000011'::uuid),
     ('00000000-0000-0000-0000-000000006003'::uuid, '00000000-0000-0000-0000-000000005003'::uuid, '00000000-0000-0000-0000-000000000012'::uuid)
+  ),
+  ins_staff_profs AS (
+    INSERT INTO public.staff_branch_profiles (id, staff_id, branch_id)
+    SELECT * FROM staff_profs
+    RETURNING id
+  ),
+  roles_data (id, organization_id, name) AS (VALUES
+    ('00000000-0000-0000-0000-000000000008'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, 'Branch Admin')
+  ),
+  ins_roles AS (
+    INSERT INTO public.roles (id, organization_id, name)
+    SELECT * FROM roles_data
+    RETURNING id
+  ),
+  ura_data (branch_membership_id, role_id) AS (VALUES
+    ('00000000-0000-0000-0000-000000000003'::uuid, '00000000-0000-0000-0000-000000000008'::uuid)
   )
-  INSERT INTO public.staff_branch_profiles (id, staff_id, branch_id)
-  SELECT * FROM staff_profs;
+  INSERT INTO public.user_role_assignments (branch_membership_id, role_id)
+  SELECT * FROM ura_data;
 
 -- Set super admin claim
 UPDATE auth.users SET raw_app_meta_data = '{"is_super_admin": true}' WHERE id = '00000000-0000-0000-0000-000000000007';
