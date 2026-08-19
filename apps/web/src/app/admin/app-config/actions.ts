@@ -37,6 +37,9 @@ async function getContextBranchId(explicitBranchId?: string) {
   }
   
   if (context.type === 'normal') {
+    if (!context.roles.includes('branchadmin')) {
+      throw new Error("Unauthorized. Only Branch Admins can modify app configuration.");
+    }
     if (explicitBranchId && explicitBranchId !== context.branchId) {
       throw new Error("Normal users cannot target arbitrary branches.");
     }
@@ -51,7 +54,7 @@ export async function getBranchAppConfig(explicitBranchId?: string) {
   try {
     branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: e instanceof Error ? e.message : 'Unknown error' };
   }
   
   const { data, error } = await supabase
@@ -75,7 +78,7 @@ export async function updateBranchAppConfig(payload: AppConfigPayload, explicitB
   try {
     branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: e instanceof Error ? e.message : 'Unknown error' };
   }
 
   // Validate package/bundle IDs on the server

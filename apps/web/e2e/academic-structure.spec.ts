@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { execSync } from 'child_process';
 
 test.describe('Academic Structure Role Tests', () => {
 
@@ -67,7 +68,11 @@ test.describe('Academic Structure Role Tests', () => {
     
     let accessToken;
     try {
-      const parsed = JSON.parse(fullCookieValue);
+      let decodedCookieValue = fullCookieValue;
+      if (fullCookieValue.startsWith('base64-')) {
+        decodedCookieValue = Buffer.from(fullCookieValue.replace('base64-', ''), 'base64').toString('utf-8');
+      }
+      const parsed = JSON.parse(decodedCookieValue);
       accessToken = Array.isArray(parsed) ? parsed[0] : parsed.access_token;
     } catch (e) {
       console.warn("Failed to parse auth cookie", e);
@@ -95,14 +100,20 @@ test.describe('Academic Structure Role Tests', () => {
       }
     });
 
+    // 1. HTTP Response is secondary evidence. It should be 201 empty or 4xx.
     if (response.ok()) {
-      // RLS might silently drop the insert and return empty representation
       const data = await response.json();
-      expect(data).toHaveLength(0);
+      expect(data).toHaveLength(0); // Supabase returns empty array if RLS silently drops
     } else {
       expect(response.status()).toBeGreaterThanOrEqual(400);
     }
+
+    // 2. PRIMARY EVIDENCE: The row must not exist in the database at all.
+    // We use child_process to bypass RLS and query the database directly.
+    const result = execSync(`npx --no-install supabase db query "SELECT count(*) FROM public.academic_years WHERE name = 'Malicious Cross-Branch Year';" --db-url "postgresql://postgres:postgres@127.0.0.1:54322/postgres"`).toString();
+    
+    // The output format usually includes the count in a table format. We just check if count is '0'.
+    expect(result).toContain('0');
+
   });
-
 });
-

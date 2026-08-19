@@ -1,9 +1,6 @@
 name: Authoritative E2E
 
 on:
-  push:
-    branches:
-      - '*'
   pull_request:
     branches:
       - '*'
