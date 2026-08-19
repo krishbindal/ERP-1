@@ -76,8 +76,16 @@ export async function getAppContext(): Promise<AppContext | null> {
   
   // Extract roles explicitly, defaulting to 'unknown' if none
   const roles = assignments
-    .map((a) => ((a.roles as unknown) as { name: string })?.name as UserRole)
-    .filter(Boolean);
+    .map((a) => {
+      const rawName = ((a.roles as unknown) as { name: string })?.name;
+      if (!rawName) return null;
+      const normalized = rawName.toLowerCase().replace(/\s/g, '');
+      if (['superadmin', 'branchadmin', 'teacher', 'parent', 'student'].includes(normalized)) {
+        return normalized as UserRole;
+      }
+      return 'unknown' as UserRole;
+    })
+    .filter(Boolean) as UserRole[];
 
   if (roles.length === 0) {
     roles.push('unknown');

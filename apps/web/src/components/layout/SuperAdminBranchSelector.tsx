@@ -27,6 +27,7 @@ export function SuperAdminBranchSelector({ organizationId }: { organizationId: s
 
   return (
     <select
+      aria-label="Branch"
       value={currentBranchId}
       onChange={(e) => {
         const url = new URL(window.location.href);

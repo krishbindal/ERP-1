@@ -40,6 +40,8 @@ INSERT INTO public.organizations (id, name) VALUES ('eeeeeeee-eeee-eeee-eeee-eee
 
 -- Branches
 INSERT INTO public.branches (id, organization_id, name) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', 'Test Branch') ON CONFLICT DO NOTHING;
+INSERT INTO public.branches (id, organization_id, name) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', 'Second Test Branch') ON CONFLICT DO NOTHING;
+
 
 -- Profiles
 INSERT INTO public.profiles (id, first_name, last_name)

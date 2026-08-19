@@ -41,7 +41,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       return <div className="text-red-500">You are not authorized to view this branch.</div>;
     }
     isAuthorized = true; // all normal users can VIEW their branch academic structure
-    isReadOnly = context.roles.includes('teacher') || context.roles.includes('student') || context.roles.includes('parent');
+    isReadOnly = !context.roles.includes('branchadmin');
   }
 
   if (!isAuthorized) {
