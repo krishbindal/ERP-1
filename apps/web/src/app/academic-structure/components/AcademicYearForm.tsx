@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { createAcademicYear, updateAcademicYear } from '../actions';
 
-export function AcademicYearForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: unknown }) {
+export function AcademicYearForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: any }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 

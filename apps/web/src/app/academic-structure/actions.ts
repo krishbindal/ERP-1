@@ -2,13 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { mapDbError } from '@/lib/db-error-mapper';
+import { mapDatabaseError } from '@/lib/db-error-mapper';
 
 // Academic Years
 export async function createAcademicYear(data: { branch_id: string; name: string; start_date: string; end_date: string; status: string }) {
   const supabase = await createClient();
   const { error } = await supabase.from('academic_years').insert(data);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -16,7 +16,7 @@ export async function createAcademicYear(data: { branch_id: string; name: string
 export async function updateAcademicYear(id: string, data: { name: string; start_date: string; end_date: string; status: string }) {
   const supabase = await createClient();
   const { error } = await supabase.from('academic_years').update(data).eq('id', id);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -24,7 +24,7 @@ export async function updateAcademicYear(id: string, data: { name: string; start
 export async function deleteAcademicYear(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from('academic_years').delete().eq('id', id);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -33,7 +33,7 @@ export async function deleteAcademicYear(id: string) {
 export async function createClass(data: { branch_id: string; academic_year_id: string; name: string; level: number }) {
   const supabase = await createClient();
   const { error } = await supabase.from('classes').insert(data);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -41,7 +41,7 @@ export async function createClass(data: { branch_id: string; academic_year_id: s
 export async function updateClass(id: string, data: { name: string; level: number }) {
   const supabase = await createClient();
   const { error } = await supabase.from('classes').update(data).eq('id', id);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -49,7 +49,7 @@ export async function updateClass(id: string, data: { name: string; level: numbe
 export async function deleteClass(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from('classes').delete().eq('id', id);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -58,7 +58,7 @@ export async function deleteClass(id: string) {
 export async function createSection(data: { branch_id: string; class_id: string; name: string; capacity: number }) {
   const supabase = await createClient();
   const { error } = await supabase.from('sections').insert(data);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -66,7 +66,7 @@ export async function createSection(data: { branch_id: string; class_id: string;
 export async function updateSection(id: string, data: { name: string; capacity: number }) {
   const supabase = await createClient();
   const { error } = await supabase.from('sections').update(data).eq('id', id);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }
@@ -74,7 +74,7 @@ export async function updateSection(id: string, data: { name: string; capacity: 
 export async function deleteSection(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from('sections').delete().eq('id', id);
-  if (error) return { error: mapDbError(error) };
+  if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
 }

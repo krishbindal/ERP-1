@@ -12,9 +12,9 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 
 async function main() {
   const users = [
-    { email: 'superadmin@test.com', password: 'password123', meta: { is_super_admin: true } },
-    { email: 'admin.a@test.com', password: 'password123', meta: {} },
-    { email: 'teacher.a1@test.com', password: 'password123', meta: {} },
+    { email: 'superadmin.e2e@test.com', password: 'password123', meta: { is_super_admin: true } },
+    { email: 'admin.a.e2e@test.com', password: 'password123', meta: {} },
+    { email: 'teacher.a1.e2e@test.com', password: 'password123', meta: {} },
   ];
 
   for (const u of users) {

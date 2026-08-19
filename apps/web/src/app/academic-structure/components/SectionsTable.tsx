@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { SectionForm } from './SectionForm';
 import { deleteSection } from '../actions';
 
-export function SectionsTable({ data, isReadOnly, branchId }: { data: unknown[], isReadOnly: boolean, branchId: string }) {
+export function SectionsTable({ data, isReadOnly, branchId }: { data: any[], isReadOnly: boolean, branchId: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<unknown | null>(null);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this section?')) {

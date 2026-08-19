@@ -11,11 +11,11 @@ export function mapDatabaseError(error: unknown): string {
     return 'A record with this name already exists.';
   }
   if (code === 'P0001') {
-    return message;
+    return message as string;
   }
   if (code === '42501') {
     return 'Access Denied: You do not have permission to perform this action.';
   }
 
-  return message || 'An unknown database error occurred.';
+  return (message as string) || 'An unknown database error occurred.';
 }

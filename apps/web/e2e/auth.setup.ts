@@ -1,10 +1,10 @@
-import { test as setup, expect } from '@playwright/test';
+import { test as setup } from '@playwright/test';
 import * as path from 'path';
 
 const roles = [
-  { name: 'superadmin', email: 'superadmin@test.com' },
-  { name: 'branchadmin', email: 'admin.a@test.com' },
-  { name: 'teacher', email: 'teacher.a1@test.com' },
+  { name: 'superadmin', email: 'superadmin.e2e@test.com' },
+  { name: 'branchadmin', email: 'admin.a.e2e@test.com' },
+  { name: 'teacher', email: 'teacher.a1.e2e@test.com' },
 ];
 
 for (const role of roles) {

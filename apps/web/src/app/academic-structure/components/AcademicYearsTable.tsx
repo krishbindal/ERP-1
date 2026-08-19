@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { AcademicYearForm } from './AcademicYearForm';
 import { deleteAcademicYear } from '../actions';
 
-export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: unknown[], isReadOnly: boolean, branchId: string }) {
+export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: any[], isReadOnly: boolean, branchId: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<unknown>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this academic year?')) {

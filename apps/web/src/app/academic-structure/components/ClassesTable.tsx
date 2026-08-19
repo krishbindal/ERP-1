@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { ClassForm } from './ClassForm';
 import { deleteClass } from '../actions';
 
-export default function ClassesTable({ data, isReadOnly, branchId }: { data: unknown[], isReadOnly: boolean, branchId: string }) {
+export default function ClassesTable({ data, isReadOnly, branchId }: { data: any[], isReadOnly: boolean, branchId: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<unknown | null>(null);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this class?')) {
@@ -47,11 +47,11 @@ export default function ClassesTable({ data, isReadOnly, branchId }: { data: unk
                 </td>
               </tr>
             )}
-            {data.map((cls: unknown) => (
-              <tr key={(cls as Record<string, unknown>).id as string}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{(cls as Record<string, unknown>).name as string}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(cls as Record<string, unknown>).level as string}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{((cls as Record<string, unknown>).academic_years as Record<string, unknown>)?.name as string}</td>
+            {data.map((cls: any) => (
+              <tr key={(cls as Record<string, any>).id as string}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{(cls as Record<string, any>).name as string}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{(cls as Record<string, any>).level as string}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{((cls as Record<string, any>).academic_years as Record<string, any>)?.name as string}</td>
                 {!isReadOnly && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button onClick={() => { setEditingItem(cls); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
