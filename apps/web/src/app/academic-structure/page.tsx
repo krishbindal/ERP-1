@@ -25,7 +25,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       .eq('branch_id', branchId)
       .single();
 
-    const roleName = (membership as any)?.user_role_assignments?.[0]?.roles?.name;
+    const roleName = (membership as Record<string, unknown>)?.user_role_assignments?.[0]?.roles?.name;
     isReadOnly = roleName === 'Teacher';
   }
 

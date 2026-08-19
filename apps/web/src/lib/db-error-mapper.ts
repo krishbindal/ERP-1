@@ -1,8 +1,8 @@
-export function mapDbError(error: any): string {
+export function mapDatabaseError(error: unknown): string {
   if (!error) return 'An unknown error occurred.';
 
-  const code = error.code || '';
-  const message = error.message || '';
+  const code = (error as Record<string, unknown>).code || '';
+  const message = (error as Record<string, unknown>).message || '';
 
   if (code === '23503') {
     return 'Operation failed because this record is referenced by other data.';

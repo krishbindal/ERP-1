@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { AcademicYearForm } from './AcademicYearForm';
 import { deleteAcademicYear } from '../actions';
 
-export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: any[], isReadOnly: boolean, branchId: string }) {
+export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: unknown[], isReadOnly: boolean, branchId: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<unknown>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this academic year?')) {
@@ -48,7 +48,7 @@ export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: any[]
                 </td>
               </tr>
             )}
-            {data.map(year => (
+          {data.map((year: { id: string; name: string; start_date: string; end_date: string; status: string }) => (
               <tr key={year.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{year.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{year.start_date}</td>

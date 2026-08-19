@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createSection, updateSection, getClasses } from '../actions';
 
-export function SectionForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: any }) {
+export function SectionForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: unknown }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<{id: string, name: string}[]>([]);

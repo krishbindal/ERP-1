@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { createClass, updateClass, getAcademicYears } from '../actions';
 
-export function ClassForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: any }) {
+export function ClassForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: { id: string, name: string, level: number } }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [academicYears, setAcademicYears] = useState<{id: string, name: string}[]>([]);
