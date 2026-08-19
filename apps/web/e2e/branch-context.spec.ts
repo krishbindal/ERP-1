@@ -5,7 +5,8 @@ import {
   auth_is_super_admin,
   auth_has_org_access,
   NormalUserContext,
-  SuperAdminContext
+  SuperAdminContext,
+  UserRole
 } from '../src/lib/branch-context';
 
 test.describe('branch-context authorization helpers', () => {
@@ -58,7 +59,7 @@ test.describe('branch-context authorization helpers', () => {
       expect(auth_has_branch_role(superAdminContext, { id: 'branch-1', organization_id: 'org-1' }, 'teacher')).toBe(false);
 
       // Verify that if a real role assignment were added, it works
-      const saWithExplicitRole = { ...superAdminContext, roles: ['superadmin', 'branchadmin'] as unknown as ['superadmin'] };
+      const saWithExplicitRole = { ...superAdminContext, roles: ['superadmin', 'branchadmin'] as UserRole[] };
       expect(auth_has_branch_role(saWithExplicitRole, { id: 'branch-1', organization_id: 'org-1' }, 'branchadmin')).toBe(true);
     });
   });

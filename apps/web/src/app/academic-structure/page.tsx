@@ -62,15 +62,15 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   if (tab === 'years') {
     const { data, error } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
     if (error) throw new Error(error.message);
-    years = (data as unknown as AcademicYear[]) || [];
+    years = (data as AcademicYear[]) || [];
   } else if (tab === 'classes') {
     const { data, error } = await supabase.from('classes').select('*, academic_years(name)').eq('branch_id', branchId).order('level', { ascending: true });
     if (error) throw new Error(error.message);
-    classes = (data as unknown as ClassWithYear[]) || [];
+    classes = (data as ClassWithYear[]) || [];
   } else if (tab === 'sections') {
     const { data, error } = await supabase.from('sections').select('*, classes(name, academic_years(name))').eq('branch_id', branchId).order('name', { ascending: true });
     if (error) throw new Error(error.message);
-    sections = (data as unknown as SectionWithClass[]) || [];
+    sections = (data as SectionWithClass[]) || [];
   }
 
   return (

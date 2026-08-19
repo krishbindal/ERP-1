@@ -15,7 +15,7 @@ export interface SuperAdminContext {
   type: 'superadmin';
   userId: string;
   organizationScopes: string[];
-  roles: ['superadmin'];
+  roles: UserRole[];
 }
 
 export type AppContext = NormalUserContext | SuperAdminContext;
@@ -71,15 +71,23 @@ export async function getAppContext(): Promise<AppContext | null> {
   }
 
   const [membership] = memberships;
-  const branchData = membership.branches as unknown as { name: string, organization_id: string };
-  const assignments = (membership.user_role_assignments as unknown) as { roles: { name: string } | { name: string }[] | null }[] || [];
+  const branchDataRaw = membership.branches;
+  const branchData = Array.isArray(branchDataRaw) ? branchDataRaw[0] : branchDataRaw;
+  if (!branchData) {
+    throw new Error("Missing branch data");
+  }
+
+  const assignmentsRaw = membership.user_role_assignments || [];
+  const assignments = Array.isArray(assignmentsRaw) ? assignmentsRaw : [assignmentsRaw];
   
   // Extract roles explicitly, defaulting to 'unknown' if none
   const roles = assignments
-    .map((a) => {
-      const rawName = ((a.roles as unknown) as { name: string })?.name;
+    .map((a: { roles?: unknown }) => {
+      const rolesRaw = a.roles as { name: string } | { name: string }[] | null;
+      if (!rolesRaw) return null;
+      const rawName = Array.isArray(rolesRaw) ? rolesRaw[0]?.name : rolesRaw.name;
       if (!rawName) return null;
-      const normalized = rawName.toLowerCase().replace(/\s/g, '');
+      const normalized = String(rawName).toLowerCase().replace(/\s/g, '');
       if (['superadmin', 'branchadmin', 'teacher', 'parent', 'student'].includes(normalized)) {
         return normalized as UserRole;
       }

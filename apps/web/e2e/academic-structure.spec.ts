@@ -54,8 +54,54 @@ test.describe('Academic Structure Role Tests', () => {
     await expect(page.locator(`text=${uniqueYear}`)).not.toBeVisible();
   });
   
-  test('Branch Admin attempting to access another branch resource is denied', async () => {
+  test('Branch Admin attempting to access another branch resource is denied', async ({ page, request }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip();
+
+    await page.goto('/academic-structure');
+
+    // Get auth token from cookies
+    const cookies = await page.context().cookies();
+    const tokenCookies = cookies.filter(c => c.name.includes('-auth-token'));
+    tokenCookies.sort((a, b) => a.name.localeCompare(b.name));
+    const fullCookieValue = tokenCookies.map(c => decodeURIComponent(c.value)).join('');
+    
+    let accessToken;
+    try {
+      const parsed = JSON.parse(fullCookieValue);
+      accessToken = Array.isArray(parsed) ? parsed[0] : parsed.access_token;
+    } catch (e) {
+      console.warn("Failed to parse auth cookie", e);
+    }
+
+    expect(accessToken).toBeTruthy();
+
+    // Use default local supabase URL if env not set in test
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''; // Usually provided by Playwright env
+
+    // Attempt to insert into Second Test Branch (eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03)
+    const response = await request.post(`${supabaseUrl}/rest/v1/academic_years`, {
+      headers: {
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      data: {
+        branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03', // Unowned branch
+        name: 'Malicious Cross-Branch Year',
+        start_date: '2026-01-01',
+        end_date: '2026-12-31'
+      }
+    });
+
+    if (response.ok()) {
+      // RLS might silently drop the insert and return empty representation
+      const data = await response.json();
+      expect(data).toHaveLength(0);
+    } else {
+      expect(response.status()).toBeGreaterThanOrEqual(400);
+    }
   });
 
 });

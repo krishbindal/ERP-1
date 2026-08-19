@@ -118,11 +118,3 @@ jobs:
         if: always()
         run: git clean -ffdx && git reset --hard HEAD
 
-  publish:
-    name: Publish Reports
-    needs: e2e
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Echo Publish
-        run: echo "Publishing E2E Results"
