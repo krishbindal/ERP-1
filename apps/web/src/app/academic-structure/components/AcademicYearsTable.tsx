@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import { AcademicYearForm } from './AcademicYearForm';
 import { deleteAcademicYear } from '../actions';
+import { AcademicYear } from './types';
 
-export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: any[], isReadOnly: boolean, branchId: string }) {
+export function AcademicYearsTable({ data, isReadOnly }: { data: AcademicYear[], isReadOnly: boolean }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<AcademicYear | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this academic year?')) {
@@ -48,13 +49,13 @@ export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: any[]
                 </td>
               </tr>
             )}
-          {data.map((year: { id: string; name: string; start_date: string; end_date: string; status: string }) => (
+            {data.map((year) => (
               <tr key={year.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{year.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{year.start_date}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{year.end_date}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${year.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${year.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                     {year.status}
                   </span>
                 </td>
@@ -73,7 +74,6 @@ export function AcademicYearsTable({ data, isReadOnly, branchId }: { data: any[]
       {isDrawerOpen && (
         <AcademicYearForm 
           onClose={() => setIsDrawerOpen(false)} 
-          branchId={branchId}
           initialData={editingItem}
         />
       )}

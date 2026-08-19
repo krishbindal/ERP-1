@@ -2,18 +2,17 @@ import { AcademicYearsTable } from './components/AcademicYearsTable';
 import ClassesTable from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
-import { cookies } from 'next/headers';
+import { getCurrentAppBranch } from '@/lib/branch-context';
+import { AcademicYear, ClassWithYear, SectionWithClass } from './components/types';
 
 export default async function AcademicStructurePage(props: { searchParams: Promise<{ tab?: string }> }) {
   const searchParams = await props.searchParams;
   const tab = searchParams.tab || 'years';
   
   const supabase = await createClient();
-  const cookieStore = await cookies();
-  const branchId = cookieStore.get('active_branch_id')?.value;
+  const currentBranch = await getCurrentAppBranch();
+  const branchId = currentBranch?.id;
 
-  // We need to determine if user can mutate.
-  // One way is checking the user's role in staff_profiles.
   const { data: user } = await supabase.auth.getUser();
   
   let isReadOnly = false;
@@ -25,24 +24,25 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       .eq('branch_id', branchId)
       .single();
 
-    const roleName = ((membership as any)?.user_role_assignments as any)?.[0]?.roles?.name;
+    const assignments = (membership as unknown as { user_role_assignments: { roles: { name: string } }[] })?.user_role_assignments;
+    const roleName = assignments?.[0]?.roles?.name;
     isReadOnly = roleName === 'Teacher';
   }
 
-  let years = [];
-  let classes = [];
-  let sections = [];
+  let years: AcademicYear[] = [];
+  let classes: ClassWithYear[] = [];
+  let sections: SectionWithClass[] = [];
 
   if (branchId) {
     if (tab === 'years') {
       const { data } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
-      years = data || [];
+      years = (data as unknown as AcademicYear[]) || [];
     } else if (tab === 'classes') {
       const { data } = await supabase.from('classes').select('*, academic_years(name)').eq('branch_id', branchId).order('level', { ascending: true });
-      classes = data || [];
+      classes = (data as unknown as ClassWithYear[]) || [];
     } else if (tab === 'sections') {
-      const { data } = await supabase.from('sections').select('*, classes(name)').eq('branch_id', branchId).order('name', { ascending: true });
-      sections = data || [];
+      const { data } = await supabase.from('sections').select('*, classes(name, academic_years(name))').order('name', { ascending: true });
+      sections = (data as unknown as SectionWithClass[]) || [];
     }
   }
 
@@ -58,12 +58,12 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       </div>
       <div>
         {!branchId ? (
-          <div className="text-gray-500">Please select a branch to view academic structure.</div>
+          <div className="text-gray-500">No branch context. Ensure you are accessing a valid branch application.</div>
         ) : (
           <>
-            {tab === 'years' && <AcademicYearsTable data={years} isReadOnly={isReadOnly} branchId={branchId} />}
-            {tab === 'classes' && <ClassesTable data={classes} isReadOnly={isReadOnly} branchId={branchId} />}
-            {tab === 'sections' && <SectionsTable data={sections} isReadOnly={isReadOnly} branchId={branchId} />}
+            {tab === 'years' && <AcademicYearsTable data={years} isReadOnly={isReadOnly} />}
+            {tab === 'classes' && <ClassesTable data={classes} isReadOnly={isReadOnly} />}
+            {tab === 'sections' && <SectionsTable data={sections} isReadOnly={isReadOnly} />}
           </>
         )}
       </div>

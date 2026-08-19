@@ -2,10 +2,11 @@
 import { useState } from 'react';
 import { SectionForm } from './SectionForm';
 import { deleteSection } from '../actions';
+import { SectionWithClass } from './types';
 
-export function SectionsTable({ data, isReadOnly, branchId }: { data: any[], isReadOnly: boolean, branchId: string }) {
+export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], isReadOnly: boolean }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any | null>(null);
+  const [editingItem, setEditingItem] = useState<SectionWithClass | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this section?')) {
@@ -34,8 +35,8 @@ export function SectionsTable({ data, isReadOnly, branchId }: { data: any[], isR
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacity</th>
               {!isReadOnly && <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>}
             </tr>
           </thead>
@@ -47,11 +48,11 @@ export function SectionsTable({ data, isReadOnly, branchId }: { data: any[], isR
                 </td>
               </tr>
             )}
-            {data.map(section => (
+            {data.map((section) => (
               <tr key={section.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{section.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{section.classes?.name} ({section.classes?.academic_years?.name})</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{section.capacity}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{section.classes?.name}</td>
                 {!isReadOnly && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button onClick={() => { setEditingItem(section); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
@@ -67,7 +68,6 @@ export function SectionsTable({ data, isReadOnly, branchId }: { data: any[], isR
       {isDrawerOpen && (
         <SectionForm 
           onClose={() => setIsDrawerOpen(false)} 
-          branchId={branchId}
           initialData={editingItem}
         />
       )}

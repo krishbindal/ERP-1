@@ -1,25 +1,24 @@
 import { createClient } from '@/lib/supabase/server';
-import BranchSelector from '../BranchSelector';
-import { cookies } from 'next/headers';
+import { getCurrentAppBranch } from '@/lib/branch-context';
 
 export async function TopBar() {
   const supabase = await createClient();
   const { data: user } = await supabase.auth.getUser();
-  const { data: branches } = await supabase.from('branches').select('id, name');
-  
-  const cookieStore = await cookies();
-  const currentBranchId = cookieStore.get('active_branch_id')?.value || '';
-
-  // Auto-set the active branch if not set, but since we can't mutate cookies easily in render, 
-  // the client component can handle it.
+  const currentBranch = await getCurrentAppBranch();
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
-        {branches && branches.length > 0 ? (
-          <BranchSelector branches={branches} currentBranchId={currentBranchId} />
+        {currentBranch ? (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded-md border border-gray-200">
+              {currentBranch.name}
+            </span>
+          </div>
         ) : (
-          <span className="text-gray-500">No Branches</span>
+          <span className="text-sm font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">
+            No Branch Assigned
+          </span>
         )}
       </div>
       <div className="flex items-center gap-4">

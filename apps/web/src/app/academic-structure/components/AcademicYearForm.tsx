@@ -1,8 +1,9 @@
 "use client";
 import { useState } from 'react';
 import { createAcademicYear, updateAcademicYear } from '../actions';
+import { AcademicYear } from './types';
 
-export function AcademicYearForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: any }) {
+export function AcademicYearForm({ onClose, initialData }: { onClose: () => void, initialData?: AcademicYear | null }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -13,7 +14,6 @@ export function AcademicYearForm({ onClose, branchId, initialData }: { onClose: 
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      branch_id: branchId,
       name: formData.get('name') as string,
       start_date: formData.get('start_date') as string,
       end_date: formData.get('end_date') as string,

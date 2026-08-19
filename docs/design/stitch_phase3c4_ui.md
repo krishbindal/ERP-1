@@ -50,3 +50,10 @@ A centralized page (`/academic-structure`) for managing Years, Classes, and Sect
 *   **Desktop (lg):** Persistent sidebar, full data tables.
 *   **Tablet (md):** Collapsible sidebar, scrollable data tables.
 *   **Mobile (sm):** Bottom navigation or hamburger menu, stacked cards instead of data tables for entities. Slide-out forms become full-screen modals.
+
+
+## Branch-App Architecture Updates
+- One branch per app instance.
+- No branch selector for normal users.
+- Branch identity is read-only.
+- Organization administration is a separate context.

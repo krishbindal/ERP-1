@@ -1,15 +1,16 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { createSection, updateSection, getClasses } from '../actions';
+import { SectionWithClass } from './types';
 
-export function SectionForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: any }) {
+export function SectionForm({ onClose, initialData }: { onClose: () => void, initialData?: SectionWithClass | null }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
-    getClasses(branchId).then(res => setClasses(res.data || []));
-  }, [branchId]);
+    getClasses().then(res => setClasses(res.data || []));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,7 +19,6 @@ export function SectionForm({ onClose, branchId, initialData }: { onClose: () =>
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      branch_id: branchId,
       class_id: formData.get('class_id') as string,
       name: formData.get('name') as string,
       capacity: parseInt(formData.get('capacity') as string, 10),
@@ -67,7 +67,7 @@ export function SectionForm({ onClose, branchId, initialData }: { onClose: () =>
                       <div>
                         <label htmlFor="capacity" className="block text-sm font-medium text-gray-900">Capacity</label>
                         <div className="mt-1">
-                          <input required defaultValue={initialData?.capacity || 40} type="number" name="capacity" id="capacity" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
+                          <input required defaultValue={initialData?.capacity} type="number" name="capacity" id="capacity" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
                         </div>
                       </div>
                       {!initialData && (

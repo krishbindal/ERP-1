@@ -1,15 +1,16 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { createClass, updateClass, getAcademicYears } from '../actions';
+import { ClassWithYear } from './types';
 
-export function ClassForm({ onClose, branchId, initialData }: { onClose: () => void, branchId: string, initialData?: { id: string, name: string, level: number } }) {
+export function ClassForm({ onClose, initialData }: { onClose: () => void, initialData?: ClassWithYear | null }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [academicYears, setAcademicYears] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
-    getAcademicYears(branchId).then(res => setAcademicYears(res.data || []));
-  }, [branchId]);
+    getAcademicYears().then(res => setAcademicYears(res.data || []));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,7 +19,6 @@ export function ClassForm({ onClose, branchId, initialData }: { onClose: () => v
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      branch_id: branchId,
       academic_year_id: formData.get('academic_year_id') as string,
       name: formData.get('name') as string,
       level: parseInt(formData.get('level') as string, 10),

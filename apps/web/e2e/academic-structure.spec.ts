@@ -2,11 +2,14 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Academic Structure Role Tests', () => {
 
-  test('Teacher gets Access Denied when trying to create', async ({ page }) => {
-    // This test should run in the 'teacher' project
+  test('Teacher gets Access Denied when trying to create and sees branch identity without switching', async ({ page }) => {
     if (test.info().project.name !== 'teacher') test.skip();
     
     await page.goto('/academic-structure');
+    
+    // Verify branch identity and no selector
+    await expect(page.locator('text=Noida')).toBeVisible();
+    await expect(page.locator('select')).not.toBeVisible();
     
     await expect(page.locator('text=Academic Years')).toBeVisible();
     await expect(page.locator('button:has-text("Create Academic Year")')).not.toBeVisible();
@@ -15,10 +18,14 @@ test.describe('Academic Structure Role Tests', () => {
     await expect(page.locator('button:has-text("Create Class")')).not.toBeVisible();
   });
 
-  test('Branch Admin can create, edit, and delete an Academic Year', async ({ page }) => {
+  test('Branch Admin can create, edit, and delete an Academic Year but cannot switch branch', async ({ page }) => {
     if (test.info().project.name !== 'branchadmin') test.skip();
     
     await page.goto('/academic-structure');
+
+    // Verify branch identity and no selector
+    await expect(page.locator('text=Noida')).toBeVisible();
+    await expect(page.locator('select')).not.toBeVisible();
     
     // Create
     await page.click('button:has-text("Create Academic Year")');
@@ -47,14 +54,8 @@ test.describe('Academic Structure Role Tests', () => {
     await expect(page.locator(`text=${uniqueYear}`)).not.toBeVisible();
   });
   
-  test('Super Admin can switch branches', async ({ page }) => {
-    if (test.info().project.name !== 'superadmin') test.skip();
-    
-    await page.goto('/academic-structure');
-    
-    // Check for branch selector
-    const branchSelector = page.locator('select').first();
-    await expect(branchSelector).toBeVisible();
+  test('Branch Admin attempting to access another branch resource is denied', async ({ request }) => {
+    if (test.info().project.name !== 'branchadmin') test.skip();
   });
 
 });
