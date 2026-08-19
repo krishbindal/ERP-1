@@ -18,6 +18,27 @@ export async function getCurrentAppBranch(): Promise<{ id: string, name: string 
   }
 
   if (!memberships || memberships.length === 0) {
+    // Check if user is Super Admin
+    if (user.user.app_metadata?.is_super_admin === true) {
+      const { data: orgMembership } = await supabase
+        .from('organization_memberships')
+        .select('organization_id')
+        .eq('user_id', user.user.id)
+        .maybeSingle();
+
+      if (orgMembership) {
+        const { data: branch } = await supabase
+          .from('branches')
+          .select('id, name')
+          .eq('organization_id', orgMembership.organization_id)
+          .limit(1)
+          .maybeSingle();
+        
+        if (branch) {
+          return { id: branch.id, name: branch.name };
+        }
+      }
+    }
     return null;
   }
   
