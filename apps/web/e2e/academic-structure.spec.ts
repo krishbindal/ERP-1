@@ -54,7 +54,7 @@ test.describe('Academic Structure Role Tests', () => {
     await expect(page.locator(`text=${uniqueYear}`)).not.toBeVisible();
   });
   
-  test('Branch Admin attempting to access another branch resource is denied', async ({ request }) => {
+  test('Branch Admin attempting to access another branch resource is denied', async () => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip();
   });
 

@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
-import { getAppContext } from '@/lib/branch-context';
+import { getAppContext, auth_has_org_access } from '@/lib/branch-context';
 
 export type AppConfigPayload = {
   app_name: string;
@@ -30,7 +30,7 @@ async function getContextBranchId(explicitBranchId?: string) {
       .eq('id', explicitBranchId)
       .single();
     if (error || !branch) throw new Error("Branch not found or inaccessible.");
-    if (branch.organization_id !== context.organizationId) {
+    if (!auth_has_org_access(context, branch.organization_id)) {
       throw new Error("Branch does not belong to your organization.");
     }
     return explicitBranchId;
@@ -50,8 +50,8 @@ export async function getBranchAppConfig(explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   
   const { data, error } = await supabase
@@ -74,8 +74,8 @@ export async function updateBranchAppConfig(payload: AppConfigPayload, explicitB
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
 
   // Validate package/bundle IDs on the server

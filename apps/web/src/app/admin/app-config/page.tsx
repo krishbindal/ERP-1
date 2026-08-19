@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { getAppContext } from '@/lib/branch-context';
+import { getAppContext, auth_has_org_access } from '@/lib/branch-context';
 import { getBranchAppConfig } from './actions';
 import { AppConfigForm } from './components/AppConfigForm';
 
@@ -29,7 +29,7 @@ export default async function AppConfigPage(props: { searchParams: Promise<{ bra
 
   if (context.type === 'superadmin') {
     const { data: branch } = await supabase.from('branches').select('name, organization_id').eq('id', branchId).single();
-    if (branch && branch.organization_id === context.organizationId) {
+    if (branch && auth_has_org_access(context, branch.organization_id)) {
       isAuthorized = true;
       branchName = branch.name;
     }
@@ -37,7 +37,7 @@ export default async function AppConfigPage(props: { searchParams: Promise<{ bra
     if (explicitBranchId && explicitBranchId !== context.branchId) {
       return <div className="text-red-500">You are not authorized to view this branch.</div>;
     }
-    isAuthorized = context.role === 'branchadmin';
+    isAuthorized = context.roles.includes('branchadmin');
     branchName = context.branchName;
   }
 

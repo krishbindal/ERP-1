@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout commit
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
           
@@ -29,22 +29,27 @@ jobs:
           echo "Prerequisites verified."
 
   e2e:
-    name: E2E - ${{ matrix.browser }}
     needs: prepare
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, mobile-chrome, webkit]
+        browser:
+          - chromium
+          - mobile-chrome
+          - webkit
+
+    name: E2E (${{ matrix.browser }})
 
     steps:
       - name: Checkout commit
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           clean: true
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
 
@@ -52,7 +57,12 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps ${{ matrix.browser == 'mobile-chrome' && 'chromium' || matrix.browser }}
+        run: |
+          if [ "${{ matrix.browser }}" = "mobile-chrome" ]; then
+            npx playwright install --with-deps chromium
+          else
+            npx playwright install --with-deps ${{ matrix.browser }}
+          fi
 
       - name: Start Local Supabase
         run: npx --no-install supabase start

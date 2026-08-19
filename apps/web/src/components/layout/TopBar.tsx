@@ -18,7 +18,7 @@ export async function TopBar() {
           </div>
         ) : context?.type === 'superadmin' ? (
           <div className="flex items-center space-x-2">
-             <SuperAdminBranchSelector organizationId={context.organizationId} />
+             <SuperAdminBranchSelector organizationId={context.organizationScopes[0]} />
           </div>
         ) : (
           <span className="text-sm font-medium text-gray-500 bg-gray-50 px-3 py-1 rounded-md border border-gray-200">

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from '@/lib/supabase/server';
+import { auth_has_org_access } from '@/lib/branch-context';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
 import { getAppContext } from '@/lib/branch-context';
@@ -21,7 +22,7 @@ async function getContextBranchId(explicitBranchId?: string) {
       .eq('id', explicitBranchId)
       .single();
     if (error || !branch) throw new Error("Branch not found or inaccessible.");
-    if (branch.organization_id !== context.organizationId) {
+    if (!auth_has_org_access(context, branch.organization_id)) {
       throw new Error("Branch does not belong to your organization.");
     }
     return explicitBranchId;
@@ -42,8 +43,8 @@ export async function createAcademicYear(data: { name: string; start_date: strin
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('academic_years').insert({ ...data, branch_id });
   if (error) return { error: mapDatabaseError(error) };
@@ -53,11 +54,10 @@ export async function createAcademicYear(data: { name: string; start_date: strin
 
 export async function updateAcademicYear(id: string, data: { name: string; start_date: string; end_date: string; status: string }, explicitBranchId?: string) {
   const supabase = await createClient();
-  let branch_id: string;
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+    await getContextBranchId(explicitBranchId);
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('academic_years').update(data).eq('id', id);
   if (error) return { error: mapDatabaseError(error) };
@@ -67,11 +67,10 @@ export async function updateAcademicYear(id: string, data: { name: string; start
 
 export async function deleteAcademicYear(id: string, explicitBranchId?: string) {
   const supabase = await createClient();
-  let branch_id: string;
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+    await getContextBranchId(explicitBranchId);
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('academic_years').delete().eq('id', id);
   if (error) return { error: mapDatabaseError(error) };
@@ -85,8 +84,8 @@ export async function createClass(data: { academic_year_id: string; name: string
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('classes').insert({ ...data, branch_id });
   if (error) return { error: mapDatabaseError(error) };
@@ -96,11 +95,10 @@ export async function createClass(data: { academic_year_id: string; name: string
 
 export async function updateClass(id: string, data: { name: string; level: number }, explicitBranchId?: string) {
   const supabase = await createClient();
-  let branch_id: string;
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+    await getContextBranchId(explicitBranchId);
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('classes').update(data).eq('id', id);
   if (error) return { error: mapDatabaseError(error) };
@@ -110,11 +108,10 @@ export async function updateClass(id: string, data: { name: string; level: numbe
 
 export async function deleteClass(id: string, explicitBranchId?: string) {
   const supabase = await createClient();
-  let branch_id: string;
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+    await getContextBranchId(explicitBranchId);
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('classes').delete().eq('id', id);
   if (error) return { error: mapDatabaseError(error) };
@@ -128,8 +125,8 @@ export async function createSection(data: { class_id: string; name: string; capa
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('sections').insert({ ...data, branch_id });
   if (error) return { error: mapDatabaseError(error) };
@@ -139,11 +136,10 @@ export async function createSection(data: { class_id: string; name: string; capa
 
 export async function updateSection(id: string, data: { name: string; capacity: number }, explicitBranchId?: string) {
   const supabase = await createClient();
-  let branch_id: string;
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+    await getContextBranchId(explicitBranchId);
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('sections').update(data).eq('id', id);
   if (error) return { error: mapDatabaseError(error) };
@@ -153,11 +149,10 @@ export async function updateSection(id: string, data: { name: string; capacity: 
 
 export async function deleteSection(id: string, explicitBranchId?: string) {
   const supabase = await createClient();
-  let branch_id: string;
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+    await getContextBranchId(explicitBranchId);
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { error } = await supabase.from('sections').delete().eq('id', id);
   if (error) return { error: mapDatabaseError(error) };
@@ -170,8 +165,8 @@ export async function getAcademicYears(explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { data, error } = await supabase.from('academic_years').select('id, name').eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
@@ -183,8 +178,8 @@ export async function getClasses(explicitBranchId?: string) {
   let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
-  } catch (e: unknown) {
-    return { error: e.message };
+  } catch (e) {
+    return { error: (e as Error).message };
   }
   const { data, error } = await supabase.from('classes').select('id, name').eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };

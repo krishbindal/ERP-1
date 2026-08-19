@@ -2,7 +2,7 @@ import { AcademicYearsTable } from './components/AcademicYearsTable';
 import { ClassesTable } from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
-import { getAppContext } from '@/lib/branch-context';
+import { getAppContext, auth_has_org_access } from '@/lib/branch-context';
 import { AcademicYear, ClassWithYear, SectionWithClass } from './components/types';
 
 export default async function AcademicStructurePage(props: { searchParams: Promise<{ tab?: string; branchId?: string }> }) {
@@ -32,7 +32,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
 
   if (context.type === 'superadmin') {
     const { data: branch } = await supabase.from('branches').select('name, organization_id').eq('id', branchId).single();
-    if (branch && branch.organization_id === context.organizationId) {
+    if (branch && auth_has_org_access(context, branch.organization_id)) {
       isAuthorized = true;
       isReadOnly = false; // Super Admins can edit
     }
@@ -41,7 +41,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       return <div className="text-red-500">You are not authorized to view this branch.</div>;
     }
     isAuthorized = true; // all normal users can VIEW their branch academic structure
-    isReadOnly = context.role === 'teacher' || context.role === 'student' || context.role === 'parent';
+    isReadOnly = context.roles.includes('teacher') || context.roles.includes('student') || context.roles.includes('parent');
   }
 
   if (!isAuthorized) {
