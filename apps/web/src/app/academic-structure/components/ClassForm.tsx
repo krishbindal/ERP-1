@@ -10,13 +10,17 @@ export function ClassForm({ onClose, initialData }: { onClose: () => void, initi
   const [academicYears, setAcademicYears] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
-    getAcademicYears().then(res => {
-      if (res.error) {
-        setError(res.error);
-      } else {
-        setAcademicYears(res.data || []);
-      }
-    });
+    getAcademicYears()
+      .then(res => {
+        if (res.error) {
+          setError(res.error);
+        } else {
+          setAcademicYears(res.data || []);
+        }
+      })
+      .catch(err => {
+        setError(err instanceof Error ? (err as Error).message : 'Failed to fetch academic years.');
+      });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -31,19 +35,27 @@ export function ClassForm({ onClose, initialData }: { onClose: () => void, initi
       level: parseInt(formData.get('level') as string, 10),
     };
 
-    let result;
-    if (initialData) {
-      result = await updateClass(initialData.id, { name: data.name, level: data.level });
-    } else {
-      result = await createClass(data);
-    }
+    try {
+      let result;
+      if (initialData) {
+        result = await updateClass(initialData.id, { name: data.name, level: data.level });
+      } else {
+        result = await createClass(data);
+      }
 
-    setLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      onClose();
+      if (result.error) {
+        setError(result.error);
+      } else {
+        onClose();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,3 +94,6 @@ export function ClassForm({ onClose, initialData }: { onClose: () => void, initi
     </DrawerForm>
   );
 }
+
+
+

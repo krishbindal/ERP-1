@@ -21,19 +21,27 @@ export function AcademicYearForm({ onClose, initialData }: { onClose: () => void
       status: formData.get('status') as string,
     };
 
-    let result;
-    if (initialData) {
-      result = await updateAcademicYear(initialData.id, data);
-    } else {
-      result = await createAcademicYear(data);
-    }
+    try {
+      let result;
+      if (initialData) {
+        result = await updateAcademicYear(initialData.id, data);
+      } else {
+        result = await createAcademicYear(data);
+      }
 
-    setLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      onClose();
+      if (result.error) {
+        setError(result.error);
+      } else {
+        onClose();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,3 +85,7 @@ export function AcademicYearForm({ onClose, initialData }: { onClose: () => void
     </DrawerForm>
   );
 }
+
+
+
+

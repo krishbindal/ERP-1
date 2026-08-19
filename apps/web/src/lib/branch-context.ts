@@ -11,20 +11,19 @@ export async function getCurrentAppBranch(): Promise<{ id: string, name: string 
   const { data: memberships, error: membershipError } = await supabase
     .from('branch_memberships')
     .select('branch_id, branches(name)')
-    .eq('user_id', user.user.id)
-    .limit(1);
+    .eq('user_id', user.user.id);
 
   if (membershipError) {
     throw new Error(membershipError.message);
   }
 
-  if (memberships && memberships.length > 0) {
-    const branch = (memberships[0] as unknown as { branches: { name: string } }).branches;
-    return {
-      id: memberships[0].branch_id,
-      name: branch?.name || 'Unknown Branch'
-    };
+  if (!memberships || memberships.length === 0) {
+    return null;
   }
-
-  return null;
+  
+  const branch = (memberships[0] as unknown as { branches: { name: string } }).branches;
+  return {
+    id: memberships[0].branch_id,
+    name: branch?.name || 'Unknown Branch'
+  };
 }

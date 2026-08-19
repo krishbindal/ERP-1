@@ -10,10 +10,18 @@ export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], 
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this section?')) {
-      const result = await deleteSection(id);
-      if (result.error) {
-        alert(result.error);
+      try {
+        const result = await deleteSection(id);
+        if (result.error) {
+          alert(result.error);
+        }
+      } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('An unexpected error occurred during deletion.');
       }
+    }
     }
   };
 
@@ -48,15 +56,15 @@ export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], 
                 </td>
               </tr>
             )}
-            {data.map((section) => (
-              <tr key={section.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{section.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{section.classes?.name} ({section.classes?.academic_years?.name})</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{section.capacity}</td>
+            {data.map((sec) => (
+              <tr key={sec.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{sec.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{sec.classes?.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{sec.capacity}</td>
                 {!isReadOnly && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => { setEditingItem(section); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
-                    <button onClick={() => handleDelete(section.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                    <button onClick={() => { setEditingItem(sec); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                    <button onClick={() => handleDelete(sec.id)} className="text-red-600 hover:text-red-900">Delete</button>
                   </td>
                 )}
               </tr>
@@ -74,3 +82,6 @@ export function SectionsTable({ data, isReadOnly }: { data: SectionWithClass[], 
     </div>
   );
 }
+
+
+

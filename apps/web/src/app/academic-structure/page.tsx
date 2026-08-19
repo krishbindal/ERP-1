@@ -1,5 +1,5 @@
 import { AcademicYearsTable } from './components/AcademicYearsTable';
-import ClassesTable from './components/ClassesTable';
+import { ClassesTable } from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentAppBranch } from '@/lib/branch-context';
@@ -13,10 +13,10 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   const currentBranch = await getCurrentAppBranch();
   const branchId = currentBranch?.id;
 
-  const { data: user } = await supabase.auth.getUser();
+  const { data: user, error: authError } = await supabase.auth.getUser();
   
   let isReadOnly = false;
-  if (user?.user?.id && branchId) {
+  if (!authError && user?.user?.id && branchId) {
     const { data: membership, error: membershipError } = await supabase
       .from('branch_memberships')
       .select('id, user_role_assignments(roles(name))')
@@ -47,7 +47,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
       if (error) throw new Error(error.message);
       classes = (data as unknown as ClassWithYear[]) || [];
     } else if (tab === 'sections') {
-      const { data, error } = await supabase.from('sections').select('*, classes(name, academic_years(name))').order('name', { ascending: true });
+      const { data, error } = await supabase.from('sections').select('*, classes(name, academic_years(name))').eq('branch_id', branchId).order('name', { ascending: true });
       if (error) throw new Error(error.message);
       sections = (data as unknown as SectionWithClass[]) || [];
     }

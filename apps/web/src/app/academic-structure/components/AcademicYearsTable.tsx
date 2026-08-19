@@ -10,10 +10,18 @@ export function AcademicYearsTable({ data, isReadOnly }: { data: AcademicYear[],
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this academic year?')) {
-      const result = await deleteAcademicYear(id);
-      if (result.error) {
-        alert(result.error);
+      try {
+        const result = await deleteAcademicYear(id);
+        if (result.error) {
+          alert(result.error);
+        }
+      } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('An unexpected error occurred during deletion.');
       }
+    }
     }
   };
 
@@ -80,3 +88,6 @@ export function AcademicYearsTable({ data, isReadOnly }: { data: AcademicYear[],
     </div>
   );
 }
+
+
+

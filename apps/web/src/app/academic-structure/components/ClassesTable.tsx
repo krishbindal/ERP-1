@@ -4,16 +4,24 @@ import { ClassForm } from './ClassForm';
 import { deleteClass } from '../actions';
 import { ClassWithYear } from './types';
 
-export default function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isReadOnly: boolean }) {
+export function ClassesTable({ data, isReadOnly }: { data: ClassWithYear[], isReadOnly: boolean }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ClassWithYear | null>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this class?')) {
-      const result = await deleteClass(id);
-      if (result.error) {
-        alert(result.error);
+      try {
+        const result = await deleteClass(id);
+        if (result.error) {
+          alert(result.error);
+        }
+      } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('An unexpected error occurred during deletion.');
       }
+    }
     }
   };
 
@@ -35,8 +43,8 @@ export default function ClassesTable({ data, isReadOnly }: { data: ClassWithYear
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
               {!isReadOnly && <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>}
             </tr>
           </thead>
@@ -51,8 +59,8 @@ export default function ClassesTable({ data, isReadOnly }: { data: ClassWithYear
             {data.map((cls) => (
               <tr key={cls.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{cls.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cls.level}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cls.academic_years?.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cls.level}</td>
                 {!isReadOnly && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button onClick={() => { setEditingItem(cls); setIsDrawerOpen(true); }} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
@@ -74,3 +82,6 @@ export default function ClassesTable({ data, isReadOnly }: { data: ClassWithYear
     </div>
   );
 }
+
+
+

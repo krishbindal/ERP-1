@@ -10,13 +10,17 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
   const [classes, setClasses] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
-    getClasses().then(res => {
-      if (res.error) {
-        setError(res.error);
-      } else {
-        setClasses(res.data || []);
-      }
-    });
+    getClasses()
+      .then(res => {
+        if (res.error) {
+          setError(res.error);
+        } else {
+          setClasses(res.data || []);
+        }
+      })
+      .catch(err => {
+        setError(err instanceof Error ? (err as Error).message : 'Failed to fetch classes.');
+      });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -31,19 +35,27 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
       capacity: parseInt(formData.get('capacity') as string, 10),
     };
 
-    let result;
-    if (initialData) {
-      result = await updateSection(initialData.id, { name: data.name, capacity: data.capacity });
-    } else {
-      result = await createSection(data);
-    }
+    try {
+      let result;
+      if (initialData) {
+        result = await updateSection(initialData.id, { name: data.name, capacity: data.capacity });
+      } else {
+        result = await createSection(data);
+      }
 
-    setLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-    } else {
-      onClose();
+      if (result.error) {
+        setError(result.error);
+      } else {
+        onClose();
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unexpected error occurred.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,3 +94,6 @@ export function SectionForm({ onClose, initialData }: { onClose: () => void, ini
     </DrawerForm>
   );
 }
+
+
+
