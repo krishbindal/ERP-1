@@ -47,9 +47,6 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Install dependencies
-        run: npm ci
-
       - name: Verify Playwright Browsers
         run: |
           chmod +x scripts/ci-runner-preflight.sh
@@ -187,6 +184,9 @@ jobs:
           fi
           
           echo "Database is fully ready and reachable."
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build Web
         run: npm run build:web
