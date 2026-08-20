@@ -43,13 +43,52 @@ jobs:
       - name: Unit Tests
         run: npm run test --workspaces --if-present
 
+      - name: Cleanup Stale Environment
+        run: |
+          npx --no-install supabase stop --no-backup || true
+          
+          STALE_CONTAINERS=$(docker ps -a -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_CONTAINERS" ]; then
+            echo "$STALE_CONTAINERS" | xargs -r docker rm -f
+          fi
+          
+          STALE_NETWORKS=$(docker network ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_NETWORKS" ]; then
+            echo "$STALE_NETWORKS" | xargs -r docker network rm
+          fi
+          
+          STALE_VOLUMES=$(docker volume ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_VOLUMES" ]; then
+            echo "$STALE_VOLUMES" | xargs -r docker volume rm
+          fi
+
+      - name: Verify Clean State
+        run: |
+          STALE=$(docker ps -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE" ]; then
+            echo "::error::Stale containers for ERP_1 remain after cleanup!"
+            docker ps -a -f label=com.supabase.cli.project=ERP_1
+            exit 1
+          fi
+
       - name: Start Local Supabase
-        run: npx --no-install supabase start
+        run: |
+          if ! timeout 300s npx --no-install supabase start --debug > start_output.log 2>&1; then
+            echo "::error::Supabase start failed or timed out!"
+            echo "--- Start Output ---"
+            cat start_output.log || true
+            echo "--- Docker PS ---"
+            docker ps -a -f label=com.supabase.cli.project=ERP_1 || true
+            echo "--- Postgres Logs ---"
+            DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
+            if [ -n "$DB_CONTAINER" ]; then docker logs $DB_CONTAINER || true; fi
+            exit 1
+          fi
 
       - name: Wait for PostgreSQL Readiness
         run: |
           echo "Waiting for PostgreSQL to be ready..."
-          DB_CONTAINER=$(docker ps -qf name="supabase_db_")
+          DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
           if [ -n "$DB_CONTAINER" ]; then
             until docker exec $DB_CONTAINER pg_isready -U postgres; do
               echo "Waiting for postgres..."
@@ -61,12 +100,23 @@ jobs:
           fi
 
       - name: Reset Database
-        run: npx --no-install supabase db reset --yes
+        run: |
+          if ! timeout 300s npx --no-install supabase db reset --yes > reset_output.log 2>&1; then
+            echo "::error::Supabase db reset failed or timed out!"
+            echo "--- Reset Output ---"
+            cat reset_output.log || true
+            echo "--- Docker PS ---"
+            docker ps -a -f label=com.supabase.cli.project=ERP_1 || true
+            echo "--- Postgres Logs ---"
+            DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
+            if [ -n "$DB_CONTAINER" ]; then docker logs $DB_CONTAINER || true; fi
+            exit 1
+          fi
 
       - name: Wait for PostgreSQL Readiness After Reset
         run: |
           echo "Waiting for PostgreSQL to be ready after reset..."
-          DB_CONTAINER=$(docker ps -qf name="supabase_db_")
+          DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
           if [ -n "$DB_CONTAINER" ]; then
             until docker exec $DB_CONTAINER pg_isready -U postgres; do
               echo "Waiting for postgres..."
@@ -141,7 +191,23 @@ jobs:
 
       - name: Stop Local Supabase
         if: always()
-        run: npx --no-install supabase stop
+        run: |
+          npx --no-install supabase stop --no-backup || true
+          
+          STALE_CONTAINERS=$(docker ps -a -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_CONTAINERS" ]; then
+            echo "$STALE_CONTAINERS" | xargs -r docker rm -f
+          fi
+          
+          STALE_NETWORKS=$(docker network ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_NETWORKS" ]; then
+            echo "$STALE_NETWORKS" | xargs -r docker network rm
+          fi
+          
+          STALE_VOLUMES=$(docker volume ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_VOLUMES" ]; then
+            echo "$STALE_VOLUMES" | xargs -r docker volume rm
+          fi
 
       - name: Cleanup Workspace
         if: always()

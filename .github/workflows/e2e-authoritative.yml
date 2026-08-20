@@ -34,15 +34,7 @@ jobs:
     needs: prepare
     runs-on: [self-hosted, linux, x64, schoolos-ci]
 
-    strategy:
-      fail-fast: false
-      matrix:
-        browser:
-          - chromium
-          - mobile-chrome
-          - webkit
-
-    name: E2E (${{ matrix.browser }})
+    name: E2E (All Browsers)
 
     steps:
       - name: Checkout commit
@@ -59,15 +51,30 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: |
-          if [ "${{ matrix.browser }}" = "mobile-chrome" ]; then
-            npx playwright install chromium
-          else
-            npx playwright install ${{ matrix.browser }}
-          fi
+        run: npx playwright install chromium webkit
 
       - name: Cleanup Stale Environment
-        run: npx --no-install supabase stop --no-backup || true
+        run: |
+          npx --no-install supabase stop --no-backup || true
+          
+          # Verify and clean any stale ERP_1 resources
+          STALE_CONTAINERS=$(docker ps -a -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_CONTAINERS" ]; then
+            echo "Removing stale containers..."
+            echo "$STALE_CONTAINERS" | xargs -r docker rm -f
+          fi
+          
+          STALE_NETWORKS=$(docker network ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_NETWORKS" ]; then
+            echo "Removing stale networks..."
+            echo "$STALE_NETWORKS" | xargs -r docker network rm
+          fi
+          
+          STALE_VOLUMES=$(docker volume ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_VOLUMES" ]; then
+            echo "Removing stale volumes..."
+            echo "$STALE_VOLUMES" | xargs -r docker volume rm
+          fi
 
       - name: Verify Clean State
         run: |
@@ -177,11 +184,7 @@ jobs:
           PLAYWRIGHT_JSON_OUTPUT_NAME: results.json
         run: |
           cd apps/web
-          npx playwright test \
-            --reporter=line,json \
-            --project=${{ matrix.browser }}-superadmin \
-            --project=${{ matrix.browser }}-branchadmin \
-            --project=${{ matrix.browser }}-teacher
+          npx playwright test --reporter=line,json
           
       - name: Certify Playwright Results
         if: always()
@@ -192,13 +195,29 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ matrix.browser }}
+          name: playwright-report-all-browsers
           path: apps/web/playwright-report/
           retention-days: 7
 
       - name: Stop Local Supabase
         if: always()
-        run: npx --no-install supabase stop --no-backup || true
+        run: |
+          npx --no-install supabase stop --no-backup || true
+          
+          STALE_CONTAINERS=$(docker ps -a -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_CONTAINERS" ]; then
+            echo "$STALE_CONTAINERS" | xargs -r docker rm -f
+          fi
+          
+          STALE_NETWORKS=$(docker network ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_NETWORKS" ]; then
+            echo "$STALE_NETWORKS" | xargs -r docker network rm
+          fi
+          
+          STALE_VOLUMES=$(docker volume ls -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE_VOLUMES" ]; then
+            echo "$STALE_VOLUMES" | xargs -r docker volume rm
+          fi
 
       - name: Cleanup Workspace
         if: always()
