@@ -79,7 +79,28 @@ jobs:
           fi
 
       - name: Start Local Supabase
-        run: npx --no-install supabase start
+        run: |
+          if ! timeout 300s npx --no-install supabase start --debug > start_output.log 2>&1; then
+            echo "::error::Supabase start failed or timed out!"
+            echo "--- Start Output ---"
+            cat start_output.log || true
+            echo "--- Docker PS ---"
+            docker ps -a -f label=com.supabase.cli.project=ERP_1 || true
+            echo "--- Docker Events ---"
+            docker events --since 5m --until 0m || true
+            echo "--- Postgres Logs ---"
+            DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
+            if [ -n "$DB_CONTAINER" ]; then docker logs $DB_CONTAINER || true; fi
+            echo "--- Auth Logs ---"
+            AUTH_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_auth_)
+            if [ -n "$AUTH_CONTAINER" ]; then docker logs $AUTH_CONTAINER || true; fi
+            echo "--- Realtime Logs ---"
+            RT_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_realtime_)
+            if [ -n "$RT_CONTAINER" ]; then docker logs $RT_CONTAINER || true; fi
+            echo "--- Supabase Status ---"
+            npx --no-install supabase status || true
+            exit 1
+          fi
 
       - name: Wait for PostgreSQL Readiness
         run: |
