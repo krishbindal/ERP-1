@@ -1,9 +1,21 @@
 const fs = require('fs');
 const path = require('path');
 
-const reportPath = process.argv[2];
+if (!process.argv[2]) {
+  console.error(`ERROR: No report path provided`);
+  process.exit(1);
+}
 
-if (!reportPath || !fs.existsSync(reportPath)) {
+const workspaceRoot = path.resolve(process.cwd());
+const reportPath = path.resolve(process.argv[2]);
+const relative = path.relative(workspaceRoot, reportPath);
+
+if (relative === '' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
+  console.error(`ERROR: Path traversal detected`);
+  process.exit(1);
+}
+
+if (!fs.existsSync(reportPath)) {
   console.error(`ERROR: Playwright report not found at ${reportPath}`);
   process.exit(1);
 }
