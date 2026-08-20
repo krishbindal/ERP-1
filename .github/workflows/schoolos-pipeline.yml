@@ -98,7 +98,7 @@ jobs:
             echo "--- System Diagnostics ---"
             docker stats --no-stream || true
             docker events --since 5m --until 0m -f label=com.supabase.cli.project=ERP_1 || true
-            sudo ss -ltnp || true
+            ss -ltnp || true
             docker network ls || true
             docker network inspect supabase_network_ERP_1 || true
             echo "--- Start Output ---"
@@ -198,22 +198,17 @@ jobs:
           
           echo "Database tests and pgTAP cleanup completed successfully."
 
-      - name: Playwright Chromium
-        run: npx playwright test --project=chromium
-
-      - name: Playwright Mobile Chrome
-        run: npx playwright test --project="Mobile Chrome"
-
-      - name: Playwright WebKit
-        run: npx playwright test --project=webkit
+      - name: Run Playwright Tests
+        env:
+          PLAYWRIGHT_GIT_COMMIT_INFO: 0
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+        run: |
+          cd apps/web
+          npx playwright test --reporter=line,json
 
       - name: Verify JSON Certification Artifact
         run: |
-          if [ ! -f "test-results.json" ]; then
-            echo "::error::Certification artifact test-results.json not found."
-            exit 1
-          fi
-          node scripts/verify-e2e-certification.js
+          node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
 
       - name: Stop Local Supabase
         if: always()
