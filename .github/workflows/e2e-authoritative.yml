@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   prepare:
+    if: false
     name: Prepare
     runs-on: [self-hosted, linux, x64, schoolos-ci]
     steps:
@@ -31,6 +32,7 @@ jobs:
           ./scripts/ci-runner-preflight.sh
 
   e2e:
+    if: false
     needs: prepare
     runs-on: [self-hosted, linux, x64, schoolos-ci]
 

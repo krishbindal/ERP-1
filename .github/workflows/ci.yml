@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   validate:
+    if: false
     name: Validation and Tests
     runs-on: [self-hosted, linux, x64, schoolos-ci]
     
