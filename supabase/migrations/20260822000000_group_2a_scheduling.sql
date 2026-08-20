@@ -169,11 +169,37 @@ DECLARE
     v_day_of_week INTEGER;
     v_time_range public.timerange;
     v_conflict_id UUID;
+    v_resources text[];
+    v_res text;
 BEGIN
     -- Only check if ACTIVE
     IF NEW.status != 'ACTIVE' THEN
         RETURN NEW;
     END IF;
+
+    -- Gather resources to lock for concurrency safety
+    -- We lock the substitute staff, substitute room (if any), and the canonical entry
+    -- being substituted, specific to this date.
+    v_resources := ARRAY[
+        NEW.timetable_entry_id::text,
+        NEW.substitute_staff_id::text
+    ];
+    IF NEW.substitute_room_id IS NOT NULL THEN
+        v_resources := array_append(v_resources, NEW.substitute_room_id::text);
+    END IF;
+
+    -- Sort resources to guarantee deterministic lock acquisition order and prevent deadlocks
+    SELECT array_agg(val) INTO v_resources
+    FROM (SELECT unnest(v_resources) AS val ORDER BY val) s;
+
+    -- Acquire transaction-scoped advisory locks
+    FOREACH v_res IN ARRAY v_resources
+    LOOP
+        PERFORM pg_advisory_xact_lock(
+            hashtext('timetable_substitution'),
+            hashtext(v_res || '_' || NEW.substitution_date::text)
+        );
+    END LOOP;
 
     -- Extract bounds from canonical entry to avoid needing it in substitution table
     SELECT day_of_week, time_range INTO v_day_of_week, v_time_range
@@ -196,6 +222,7 @@ BEGIN
       AND (
           ts.substitute_staff_id = NEW.substitute_staff_id 
           OR (NEW.substitute_room_id IS NOT NULL AND ts.substitute_room_id = NEW.substitute_room_id)
+          OR ts.timetable_entry_id = NEW.timetable_entry_id
       );
 
     IF FOUND THEN
