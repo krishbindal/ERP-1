@@ -3,7 +3,7 @@ import { User, LogOut, BookOpen, Users, LayoutDashboard } from "lucide-react";
 
 export function Sidebar() {
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col h-screen border-r border-gray-800">
+    <aside className="w-64 bg-gray-900 text-white hidden md:flex flex-col h-screen border-r border-gray-800">
       <div className="p-4 border-b border-gray-800">
         <h1 className="text-xl font-bold">SchoolOS</h1>
       </div>
