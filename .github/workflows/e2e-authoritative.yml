@@ -181,7 +181,7 @@ jobs:
       - name: Run Playwright Tests
         env:
           PLAYWRIGHT_GIT_COMMIT_INFO: 0
-          PLAYWRIGHT_JSON_OUTPUT_NAME: results.json
+          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
         run: |
           cd apps/web
           npx playwright test --reporter=line,json
@@ -201,23 +201,7 @@ jobs:
 
       - name: Stop Local Supabase
         if: always()
-        run: |
-          npx --no-install supabase stop --no-backup || true
-          
-          STALE_CONTAINERS=$(docker ps -a -q -f label=com.supabase.cli.project=ERP_1)
-          if [ -n "$STALE_CONTAINERS" ]; then
-            echo "$STALE_CONTAINERS" | xargs -r docker rm -f
-          fi
-          
-          STALE_NETWORKS=$(docker network ls -q -f label=com.supabase.cli.project=ERP_1)
-          if [ -n "$STALE_NETWORKS" ]; then
-            echo "$STALE_NETWORKS" | xargs -r docker network rm
-          fi
-          
-          STALE_VOLUMES=$(docker volume ls -q -f label=com.supabase.cli.project=ERP_1)
-          if [ -n "$STALE_VOLUMES" ]; then
-            echo "$STALE_VOLUMES" | xargs -r docker volume rm
-          fi
+        run: bash scripts/ci-cleanup.sh
 
       - name: Cleanup Workspace
         if: always()
