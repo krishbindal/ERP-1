@@ -66,25 +66,86 @@ jobs:
             npx playwright install ${{ matrix.browser }}
           fi
 
+      - name: Cleanup Stale Environment
+        run: npx --no-install supabase stop --no-backup || true
+
+      - name: Verify Clean State
+        run: |
+          STALE=$(docker ps -q -f label=com.supabase.cli.project=ERP_1)
+          if [ -n "$STALE" ]; then
+            echo "::error::Stale containers for ERP_1 remain after cleanup!"
+            docker ps -a -f label=com.supabase.cli.project=ERP_1
+            exit 1
+          fi
+
       - name: Start Local Supabase
         run: npx --no-install supabase start
 
       - name: Wait for PostgreSQL Readiness
         run: |
           echo "Waiting for PostgreSQL to be ready..."
-          DB_CONTAINER=$(docker ps -qf name="supabase_db_")
+          DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
           if [ -n "$DB_CONTAINER" ]; then
             until docker exec $DB_CONTAINER pg_isready -U postgres; do
               echo "Waiting for postgres..."
               sleep 2
             done
+            if ! bash -c '</dev/tcp/127.0.0.1/54322' 2>/dev/null; then
+              echo "::error::Port 54322 is not reachable from host!"
+              exit 1
+            fi
           else
-            echo "Supabase DB container not found!"
+            echo "::error::Supabase DB container not found!"
             exit 1
           fi
 
       - name: Reset Database
-        run: npx --no-install supabase db reset --yes
+        run: |
+          if ! timeout 300s npx --no-install supabase db reset --yes > reset_output.log 2>&1; then
+            echo "::error::Supabase db reset failed or timed out!"
+            echo "--- Reset Output ---"
+            cat reset_output.log || true
+            echo "--- Docker PS ---"
+            docker ps -a -f label=com.supabase.cli.project=ERP_1 || true
+            echo "--- Postgres Logs ---"
+            DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
+            if [ -n "$DB_CONTAINER" ]; then docker logs $DB_CONTAINER || true; fi
+            echo "--- Auth Logs ---"
+            AUTH_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_auth_)
+            if [ -n "$AUTH_CONTAINER" ]; then docker logs $AUTH_CONTAINER || true; fi
+            echo "--- Realtime Logs ---"
+            RT_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_realtime_)
+            if [ -n "$RT_CONTAINER" ]; then docker logs $RT_CONTAINER || true; fi
+            echo "--- Supabase Status ---"
+            npx --no-install supabase status || true
+            exit 1
+          fi
+
+      - name: Verify Post-Reset Readiness
+        run: |
+          echo "Verifying database readiness after reset..."
+          DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
+          if [ -z "$DB_CONTAINER" ]; then
+            echo "::error::Supabase DB container not found after reset!"
+            exit 1
+          fi
+          
+          if ! docker exec $DB_CONTAINER pg_isready -U postgres; then
+            echo "::error::Postgres is not accepting connections!"
+            exit 1
+          fi
+          
+          if ! bash -c '</dev/tcp/127.0.0.1/54322' 2>/dev/null; then
+            echo "::error::Port 54322 is not reachable from host!"
+            exit 1
+          fi
+          
+          if ! docker exec $DB_CONTAINER psql -U postgres -c "SELECT 1;" > /dev/null; then
+            echo "::error::Postgres test query failed!"
+            exit 1
+          fi
+          
+          echo "Database is fully ready and reachable."
 
       - name: Build Web
         run: npm run build:web
@@ -92,12 +153,19 @@ jobs:
       - name: Run Playwright Tests
         env:
           PLAYWRIGHT_GIT_COMMIT_INFO: 0
+          PLAYWRIGHT_JSON_OUTPUT_NAME: results.json
         run: |
           cd apps/web
           npx playwright test \
+            --reporter=line,json \
             --project=${{ matrix.browser }}-superadmin \
             --project=${{ matrix.browser }}-branchadmin \
             --project=${{ matrix.browser }}-teacher
+          
+      - name: Certify Playwright Results
+        if: always()
+        run: |
+          node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
 
       - name: Upload Playwright Artifacts
         if: failure()
@@ -109,7 +177,7 @@ jobs:
 
       - name: Stop Local Supabase
         if: always()
-        run: npx --no-install supabase stop
+        run: npx --no-install supabase stop --no-backup || true
 
       - name: Cleanup Workspace
         if: always()
