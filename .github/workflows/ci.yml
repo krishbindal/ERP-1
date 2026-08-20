@@ -73,7 +73,7 @@ jobs:
 
       - name: Start Local Supabase
         run: |
-          if ! timeout 300s npx --no-install supabase start --debug > start_output.log 2>&1; then
+          if ! timeout 300s npx --no-install supabase start -x realtime --debug > start_output.log 2>&1; then
             echo "::error::Supabase start failed or timed out!"
             echo "--- Start Output ---"
             cat start_output.log || true
