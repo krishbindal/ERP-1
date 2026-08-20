@@ -50,8 +50,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Browsers
-        run: npx playwright install chromium webkit
+      - name: Verify Playwright Browsers
+        run: |
+          chmod +x scripts/ci-runner-preflight.sh
+          ./scripts/ci-runner-preflight.sh
 
       - name: Cleanup Stale Environment
         run: |

@@ -54,9 +54,26 @@ fi
 echo "Disk space: ${FREE_SPACE}GB free."
 
 echo "[7/8] Verifying Chromium & WebKit Pre-installation..."
-# We assume the self-hosted runner has the necessary OS libraries.
-# By running a dry install of playwright, we can ensure the binaries are cached.
-echo "Run npx playwright install to verify cache."
+PLAYWRIGHT_DIR="$HOME/.cache/ms-playwright"
+if [ ! -d "$PLAYWRIGHT_DIR" ]; then
+  echo "::error::Playwright browsers are not pre-provisioned on the runner (cache dir missing)."
+  exit 1
+fi
+
+CHROMIUM_PATH=$(find "$PLAYWRIGHT_DIR" -maxdepth 1 -type d -name "chromium-*" | head -n 1)
+WEBKIT_PATH=$(find "$PLAYWRIGHT_DIR" -maxdepth 1 -type d -name "webkit-*" | head -n 1)
+
+if [ -z "$CHROMIUM_PATH" ]; then
+  echo "::error::Playwright browsers are not pre-provisioned on the runner (Chromium missing)."
+  exit 1
+fi
+echo "Chromium found: $CHROMIUM_PATH"
+
+if [ -z "$WEBKIT_PATH" ]; then
+  echo "::error::Playwright browsers are not pre-provisioned on the runner (WebKit missing)."
+  exit 1
+fi
+echo "WebKit found: $WEBKIT_PATH"
 
 echo "[8/8] Done. Runner is ready."
 exit 0
