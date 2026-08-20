@@ -33,6 +33,10 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
   },
+  captureGitInfo: {
+    commit: false,
+    diff: false,
+  },
 
   projects: [
     {

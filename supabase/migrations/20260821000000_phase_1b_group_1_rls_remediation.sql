@@ -26,6 +26,50 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.auth_user_has_branch_role(uuid, text) FROM public;
 GRANT EXECUTE ON FUNCTION public.auth_user_has_branch_role(uuid, text) TO authenticated;
 
+-- 1.b Additional Security Definer Hardening
+CREATE OR REPLACE FUNCTION public.auth_is_super_admin()
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+    SELECT COALESCE((current_setting('request.jwt.claims', true)::jsonb -> 'app_metadata' ->> 'is_super_admin')::boolean, false);
+$$;
+
+CREATE OR REPLACE FUNCTION public.auth_user_organizations()
+RETURNS UUID[]
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+    SELECT array_agg(organization_id)
+    FROM public.organization_memberships
+    WHERE user_id = auth.uid() AND status = 'ACTIVE';
+$$;
+
+CREATE OR REPLACE FUNCTION public.auth_user_branches()
+RETURNS UUID[]
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+    SELECT array_agg(branch_id)
+    FROM public.branch_memberships
+    WHERE user_id = auth.uid() AND status = 'ACTIVE';
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_guardian_in_student_org(p_student_id UUID, p_guardian_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_student_org UUID;
+    v_guardian_org UUID;
+BEGIN
+    SELECT organization_id INTO v_student_org FROM public.students WHERE id = p_student_id;
+    SELECT organization_id INTO v_guardian_org FROM public.guardians WHERE id = p_guardian_id;
+    RETURN v_student_org IS NOT NULL AND v_student_org = v_guardian_org;
+END;
+$$;
 -- 2. Phase 3A: Students & Guardians Fixes
 -- Students
 DROP POLICY IF EXISTS "Branch Admins can insert students in their org" ON public.students;
