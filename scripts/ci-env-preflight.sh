@@ -24,7 +24,7 @@ for PORT in "${PORTS[@]}"; do
   echo "Checking port $PORT..."
   # Use ss to find listening ports. -ltnp requires sudo for PIDs of other users, but we do what we can
   # On standard ubuntu runners, ss is available. 
-  SS_OUT=$(sudo ss -ltnp | grep ":$PORT " || true)
+  SS_OUT=$(ss -ltn | grep ":$PORT " || true)
   if [ -n "$SS_OUT" ]; then
     echo "::error::Port $PORT is already in use!"
     echo "$SS_OUT"
