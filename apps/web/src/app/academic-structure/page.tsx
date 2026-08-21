@@ -2,16 +2,17 @@ import { AcademicYearsTable } from './components/AcademicYearsTable';
 import { ClassesTable } from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
-import { getAppContext, verifyPageBranchContext } from '@/lib/branch-context';
+import {  verifyPageBranchContext } from '@/lib/branch-context';
 import { AcademicYear, ClassWithYear, SectionWithClass } from './components/types';
 
 export default async function AcademicStructurePage(props: { searchParams: Promise<{ tab?: string; branchId?: string }> }) {
   const searchParams = await props.searchParams;
   const tab = searchParams.tab || 'years';
   const explicitBranchId = searchParams.branchId;
-  
+
   const supabase = await createClient();
-  const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
+  
+    const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
   if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available.</div>;
   if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch to view its academic structure.</div>;
@@ -62,4 +63,6 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
     </div>
   );
 }
+
+
 

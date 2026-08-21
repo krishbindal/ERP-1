@@ -2,16 +2,17 @@ import { RoomsTable } from './components/RoomsTable';
 import { BellSchedulesTable } from './components/BellSchedulesTable';
 import { PeriodsTable } from './components/PeriodsTable';
 import { createClient } from '@/lib/supabase/server';
-import { getAppContext, verifyPageBranchContext } from '@/lib/branch-context';
+import {  verifyPageBranchContext } from '@/lib/branch-context';
 import { Room, BellSchedule, Period } from './components/types';
 
 export default async function SchedulingPage(props: { searchParams: Promise<{ tab?: string; branchId?: string }> }) {
   const searchParams = await props.searchParams;
   const tab = searchParams.tab || 'rooms';
   const explicitBranchId = searchParams.branchId;
-  
+
   const supabase = await createClient();
-  const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
+  
+    const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
   if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available.</div>;
   if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch to view its scheduling structure.</div>;
@@ -68,3 +69,5 @@ export default async function SchedulingPage(props: { searchParams: Promise<{ ta
     </div>
   );
 }
+
+
