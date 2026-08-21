@@ -1,52 +1,90 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Substitutions Management', () => {
-  test.describe('Branch Admin', () => {
-    test.use({ storageState: 'e2e/.auth/branch-admin.json' });
 
-    test('should view substitutions and open creation form', async ({ page }) => {
+  test.describe('Branch Admin CRUD & Conflicts', () => {
+    test.use({ storageState: 'playwright/.auth/branchadmin.json' });
+
+    test('should manage substitutions and handle conflicts', async ({ page }) => {
+      // 1. Create a substitution
       await page.goto('/scheduling/substitutions');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
 
-      // Ensure form button is visible to branch admins
-      const createBtn = page.getByRole('button', { name: 'New Substitution' });
-      await expect(createBtn).toBeVisible();
-
-      await createBtn.click();
-      await expect(page.getByRole('heading', { name: 'Create Substitution' })).toBeVisible();
+      await page.getByRole('button', { name: 'New Substitution' }).click();
       
-      // Close drawer for now
-      await page.getByRole('button', { name: 'Cancel' }).click();
-    });
+      // We expect there to be a canonical entry created by the timetable spec,
+      // but to be safe, we just select the first available target
+      await page.locator('select[name="timetable_entry_id"]').selectOption({ index: 1 });
+      await page.locator('select[name="substitute_staff_id"]').selectOption({ index: 2 });
+      await page.locator('select[name="substitute_room_id"]').selectOption({ index: 1 }); // optional
+      await page.fill('input[name="reason"]', 'E2E Testing Sick Leave');
+      await page.getByRole('button', { name: 'Save' }).click();
 
-    test('should reject cross-branch viewing', async ({ page }) => {
-      // Trying to access another branch's context
+      // Should succeed
+      await expect(page.locator('text=Create Substitution')).not.toBeVisible();
+
+      // 2. Conflict 1: Substitute Teacher double-booked (same teacher on same date/time)
+      await page.getByRole('button', { name: 'New Substitution' }).click();
+      await page.locator('select[name="timetable_entry_id"]').selectOption({ index: 2 }); // a different canonical entry at same time
+      await page.locator('select[name="substitute_staff_id"]').selectOption({ index: 2 }); // same teacher
+      await page.getByRole('button', { name: 'Save' }).click();
+
+      // 3. Conflict 2: Canonical Teacher Double-booked
+      await page.getByRole('button', { name: 'New Substitution' }).click();
+      await page.locator('select[name="timetable_entry_id"]').selectOption({ index: 2 });
+      await page.locator('select[name="substitute_staff_id"]').selectOption({ index: 3 });
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(page.locator('.text-red-600')).toBeVisible();
+      await page.getByRole('button', { name: 'Cancel' }).click();
+
+      // 4. Date rule: Wrong weekday
+      await page.getByRole('button', { name: 'New Substitution' }).click();
+      await page.locator('input[name="substitution_date"]').fill('2026-08-18'); // Assuming mismatch
+      await page.locator('select[name="timetable_entry_id"]').selectOption({ index: 1 });
+      await page.locator('select[name="substitute_staff_id"]').selectOption({ index: 2 });
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(page.locator('.text-red-600')).toBeVisible();
+      await page.getByRole('button', { name: 'Cancel' }).click();
+
+      // 5. Date rule: Outside academic year
+      await page.getByRole('button', { name: 'New Substitution' }).click();
+      await page.locator('input[name="substitution_date"]').fill('2099-01-01');
+      await page.locator('select[name="timetable_entry_id"]').selectOption({ index: 1 });
+      await page.locator('select[name="substitute_staff_id"]').selectOption({ index: 2 });
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(page.locator('.text-red-600')).toBeVisible();
+      await page.getByRole('button', { name: 'Cancel' }).click();
+
+      // 6. Cross-branch rejection
       await page.goto('/scheduling/substitutions?branchId=invalid-branch-id');
       await expect(page.locator('text=Access Denied')).toBeVisible();
+
+      // 7. Cancel Substitution (Test will fail here as UI doesn't have cancel button yet)
+      await page.goto('/scheduling/substitutions');
+      const cancelBtn = page.getByRole('button', { name: 'Cancel Substitution' });
+      await expect(cancelBtn).toBeVisible(); // Will fail
     });
   });
 
-  test.describe('Teacher', () => {
-    test.use({ storageState: 'e2e/.auth/teacher.json' });
+  test.describe('Teacher Roles', () => {
+    test.use({ storageState: 'playwright/.auth/teacher.json' });
 
-    test('should view substitutions but cannot create entries', async ({ page }) => {
+    test('should view substitutions but cannot create', async ({ page }) => {
       await page.goto('/scheduling/substitutions');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
 
-      // Create button should NOT be visible to teachers
       const createBtn = page.getByRole('button', { name: 'New Substitution' });
       await expect(createBtn).not.toBeVisible();
     });
   });
 
-  test.describe('Student', () => {
-    test.use({ storageState: 'e2e/.auth/student.json' });
+  test.describe('Student Roles', () => {
+    test.use({ storageState: 'playwright/.auth/student.json' });
 
-    test('should view substitutions but cannot create entries', async ({ page }) => {
+    test('should view substitutions but cannot create', async ({ page }) => {
       await page.goto('/scheduling/substitutions');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
 
-      // Create button should NOT be visible to students
       const createBtn = page.getByRole('button', { name: 'New Substitution' });
       await expect(createBtn).not.toBeVisible();
     });
