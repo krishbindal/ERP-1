@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { createClient } from '@/lib/supabase/server';
+import { BranchAccessError } from '../components/BranchAccessError';
+
 import { SubstitutionManager } from './components/SubstitutionManager';
 
 export default async function SubstitutionsPage(props: Readonly<{ searchParams: Promise<{ branchId?: string; view?: string; date?: string }> }>) {
@@ -12,18 +14,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
-  if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available.</div>;
-  if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch to view its scheduling structure.</div>;
-  if (errorState === 'ACCESS_DENIED' || !branchId || !isAuthorized) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">You do not have permission to view this branch&apos;s scheduling structure.</p>
-        </div>
-      </div>
-    );
-  }
+  if (errorState || !branchId || !isAuthorized) return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} />;
 
   const supabase = await createClient();
 

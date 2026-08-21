@@ -2,6 +2,8 @@ import { RoomsTable } from './components/RoomsTable';
 import { BellSchedulesTable } from './components/BellSchedulesTable';
 import { PeriodsTable } from './components/PeriodsTable';
 import { createClient } from '@/lib/supabase/server';
+import { BranchAccessError } from './components/BranchAccessError';
+
 import {  verifyPageBranchContext } from '@/lib/branch-context';
 import { Room, BellSchedule, Period } from './components/types';
 
@@ -14,18 +16,7 @@ export default async function SchedulingPage(props: { searchParams: Promise<{ ta
   
     const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
-  if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available.</div>;
-  if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch to view its scheduling structure.</div>;
-  if (errorState === 'ACCESS_DENIED' || !branchId || !isAuthorized) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">You do not have permission to view this branch&apos;s scheduling structure.</p>
-        </div>
-      </div>
-    );
-  }
+  if (errorState || !branchId || !isAuthorized) return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} />;
 
   let rooms: Room[] = [];
   let schedules: BellSchedule[] = [];
