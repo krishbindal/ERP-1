@@ -155,7 +155,12 @@ INSERT INTO public.rooms (id, branch_id, name, capacity, status)
 VALUES ('aaaaaaaa-5555-5555-5555-555555555556', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Room 102', 30, 'ACTIVE')
 ON CONFLICT DO NOTHING;
 
+-- Bell Schedule
+INSERT INTO public.bell_schedules (id, branch_id, name, status)
+VALUES ('aaaaaaaa-7777-7777-7777-777777777777', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Standard Bell Schedule', 'ACTIVE')
+ON CONFLICT DO NOTHING;
+
 -- Period
-INSERT INTO public.periods (id, branch_id, name, start_time, end_time, status)
-VALUES ('aaaaaaaa-6666-6666-6666-666666666666', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Period 1', '08:00', '09:00', 'ACTIVE')
+INSERT INTO public.periods (id, bell_schedule_id, branch_id, name, start_time, end_time, status)
+VALUES ('aaaaaaaa-6666-6666-6666-666666666666', 'aaaaaaaa-7777-7777-7777-777777777777', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Period 1', '08:00', '10:00', 'ACTIVE')
 ON CONFLICT DO NOTHING;
