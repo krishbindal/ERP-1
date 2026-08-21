@@ -11,13 +11,13 @@ test.describe('Scheduling Management', () => {
     await expect(page.getByRole('heading', { name: 'Scheduling' })).toBeVisible();
     
     // Check tabs
-    await expect(page.locator('text=Rooms')).toBeVisible();
-    await expect(page.locator('text=Bell Schedules')).toBeVisible();
-    await expect(page.locator('text=Periods')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Rooms' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Bell Schedules' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Periods' })).toBeVisible();
 
     // 2. Creates a room
     const uniqueRoomName = `Test Room ${randomUUID()}`;
-    await page.click('text=Rooms');
+    await page.getByRole('link', { name: 'Rooms' }).click();
     await page.click('button:has-text("Create Room")');
     await expect(page.locator('h2:has-text("New Room")')).toBeVisible();
     
@@ -44,7 +44,7 @@ test.describe('Scheduling Management', () => {
 
     // 5. Creates a bell schedule
     const uniqueScheduleName = `Test Schedule ${randomUUID()}`;
-    await page.click('text=Bell Schedules');
+    await page.getByRole('link', { name: 'Bell Schedules' }).click();
     await page.click('button:has-text("Create Bell Schedule")');
     await expect(page.locator('h2:has-text("New Bell Schedule")')).toBeVisible();
     
@@ -54,7 +54,7 @@ test.describe('Scheduling Management', () => {
     await expect(page.locator(`td:has-text("${uniqueScheduleName}")`)).toBeVisible();
 
     // 6. Creates periods
-    await page.click('text=Periods');
+    await page.getByRole('link', { name: 'Periods' }).click();
     await page.click('button:has-text("Create Period")');
     await expect(page.locator('h2:has-text("New Period")')).toBeVisible();
     
@@ -91,9 +91,9 @@ test.describe('Scheduling Security - Teacher Role', () => {
     
     // Create buttons should not be visible
     await expect(page.locator('button:has-text("Create Room")')).not.toBeVisible();
-    await page.click('text=Bell Schedules');
+    await page.getByRole('link', { name: 'Bell Schedules' }).click();
     await expect(page.locator('button:has-text("Create Bell Schedule")')).not.toBeVisible();
-    await page.click('text=Periods');
+    await page.getByRole('link', { name: 'Periods' }).click();
     await expect(page.locator('button:has-text("Create Period")')).not.toBeVisible();
   });
 });
