@@ -26,7 +26,12 @@ export function PeriodForm({ onClose, initialData, schedules, explicitBranchId }
       let result;
       if (initialData) {
         // Exclude bell_schedule_id from update payload, since periods belong strictly to the created schedule.
-        const { bell_schedule_id, ...updateData } = data;
+        const updateData = {
+          name: data.name,
+          start_time: data.start_time,
+          end_time: data.end_time,
+          status: data.status,
+        };
         result = await updatePeriod(initialData.id, updateData, explicitBranchId || undefined);
       } else {
         result = await createPeriod(data, explicitBranchId || undefined);

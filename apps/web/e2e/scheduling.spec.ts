@@ -82,12 +82,10 @@ test.describe('Scheduling Management', () => {
   });
 });
 
-test.describe('Scheduling Security & Roles', () => {
-  // Test Teacher read-only role
+test.describe('Scheduling Security - Teacher Role', () => {
+  test.use({ storageState: 'playwright/.auth/teacher.json' });
+
   test('Teacher cannot perform administrative mutations', async ({ page }) => {
-    // Assuming teacher auth state
-    test.use({ storageState: 'playwright/.auth/teacher.json' });
-    
     await page.goto('/scheduling');
     await expect(page.locator('h1')).toHaveText('Scheduling');
     
@@ -98,15 +96,16 @@ test.describe('Scheduling Security & Roles', () => {
     await page.click('text=Periods');
     await expect(page.locator('button:has-text("Create Period")')).not.toBeVisible();
   });
+});
 
-  // Cross-branch manipulation is tested via server action direct calling in Playwright, 
-  // or by navigating to another branch explicitly
-  test('Cross-branch manipulation is rejected', async ({ page, request }) => {
-    test.use({ storageState: 'playwright/.auth/branchadmin.json' });
+test.describe('Scheduling Security - Cross Branch', () => {
+  test.use({ storageState: 'playwright/.auth/branchadmin.json' });
+
+  test('Cross-branch manipulation is rejected', async ({ page }) => {
     // This assumes explicitBranchId behavior prevents non-authorized access
     // By passing an explicit branch id that is not theirs
     const invalidBranchId = randomUUID();
-    const res = await page.goto(`/scheduling?branchId=${invalidBranchId}`);
+    await page.goto(`/scheduling?branchId=${invalidBranchId}`);
     
     await expect(page.locator('text=You are not authorized to view this branch.')).toBeVisible();
   });
