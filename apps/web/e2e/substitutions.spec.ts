@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Substitutions Management', () => {
 
   test.describe('Branch Admin CRUD & Conflicts', () => {
-    test.use({ storageState: 'playwright/.auth/branchadmin.json' });
+    test.skip(({ projectName }) => projectName !== 'chromium-branchadmin', 'Only run once for Branch Admin');
 
     test('should manage substitutions and handle conflicts', async ({ page }) => {
 
@@ -109,7 +109,7 @@ test.describe('Substitutions Management', () => {
   });
 
   test.describe('Teacher Roles', () => {
-    test.use({ storageState: 'playwright/.auth/teacher.json' });
+    test.skip(({ projectName }) => projectName !== 'chromium-teacher', 'Only run once for Teacher');
 
     test('should view substitutions but cannot create', async ({ page }) => {
       await page.goto('/scheduling/substitutions');

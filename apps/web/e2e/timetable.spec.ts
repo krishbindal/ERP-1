@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Timetable Management', () => {
 
   test.describe('Branch Admin CRUD & Conflicts', () => {
-    test.use({ storageState: 'playwright/.auth/branchadmin.json' });
+    test.skip(({ projectName }) => projectName !== 'chromium-branchadmin', 'Only run once for Branch Admin');
 
     test('should manage timetable entries and handle conflicts', async ({ page }) => {
       await page.goto('/scheduling/timetable');
@@ -109,7 +109,7 @@ test.describe('Timetable Management', () => {
   });
 
   test.describe('Teacher Roles', () => {
-    test.use({ storageState: 'playwright/.auth/teacher.json' });
+    test.skip(({ projectName }) => projectName !== 'chromium-teacher', 'Only run once for Teacher');
 
     test('should view timetable but cannot create entries', async ({ page }) => {
       await page.goto('/scheduling/timetable');
