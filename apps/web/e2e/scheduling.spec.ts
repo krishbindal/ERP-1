@@ -107,6 +107,6 @@ test.describe('Scheduling Security - Cross Branch', () => {
     const invalidBranchId = randomUUID();
     await page.goto(`/scheduling?branchId=${invalidBranchId}`);
     
-    await expect(page.getByText('You are not authorized to view this branch.')).toBeVisible();
+    await expect(page.locator('text=Access Denied')).toBeVisible();
   });
 });
