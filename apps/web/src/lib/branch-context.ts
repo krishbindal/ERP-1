@@ -155,9 +155,6 @@ export function auth_has_branch_role(context: AppContext | null, branch: { id: s
 
 export async function getContextBranchId(explicitBranchId?: string): Promise<string> {
   const context = await getAppContext();
-  if (!context) throw new Error(" No context available.)
-export async function getContextBranchId(explicitBranchId?: string): Promise<string> {
-  const context = await getAppContext();
   if (!context) throw new Error("No context available.");
   
   if (context.type === 'superadmin') {
