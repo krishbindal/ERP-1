@@ -2,7 +2,7 @@ import { AcademicYearsTable } from './components/AcademicYearsTable';
 import { ClassesTable } from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
-import { getAppContext, auth_has_org_access } from '@/lib/branch-context';
+import { getAppContext, verifyPageBranchContext } from '@/lib/branch-context';
 import { AcademicYear, ClassWithYear, SectionWithClass } from './components/types';
 
 export default async function AcademicStructurePage(props: { searchParams: Promise<{ tab?: string; branchId?: string }> }) {
@@ -11,40 +11,11 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   const explicitBranchId = searchParams.branchId;
   
   const supabase = await createClient();
-  const context = await getAppContext();
+  const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
-  if (!context) {
-    return <div className="text-gray-500">No context available.</div>;
-  }
-
-  const branchId = context.type === 'normal' ? context.branchId : explicitBranchId;
-
-  if (!branchId) {
-    if (context.type === 'superadmin') {
-      return <div className="text-gray-500">Please select a branch to view its academic structure.</div>;
-    }
-    return <div className="text-gray-500">No branch context. Ensure you are accessing a valid branch application.</div>;
-  }
-
-  // Authorize Super Admin cross-branch access
-  let isAuthorized = false;
-  let isReadOnly = true;
-
-  if (context.type === 'superadmin') {
-    const { data: branch } = await supabase.from('branches').select('name, organization_id').eq('id', branchId).single();
-    if (branch && auth_has_org_access(context, branch.organization_id)) {
-      isAuthorized = true;
-      isReadOnly = false; // Super Admins can edit
-    }
-  } else if (context.type === 'normal') {
-    if (explicitBranchId && explicitBranchId !== context.branchId) {
-      return <div className="text-red-500">You are not authorized to view this branch.</div>;
-    }
-    isAuthorized = true; // all normal users can VIEW their branch academic structure
-    isReadOnly = !context.roles.includes('branchadmin');
-  }
-
-  if (!isAuthorized) {
+  if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available.</div>;
+  if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch to view its academic structure.</div>;
+  if (errorState === 'ACCESS_DENIED' || !branchId || !isAuthorized) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">

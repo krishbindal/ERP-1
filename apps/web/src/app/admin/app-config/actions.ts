@@ -14,39 +14,7 @@ export type AppConfigPayload = {
   support_contact?: string;
 };
 
-async function getContextBranchId(explicitBranchId?: string) {
-  const context = await getAppContext();
-  if (!context) throw new Error("No context available.");
-  
-  if (context.type === 'superadmin') {
-    if (!explicitBranchId) {
-      throw new Error("Super Admins must explicitly provide a branch ID.");
-    }
-    // Verify branch belongs to superadmin's org
-    const supabase = await createClient();
-    const { data: branch, error } = await supabase
-      .from('branches')
-      .select('organization_id')
-      .eq('id', explicitBranchId)
-      .single();
-    if (error || !branch) throw new Error("Branch not found or inaccessible.");
-    if (!auth_has_org_access(context, branch.organization_id)) {
-      throw new Error("Branch does not belong to your organization.");
-    }
-    return explicitBranchId;
-  }
-  
-  if (context.type === 'normal') {
-    if (!context.roles.includes('branchadmin')) {
-      throw new Error("Unauthorized. Only Branch Admins can modify app configuration.");
-    }
-    if (explicitBranchId && explicitBranchId !== context.branchId) {
-      throw new Error("Normal users cannot target arbitrary branches.");
-    }
-    return context.branchId;
-  }
-  throw new Error("Unknown context type.");
-}
+
 
 export async function getBranchAppConfig(explicitBranchId?: string) {
   const supabase = await createClient();
@@ -102,4 +70,5 @@ export async function updateBranchAppConfig(payload: AppConfigPayload, explicitB
   revalidatePath('/admin/app-config');
   return { success: true };
 }
+
 

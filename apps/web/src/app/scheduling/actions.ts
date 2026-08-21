@@ -4,37 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 import { auth_has_org_access } from '@/lib/branch-context';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
-import { getAppContext } from '@/lib/branch-context';
+import { getAppContext, getContextBranchId } from '@/lib/branch-context';
 
-async function getContextBranchId(explicitBranchId?: string) {
-  const context = await getAppContext();
-  if (!context) throw new Error("No context available.");
-  
-  if (context.type === 'superadmin') {
-    if (!explicitBranchId) {
-      throw new Error("Super Admins must explicitly provide a branch ID.");
-    }
-    const supabase = await createClient();
-    const { data: branch, error } = await supabase
-      .from('branches')
-      .select('organization_id')
-      .eq('id', explicitBranchId)
-      .single();
-    if (error || !branch) throw new Error("Branch not found or inaccessible.");
-    if (!auth_has_org_access(context, branch.organization_id)) {
-      throw new Error("Branch does not belong to your organization.");
-    }
-    return explicitBranchId;
-  }
-  
-  if (context.type === 'normal') {
-    if (explicitBranchId && explicitBranchId !== context.branchId) {
-      throw new Error("Normal users cannot target arbitrary branches.");
-    }
-    return context.branchId;
-  }
-  throw new Error("Unknown context type.");
-}
+
 
 // Rooms
 export async function createRoom(data: { name: string; capacity: number; status: string }, explicitBranchId?: string) {
@@ -181,3 +153,4 @@ export async function getBellSchedules(explicitBranchId?: string) {
   if (error) return { error: mapDatabaseError(error) };
   return { data };
 }
+

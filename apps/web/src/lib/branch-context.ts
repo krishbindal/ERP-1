@@ -152,3 +152,76 @@ export function auth_has_branch_role(context: AppContext | null, branch: { id: s
          context.organizationId === branch.organization_id && 
          context.roles.includes(roleName);
 }
+
+export async function getContextBranchId(explicitBranchId?: string): Promise<string> {
+  const context = await getAppContext();
+  if (!context) throw new Error(" No context available.)
+export async function getContextBranchId(explicitBranchId?: string): Promise<string> {
+  const context = await getAppContext();
+  if (!context) throw new Error("No context available.");
+  
+  if (context.type === 'superadmin') {
+    if (!explicitBranchId) {
+      throw new Error("Super Admins must explicitly provide a branch ID.");
+    }
+    const supabase = await createClient();
+    const { data: branch, error } = await supabase
+      .from('branches')
+      .select('organization_id')
+      .eq('id', explicitBranchId)
+      .single();
+    if (error || !branch) throw new Error("Branch not found or inaccessible.");
+    if (!auth_has_org_access(context, branch.organization_id)) {
+      throw new Error("Branch does not belong to your organization.");
+    }
+    return explicitBranchId;
+  }
+  
+  if (context.type === 'normal') {
+    if (explicitBranchId && explicitBranchId !== context.branchId) {
+      throw new Error("Normal users cannot target arbitrary branches.");
+    }
+    return context.branchId;
+  }
+  throw new Error("Unknown context type.");
+}
+
+export async function verifyPageBranchContext(explicitBranchId: string | undefined): Promise<{ 
+  branchId: string | null; 
+  isAuthorized: boolean; 
+  isReadOnly: boolean; 
+  errorState: 'NO_CONTEXT' | 'NO_BRANCH_SELECTED' | 'ACCESS_DENIED' | null;
+}> {
+  const context = await getAppContext();
+  if (!context) return { branchId: null, isAuthorized: false, isReadOnly: true, errorState: 'NO_CONTEXT' };
+
+  const branchId = context.type === 'normal' ? context.branchId : explicitBranchId || null;
+  if (!branchId) {
+    if (context.type === 'superadmin') return { branchId: null, isAuthorized: false, isReadOnly: true, errorState: 'NO_BRANCH_SELECTED' };
+    return { branchId: null, isAuthorized: false, isReadOnly: true, errorState: 'NO_CONTEXT' };
+  }
+
+  if (context.type === 'superadmin') {
+    const supabase = await createClient();
+    const { data: branch } = await supabase.from('branches').select('organization_id').eq('id', branchId).single();
+    if (branch && auth_has_org_access(context, branch.organization_id)) {
+      return { branchId, isAuthorized: true, isReadOnly: false, errorState: null };
+    } else {
+       return { branchId, isAuthorized: false, isReadOnly: true, errorState: 'ACCESS_DENIED' };
+    }
+  } 
+  
+  if (context.type === 'normal') {
+    if (explicitBranchId && explicitBranchId !== context.branchId) {
+      return { branchId, isAuthorized: false, isReadOnly: true, errorState: 'ACCESS_DENIED' };
+    }
+    return { 
+      branchId, 
+      isAuthorized: true, 
+      isReadOnly: !context.roles.includes('branchadmin'), 
+      errorState: null 
+    };
+  }
+
+  return { branchId: null, isAuthorized: false, isReadOnly: true, errorState: 'ACCESS_DENIED' };
+}
