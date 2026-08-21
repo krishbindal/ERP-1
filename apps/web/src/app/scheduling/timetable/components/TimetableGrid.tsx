@@ -154,18 +154,12 @@ export function TimetableGrid({ entries, periods, isReadOnly, onEntryClick }: Pr
                       className="absolute w-full px-1 py-0.5"
                       style={{ top, height }}
                     >
-                      <div 
-                        tabIndex={!isReadOnly && onEntryClick ? 0 : undefined}
-                        onKeyDown={(e) => {
-                          if (!isReadOnly && onEntryClick && (e.key === 'Enter' || e.key === ' ')) {
-                            e.preventDefault();
-                            onEntryClick(entry);
-                          }
-                        }}
+                      <button
+                        type="button"
                         onClick={() => {
                           if (!isReadOnly && onEntryClick) onEntryClick(entry);
                         }}
-                        className={`border-l-4 h-full w-full rounded shadow-sm p-1 text-xs overflow-hidden leading-tight hover:shadow-md transition-shadow ${!isReadOnly && onEntryClick ? 'cursor-pointer' : ''} ${bgClass}`}
+                        className={`text-left border-l-4 h-full w-full rounded shadow-sm p-1 text-xs overflow-hidden leading-tight hover:shadow-md transition-shadow ${!isReadOnly && onEntryClick ? 'cursor-pointer' : 'cursor-default'} ${bgClass}`}
                       >
                         <div className="font-semibold truncate">
                           {isSub && <span className="text-orange-600 mr-1 font-bold">[SUB]</span>}
@@ -174,7 +168,7 @@ export function TimetableGrid({ entries, periods, isReadOnly, onEntryClick }: Pr
                         <div className="truncate text-gray-600">{teacherName}</div>
                         <div className="truncate text-gray-500 mt-0.5">{entry.rooms?.name}</div>
                         <div className="truncate font-medium text-gray-600 mt-1">{entry.classes?.name} - {entry.sections?.name}</div>
-                      </div>
+                      </button>
                     </div>
                   );
                 })}

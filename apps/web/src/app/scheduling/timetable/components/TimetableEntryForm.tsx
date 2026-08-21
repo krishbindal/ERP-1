@@ -58,7 +58,7 @@ export function TimetableEntryForm({
       room_id: formData.get('room_id') as string,
       staff_branch_profile_id: formData.get('staff_branch_profile_id') as string,
       day_of_week: parseInt(formData.get('day_of_week') as string, 10),
-      status: formData.get('status') as string,
+      status: formData.get('status') as string || 'ACTIVE',
     };
 
     try {
