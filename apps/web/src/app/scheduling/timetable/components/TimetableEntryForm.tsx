@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createTimetableEntry, updateTimetableEntry } from '../actions';
+import { TeacherSelect } from "../../components/TeacherSelect";
 import { DrawerForm } from '@/app/academic-structure/components/DrawerForm';
 import { TimetableEntry, Period } from './TimetableGrid';
 
@@ -139,21 +140,7 @@ export function TimetableEntryForm({
               </select>
             </div>
 
-            <div>
-              <label htmlFor="staff_branch_profile_id" className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
-              <select id="staff_branch_profile_id" name="staff_branch_profile_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.staff_branch_profile_id || ''}>
-                <option value="">Select Teacher...</option>
-                {teachers.map(t => {
-                  let name = 'Unknown';
-                  if (t.staff) {
-                    name = Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`;
-                  }
-                  return (
-                    <option key={t.id} value={t.id}>{name}</option>
-                  );
-                })}
-              </select>
-            </div>
+            <TeacherSelect teachers={teachers} id="staff_branch_profile_id" name="staff_branch_profile_id" label="Teacher" defaultValue={initialData?.staff_branch_profile_id || ''} />
 
             <div>
               <label htmlFor="room_id" className="block text-sm font-medium text-gray-700 mb-1">Room</label>
