@@ -15,7 +15,7 @@ test.describe('Timetable Management', () => {
       
       await page.locator('select[name="class_id"]').selectOption({ index: 1 });
       // wait a moment for sections to filter
-      await page.waitForTimeout(500); 
+      await page.waitForLoadState('networkidle'); 
       await page.locator('select[name="section_id"]').selectOption({ index: 1 });
       await page.locator('select[name="subject_id"]').selectOption({ index: 1 });
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ index: 1 });
@@ -45,7 +45,7 @@ test.describe('Timetable Management', () => {
       // 5. Conflict 1: Section Double-Booking
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption({ index: 1 });
-      await page.waitForTimeout(500); 
+      await page.waitForLoadState('networkidle'); 
       await page.locator('select[name="section_id"]').selectOption({ index: 1 }); // Same section
       await page.locator('select[name="subject_id"]').selectOption({ index: 2 });
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ index: 2 });
@@ -61,7 +61,7 @@ test.describe('Timetable Management', () => {
       // 4. Conflict 2: Teacher Double-Booking
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption({ index: 2 });
-      await page.waitForTimeout(500); 
+      await page.waitForLoadState('networkidle'); 
       await page.locator('select[name="section_id"]').selectOption({ index: 1 }); // Diff section
       await page.locator('select[name="subject_id"]').selectOption({ index: 2 });
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ index: 1 }); // Same teacher
@@ -77,7 +77,7 @@ test.describe('Timetable Management', () => {
       // 5. Conflict 3: Room Double-Booking
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption({ index: 2 });
-      await page.waitForTimeout(500); 
+      await page.waitForLoadState('networkidle'); 
       await page.locator('select[name="section_id"]').selectOption({ index: 1 }); 
       await page.locator('select[name="subject_id"]').selectOption({ index: 2 });
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ index: 2 });

@@ -73,8 +73,8 @@ export default async function TimetablePage(props: { searchParams: Promise<{ bra
         
         <form className="flex items-center gap-2">
           <input type="hidden" name="branchId" value={branchId} />
-          <label className="text-sm font-medium text-gray-700">View:</label>
-          <select name="view" defaultValue={view} className="border border-gray-300 rounded-md p-2 text-sm">
+          <label htmlFor="view" className="text-sm font-medium text-gray-700">View:</label>
+          <select id="view" name="view" defaultValue={view} className="border border-gray-300 rounded-md p-2 text-sm">
             <option value="section">By Section</option>
             <option value="teacher">By Teacher</option>
             <option value="room">By Room</option>

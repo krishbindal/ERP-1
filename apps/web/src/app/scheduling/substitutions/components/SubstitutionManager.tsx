@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { TimetableGrid, TimetableEntry, Period } from '../../timetable/components/TimetableGrid';
 import { SubstitutionForm, Room, Teacher } from './SubstitutionForm';
 
-interface Props {
+type Props = Readonly<{
   branchId: string;
   entries: TimetableEntry[];
   periods: Period[];
@@ -13,7 +13,7 @@ interface Props {
   teachers: Teacher[];
   selectedDate: string;
   isReadOnly: boolean;
-}
+}>;
 
 export function SubstitutionManager({
   branchId,

@@ -21,13 +21,13 @@ export interface Teacher {
   }[];
 }
 
-interface Props {
+type Props = Readonly<{
   branchId: string;
   canonicalEntries: TimetableEntry[];
   rooms: Room[];
   teachers: Teacher[];
   selectedDate: string;
-}
+}>;
 
 export function SubstitutionForm({
   branchId,
@@ -103,8 +103,8 @@ export function SubstitutionForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Canonical Target Entry</label>
-              <select name="timetable_entry_id" className="w-full border border-gray-300 rounded-md p-2" required>
+              <label htmlFor="timetable_entry_id" className="block text-sm font-medium text-gray-700 mb-1">Canonical Target Entry</label>
+              <select id="timetable_entry_id" name="timetable_entry_id" className="w-full border border-gray-300 rounded-md p-2" required>
                 <option value="">Select entry...</option>
                 {canonicalEntries.map(e => (
                   <option key={e.id} value={e.id}>
@@ -115,8 +115,8 @@ export function SubstitutionForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Substitute Teacher</label>
-              <select name="substitute_staff_id" className="w-full border border-gray-300 rounded-md p-2" required>
+              <label htmlFor="substitute_staff_id" className="block text-sm font-medium text-gray-700 mb-1">Substitute Teacher</label>
+              <select id="substitute_staff_id" name="substitute_staff_id" className="w-full border border-gray-300 rounded-md p-2" required>
                 <option value="">Select a teacher...</option>
                 {teachers.map(t => {
                   const name = t.staff ? (Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`) : 'Unknown';
@@ -128,8 +128,8 @@ export function SubstitutionForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Substitute Room (Optional)</label>
-              <select name="substitute_room_id" className="w-full border border-gray-300 rounded-md p-2">
+              <label htmlFor="substitute_room_id" className="block text-sm font-medium text-gray-700 mb-1">Substitute Room (Optional)</label>
+              <select id="substitute_room_id" name="substitute_room_id" className="w-full border border-gray-300 rounded-md p-2">
                 <option value="">-- No Room Change --</option>
                 {rooms.map(r => (
                   <option key={r.id} value={r.id}>{r.name}</option>

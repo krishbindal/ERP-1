@@ -57,7 +57,7 @@ export function TimetableEntryForm({
       period_id: formData.get('period_id') as string,
       room_id: formData.get('room_id') as string,
       staff_branch_profile_id: formData.get('staff_branch_profile_id') as string,
-      day_of_week: parseInt(formData.get('day_of_week') as string, 10),
+      day_of_week: Number.Number.parseInt(formData.get('day_of_week') as string, 10),
       status: formData.get('status') as string || 'ACTIVE',
     };
 
@@ -120,8 +120,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-              <select name="section_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.section_id || ''}>
+              <label htmlFor="section_id" className="block text-sm font-medium text-gray-700 mb-1">Section</label>
+              <select id="section_id" name="section_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.section_id || ''}>
                 <option value="">Select a section...</option>
                 {filteredSections.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -130,8 +130,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-              <select name="subject_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.subject_id || ''}>
+              <label htmlFor="subject_id" className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+              <select id="subject_id" name="subject_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.subject_id || ''}>
                 <option value="">Select a subject...</option>
                 {subjects.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -140,8 +140,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
-              <select name="staff_branch_profile_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.staff_branch_profile_id || ''}>
+              <label htmlFor="staff_branch_profile_id" className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
+              <select id="staff_branch_profile_id" name="staff_branch_profile_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.staff_branch_profile_id || ''}>
                 <option value="">Select Teacher...</option>
                 {teachers.map(t => {
                   const name = t.staff ? (Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`) : 'Unknown';
@@ -153,8 +153,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-              <select name="room_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.room_id || ''}>
+              <label htmlFor="room_id" className="block text-sm font-medium text-gray-700 mb-1">Room</label>
+              <select id="room_id" name="room_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.room_id || ''}>
                 <option value="">Select a room...</option>
                 {rooms.map(r => (
                   <option key={r.id} value={r.id}>{r.name}</option>
@@ -163,8 +163,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Period</label>
-              <select name="period_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.period_id || ''}>
+              <label htmlFor="period_id" className="block text-sm font-medium text-gray-700 mb-1">Period</label>
+              <select id="period_id" name="period_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.period_id || ''}>
                 <option value="">Select a period...</option>
                 {periods.map(p => (
                   <option key={p.id} value={p.id}>{p.name} ({p.start_time} - {p.end_time})</option>
@@ -173,8 +173,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Day of Week</label>
-              <select name="day_of_week" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.day_of_week || ''}>
+              <label htmlFor="day_of_week" className="block text-sm font-medium text-gray-700 mb-1">Day of Week</label>
+              <select id="day_of_week" name="day_of_week" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.day_of_week || ''}>
                 <option value="">Select a day...</option>
                 <option value="1">Monday</option>
                 <option value="2">Tuesday</option>

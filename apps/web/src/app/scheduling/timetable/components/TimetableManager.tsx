@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { TimetableGrid, TimetableEntry, Period } from './TimetableGrid';
 import { TimetableEntryForm } from './TimetableEntryForm';
 
-interface Props {
+type Props = Readonly<{
   branchId: string;
   entries: TimetableEntry[];
   periods: Period[];
@@ -14,7 +14,7 @@ interface Props {
   subjects: { id: string; name: string }[];
   teachers: { id: string; staff?: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] }[];
   isReadOnly: boolean;
-}
+}>;
 
 export function TimetableManager({
   branchId,

@@ -30,12 +30,12 @@ export interface TimetableEntry {
   status?: string;
 }
 
-interface Props {
+type Props = Readonly<{
   entries: TimetableEntry[];
   periods: Period[];
   isReadOnly?: boolean;
   onEntryClick?: (entry: TimetableEntry) => void;
-}
+}>;
 
 const DAYS = [
   { id: 1, name: 'Monday' },

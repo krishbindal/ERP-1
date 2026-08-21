@@ -102,8 +102,8 @@ export default async function SubstitutionsPage(props: { searchParams: Promise<{
         <form className="flex items-center gap-2">
           <input type="hidden" name="branchId" value={branchId} />
           <input type="hidden" name="view" value={view} />
-          <label className="text-sm font-medium text-gray-700">Date:</label>
-          <input 
+          <label htmlFor="date" className="text-sm font-medium text-gray-700">Date:</label>
+          <input id="date" 
             type="date" 
             name="date" 
             defaultValue={selectedDate} 
