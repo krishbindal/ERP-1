@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { TimetableGrid } from '../timetable/components/TimetableGrid';
-import { SubstitutionForm } from './components/SubstitutionForm';
+import { TimetableGrid } from '../../timetable/components/TimetableGrid';
+import { SubstitutionForm } from './SubstitutionForm';
 
 interface Props {
   branchId: string;
