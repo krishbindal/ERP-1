@@ -156,6 +156,8 @@ export function TimetableGrid({ entries, periods, isReadOnly, onEntryClick }: Pr
                     >
                       <button
                         type="button"
+                        data-testid="timetable-entry"
+                        data-day={entry.day_of_week}
                         onClick={() => {
                           if (!isReadOnly && onEntryClick) onEntryClick(entry);
                         }}

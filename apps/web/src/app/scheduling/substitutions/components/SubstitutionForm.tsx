@@ -51,7 +51,7 @@ export function SubstitutionForm({
       timetable_entry_id: formData.get('timetable_entry_id') as string,
       substitution_date: formData.get('substitution_date') as string,
       substitute_staff_id: formData.get('substitute_staff_id') as string,
-      substitute_room_id: formData.get('substitute_room_id') as string || null,
+      substitute_room_id: (formData.get('substitute_room_id') as string) || undefined,
       reason: formData.get('reason') as string,
     };
 

@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { verifyPageBranchContext } from '@/lib/branch-context';
-import { createClient } from '@/lib/supabase/server';
 import { BranchAccessError } from '../components/BranchAccessError';
+import { fetchSchedulingPageData } from '../lib/page-data';
 
 import { TimetableManager } from './components/TimetableManager';
 
@@ -15,49 +15,11 @@ export default async function TimetablePage(props: Readonly<{ searchParams: Prom
 
   if (errorState || !branchId || !isAuthorized) return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} />;
 
-  const supabase = await createClient();
+  const { supabase, academicYearId, entriesData, periods, rooms, teachers } = await fetchSchedulingPageData(branchId);
 
-  const { data: activeYear } = await supabase
-    .from('academic_years')
-    .select('id')
-    .eq('branch_id', branchId)
-    .eq('status', 'ACTIVE')
-    .single();
-
-  const academicYearId = activeYear?.id;
-
-  // Fetch all canonical timetable entries for the branch & academic year
-  const { data: entriesData } = await supabase
-    .from('timetable_entries')
-    .select(`
-      *,
-      classes ( name ),
-      sections ( name ),
-      subjects ( name ),
-      periods ( name, start_time, end_time ),
-      rooms ( name ),
-      staff_branch_profiles (
-        staff ( first_name, last_name )
-      )
-    `)
-    .eq('branch_id', branchId)
-    .eq('academic_year_id', academicYearId)
-    .eq('status', 'ACTIVE');
-
-  // We need to fetch necessary lookups for the form
-  const { data: periods } = await supabase.from('periods').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('start_time');
-  const { data: rooms } = await supabase.from('rooms').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('name');
   const { data: classes } = await supabase.from('classes').select('*').eq('branch_id', branchId).eq('academic_year_id', academicYearId).order('name');
   const { data: sections } = await supabase.from('sections').select('*').eq('branch_id', branchId).eq('academic_year_id', academicYearId).order('name');
   const { data: subjects } = await supabase.from('subjects').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('name');
-  const { data: teachers } = await supabase
-    .from('staff_branch_profiles')
-    .select(`
-      id,
-      staff ( first_name, last_name )
-    `)
-    .eq('branch_id', branchId)
-    .eq('status', 'ACTIVE');
 
   return (
     <div className="space-y-6">
