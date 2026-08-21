@@ -104,9 +104,9 @@ export function TimetableEntryForm({
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-              <select 
-                name="class_id" 
+              <label htmlFor="class_id" className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+                <select id="class_id"
+                  name="class_id" 
                 className="w-full border border-gray-300 rounded-md p-2" 
                 required 
                 defaultValue={selectedClassId}

@@ -2,7 +2,7 @@ import { verifyPageBranchContext } from '@/lib/branch-context';
 import { createClient } from '@/lib/supabase/server';
 import { TimetableManager } from './components/TimetableManager';
 
-export default async function TimetablePage(props: { searchParams: Promise<{ branchId?: string; view?: string }> }) {
+export default async function TimetablePage(props: Readonly<{ searchParams: Promise<{ branchId?: string; view?: string }> }>) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
   const view = searchParams.view || 'section';

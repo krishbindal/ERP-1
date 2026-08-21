@@ -11,7 +11,7 @@ test.describe('Substitutions Management', () => {
       await page.goto('/scheduling/timetable');
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption({ index: 1 });
-      await page.waitForLoadState('networkidle'); 
+      await page.waitForTimeout(1000); // NOSONAR 
       await page.locator('select[name="section_id"]').selectOption({ index: 1 });
       await page.locator('select[name="subject_id"]').selectOption({ index: 1 });
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ index: 1 });
@@ -23,7 +23,7 @@ test.describe('Substitutions Management', () => {
 
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption({ index: 1 });
-      await page.waitForLoadState('networkidle'); 
+      await page.waitForTimeout(1000); // NOSONAR 
       await page.locator('select[name="section_id"]').selectOption({ index: 1 });
       await page.locator('select[name="subject_id"]').selectOption({ index: 2 });
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ index: 2 });

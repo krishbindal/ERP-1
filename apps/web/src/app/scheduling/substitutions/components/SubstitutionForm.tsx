@@ -92,8 +92,8 @@ export function SubstitutionForm({
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input 
+              <label htmlFor="substitution_date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input id="substitution_date"
                 type="date"
                 name="substitution_date" 
                 className="w-full border border-gray-300 rounded-md p-2" 
@@ -138,8 +138,8 @@ export function SubstitutionForm({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reason (Optional)</label>
-              <input 
+              <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">Reason (Optional)</label>
+              <input id="reason"
                 type="text"
                 name="reason" 
                 className="w-full border border-gray-300 rounded-md p-2" 
