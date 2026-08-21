@@ -21,7 +21,7 @@ test.describe('Timetable Management', () => {
   test.describe('Branch Admin CRUD & Conflicts', () => {
     test.beforeEach(async ({}, testInfo) => {
       test.skip(testInfo.project.name !== 'chromium-branchadmin',
-        'Mutation tests run only on chromium-branchadmin to prevent data collisions');
+        'Expected role-scope skip');
     });
 
     test('should manage timetable entries and handle conflicts', async ({ page }) => {
@@ -169,7 +169,7 @@ test.describe('Timetable Management', () => {
   test.describe('Teacher Roles', () => {
     test.beforeEach(async ({}, testInfo) => {
       test.skip(testInfo.project.name !== 'chromium-teacher',
-        'Teacher role test runs only on chromium-teacher');
+        'Expected role-scope skip');
     });
 
     test('should view timetable but cannot create entries', async ({ page }) => {
