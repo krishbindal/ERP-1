@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { User, LogOut, BookOpen, Users, LayoutDashboard } from "lucide-react";
+import { User, LogOut, BookOpen, Users, LayoutDashboard, CalendarDays, CalendarSync, Clock } from "lucide-react";
 
 export function Sidebar() {
   return (
@@ -25,6 +25,24 @@ export function Sidebar() {
             <Link href="/students" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-800 text-sm font-medium">
               <Users size={18} />
               Students
+            </Link>
+          </li>
+          <li>
+            <Link href="/scheduling" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-800 text-sm font-medium">
+              <CalendarDays size={18} />
+              Scheduling Configuration
+            </Link>
+          </li>
+          <li>
+            <Link href="/scheduling/timetable" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-800 text-sm font-medium">
+              <CalendarSync size={18} />
+              Timetable
+            </Link>
+          </li>
+          <li>
+            <Link href="/scheduling/substitutions" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-800 text-sm font-medium">
+              <Clock size={18} />
+              Substitutions
             </Link>
           </li>
         </ul>
