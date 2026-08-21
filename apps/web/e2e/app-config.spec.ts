@@ -43,7 +43,7 @@ test.describe('App Config Admin Tests', () => {
     await page.goto('/admin/app-config');
     
     // Initial state: super admin has no branch selected
-    await expect(page.locator('text=Please select a branch to view its configuration.')).toBeVisible();
+    await expect(page.locator('text=Please select a branch to view its app config.')).toBeVisible();
     
     // Select a branch from the global selector
     await page.getByRole('combobox', { name: 'Branch' }).selectOption({ index: 1 });

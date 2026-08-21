@@ -9,6 +9,7 @@ import {  getContextBranchId } from '@/lib/branch-context';
 
 // Academic Years
 export async function createAcademicYear(data: { name: string; start_date: string; end_date: string; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -22,6 +23,7 @@ export async function createAcademicYear(data: { name: string; start_date: strin
 }
 
 export async function updateAcademicYear(id: string, data: { name: string; start_date: string; end_date: string; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -34,6 +36,7 @@ export async function updateAcademicYear(id: string, data: { name: string; start
 }
 
 export async function deleteAcademicYear(id: string, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -47,6 +50,7 @@ export async function deleteAcademicYear(id: string, explicitBranchId?: string) 
 
 // Classes
 export async function createClass(data: { academic_year_id: string; name: string; level: number }, explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -60,6 +64,7 @@ export async function createClass(data: { academic_year_id: string; name: string
 }
 
 export async function updateClass(id: string, data: { name: string; level: number }, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -72,6 +77,7 @@ export async function updateClass(id: string, data: { name: string; level: numbe
 }
 
 export async function deleteClass(id: string, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -85,6 +91,7 @@ export async function deleteClass(id: string, explicitBranchId?: string) {
 
 // Sections
 export async function createSection(data: { class_id: string; name: string; capacity: number }, explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -98,6 +105,7 @@ export async function createSection(data: { class_id: string; name: string; capa
 }
 
 export async function updateSection(id: string, data: { name: string; capacity: number }, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -110,6 +118,7 @@ export async function updateSection(id: string, data: { name: string; capacity: 
 }
 
 export async function deleteSection(id: string, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -122,6 +131,7 @@ export async function deleteSection(id: string, explicitBranchId?: string) {
 }
 
 export async function getAcademicYears(explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -134,6 +144,7 @@ export async function getAcademicYears(explicitBranchId?: string) {
 }
 
 export async function getClasses(explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);

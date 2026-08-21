@@ -6,11 +6,11 @@ export default async function AppConfigPage(props: { searchParams: Promise<{ bra
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
 
-    const { branchId, isAuthorized, errorState } = await verifyPageBranchContext(explicitBranchId);
+    const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
   if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available.</div>;
   if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch to view its app config.</div>;
-  if (errorState === 'ACCESS_DENIED' || !branchId || !isAuthorized) {
+  if (errorState === 'ACCESS_DENIED' || !branchId || !isAuthorized || isReadOnly) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -43,7 +43,7 @@ export default async function AppConfigPage(props: { searchParams: Promise<{ bra
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Branch App Configuration</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Manage the mobile app configuration for {branchName}.
+          Manage the mobile app configuration for this branch.
         </p>
       </div>
 

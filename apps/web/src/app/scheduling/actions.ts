@@ -9,6 +9,7 @@ import {  getContextBranchId } from '@/lib/branch-context';
 
 // Rooms
 export async function createRoom(data: { name: string; capacity: number; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -22,6 +23,7 @@ export async function createRoom(data: { name: string; capacity: number; status:
 }
 
 export async function updateRoom(id: string, data: { name: string; capacity: number; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -34,6 +36,7 @@ export async function updateRoom(id: string, data: { name: string; capacity: num
 }
 
 export async function deleteRoom(id: string, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -47,6 +50,7 @@ export async function deleteRoom(id: string, explicitBranchId?: string) {
 
 // Bell Schedules
 export async function createBellSchedule(data: { name: string; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -60,6 +64,7 @@ export async function createBellSchedule(data: { name: string; status: string },
 }
 
 export async function updateBellSchedule(id: string, data: { name: string; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -72,6 +77,7 @@ export async function updateBellSchedule(id: string, data: { name: string; statu
 }
 
 export async function deleteBellSchedule(id: string, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -85,6 +91,7 @@ export async function deleteBellSchedule(id: string, explicitBranchId?: string) 
 
 // Periods
 export async function createPeriod(data: { bell_schedule_id: string; name: string; start_time: string; end_time: string; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -103,6 +110,7 @@ export async function createPeriod(data: { bell_schedule_id: string; name: strin
 }
 
 export async function updatePeriod(id: string, data: { name: string; start_time: string; end_time: string; status: string }, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -120,6 +128,7 @@ export async function updatePeriod(id: string, data: { name: string; start_time:
 }
 
 export async function deletePeriod(id: string, explicitBranchId?: string) {
+  const supabase = await createClient();
     try {
     await getContextBranchId(explicitBranchId);
   } catch (e) {
@@ -132,6 +141,7 @@ export async function deletePeriod(id: string, explicitBranchId?: string) {
 }
 
 export async function getBellSchedules(explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
