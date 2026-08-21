@@ -31,11 +31,6 @@ test.describe('Substitutions Management', () => {
       // Cancel any leftover substitutions from previous failed runs
       for (const date of ['2026-08-19', '2026-08-20']) {
         await page.goto(`/scheduling/substitutions?date=${date}`);
-        let subCount = await page.locator('[data-testid="timetable-entry"][data-day="3"], [data-testid="timetable-entry"][data-day="4"]').locator('.bg-orange-50, [class*="bg-orange-50"]').count();
-        // If there are orange substitution entries, the timetable-entry with bg-orange is a substitution
-        // Actually substitutions and canonical entries both render through TimetableGrid with data-testid="timetable-entry"
-        // Substitution entries have bg-orange-50, canonical have bg-blue-50
-        // For cleanup, we need to check the substitutions page for any active subs
         const orangeCards = page.locator('.bg-orange-50');
         let orangeCount = await orangeCards.count();
         while (orangeCount > 0) {
