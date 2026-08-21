@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { verifyPageBranchContext } from '@/lib/branch-context';
-import { createClient } from '@/lib/supabase/server';
 import { BranchAccessError } from '../components/BranchAccessError';
+import { fetchSchedulingPageData } from '../lib/page-data';
 
 import { SubstitutionManager } from './components/SubstitutionManager';
 
@@ -16,36 +16,9 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
 
   if (errorState || !branchId || !isAuthorized) return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} />;
 
-  const supabase = await createClient();
+  const { supabase, academicYearId, entriesData, periods, rooms, teachers } = await fetchSchedulingPageData(branchId);
 
-  const { data: activeYear } = await supabase
-    .from('academic_years')
-    .select('id')
-    .eq('branch_id', branchId)
-    .eq('status', 'ACTIVE')
-    .single();
-
-  const academicYearId = activeYear?.id;
-
-  // 1. Fetch canonical timetable entries
-  const { data: entriesData } = await supabase
-    .from('timetable_entries')
-    .select(`
-      *,
-      classes ( name ),
-      sections ( name ),
-      subjects ( name ),
-      periods ( name, start_time, end_time ),
-      rooms ( name ),
-      staff_branch_profiles (
-        staff ( first_name, last_name )
-      )
-    `)
-    .eq('branch_id', branchId)
-    .eq('academic_year_id', academicYearId)
-    .eq('status', 'ACTIVE');
-
-  // 2. Fetch active substitutions for the selected date
+  // Fetch active substitutions for the selected date
   const { data: subsData } = await supabase
     .from('timetable_substitutions')
     .select(`
@@ -60,7 +33,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
     .eq('substitution_date', selectedDate)
     .eq('status', 'ACTIVE');
 
-  // 3. Merge substitutions over canonical entries
+  // Merge substitutions over canonical entries
   const effectiveEntries = (entriesData || []).map(entry => {
     const sub = (subsData || []).find(s => s.timetable_entry_id === entry.id);
     if (sub) {
@@ -74,18 +47,6 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
     }
     return entry;
   });
-
-  // Data for the form
-  const { data: periods } = await supabase.from('periods').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('start_time');
-  const { data: rooms } = await supabase.from('rooms').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('name');
-  const { data: teachers } = await supabase
-    .from('staff_branch_profiles')
-    .select(`
-      id,
-      staff ( first_name, last_name )
-    `)
-    .eq('branch_id', branchId)
-    .eq('status', 'ACTIVE');
 
   return (
     <div className="space-y-6">
