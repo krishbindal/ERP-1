@@ -1,4 +1,6 @@
 #!/bin/bash
+set -u
+
 echo "Stopping Supabase..."
 npx --no-install supabase stop --no-backup || true
 
@@ -18,8 +20,26 @@ echo "Identifying stale ERP_1 networks..."
 STALE_NETWORKS=$(docker network ls -q -f label=com.supabase.cli.project=ERP_1)
 
 if [ -n "$STALE_NETWORKS" ]; then
-  echo "Removing stale networks..."
-  echo "$STALE_NETWORKS" | xargs -r docker network rm || true
+  for NETWORK in $STALE_NETWORKS; do
+    echo "Inspecting endpoints on stale network $NETWORK..."
+    ENDPOINT_CONTAINERS=$(docker network inspect "$NETWORK" --format '{{range $id, $container := .Containers}}{{$id}}{{"\n"}}{{end}}' 2>/dev/null || true)
+
+    if [ -n "$ENDPOINT_CONTAINERS" ]; then
+      echo "Removing all remaining containers attached to stale ERP_1 network..."
+      while IFS= read -r CONTAINER; do
+        [ -n "$CONTAINER" ] || continue
+        docker inspect "$CONTAINER" --format '{{.Name}} {{.State.Status}}' || true
+        docker rm -f "$CONTAINER" || {
+          echo "Force-disconnecting container $CONTAINER from network $NETWORK..."
+          docker network disconnect -f "$NETWORK" "$CONTAINER" || true
+          docker rm -f "$CONTAINER" || true
+        }
+      done <<< "$ENDPOINT_CONTAINERS"
+    fi
+
+    echo "Removing stale network $NETWORK..."
+    docker network rm "$NETWORK" || true
+  done
 fi
 
 echo "Identifying stale ERP_1 volumes..."
