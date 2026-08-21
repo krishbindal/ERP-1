@@ -1,3 +1,4 @@
+
 export function TeacherSelect({ 
   teachers, 
   name, 
@@ -5,7 +6,7 @@ export function TeacherSelect({
   label, 
   defaultValue = '' 
 }: { 
-  teachers: any[]; 
+  teachers: { id: string; staff?: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | null }[]; 
   name: string; 
   id: string; 
   label: string; 
@@ -19,7 +20,7 @@ export function TeacherSelect({
         {teachers.map(t => {
           let tName = 'Unknown';
           if (t.staff) {
-            tName = Array.isArray(t.staff) ? \\ \\ : \\ \\;
+            tName = Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`;
           }
           return (
             <option key={t.id} value={t.id}>{tName}</option>
