@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
 import { getContextBranchId } from '@/lib/branch-context';
+import { getSchedulingContext, getBranchContextClient } from '../lib/scheduling-context';
 
 export async function createSubstitution(
   data: {
@@ -15,23 +16,15 @@ export async function createSubstitution(
   },
   explicitBranchId?: string
 ) {
-  const supabase = await createClient();
   let branch_id: string;
   let academic_year_id: string;
+  let supabase: any;
 
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
-    
-    // Fetch active academic year
-    const { data: activeYear } = await supabase
-      .from('academic_years')
-      .select('id')
-      .eq('branch_id', branch_id)
-      .eq('status', 'ACTIVE')
-      .single();
-      
-    if (!activeYear) throw new Error("No active academic year found for this branch.");
-    academic_year_id = activeYear.id;
+    const ctx = await getSchedulingContext(explicitBranchId);
+    branch_id = ctx.branch_id;
+    academic_year_id = ctx.academic_year_id;
+    supabase = ctx.supabase;
   } catch (e) {
     return { error: (e as Error).message };
   }
@@ -42,17 +35,19 @@ export async function createSubstitution(
     academic_year_id,
   });
 
-  if (error) return { error: mapDatabaseError(error) };
+  if (error) { console.error("Substitution mutation error:", error); return { error: mapDatabaseError(error) }; }
   revalidatePath('/scheduling/substitutions');
   return { success: true };
 }
 
 export async function cancelSubstitution(id: string, explicitBranchId?: string) {
-  const supabase = await createClient();
+  let supabase: any;
   let branch_id: string;
 
   try {
-    branch_id = await getContextBranchId(explicitBranchId);
+    const ctx = await getBranchContextClient(explicitBranchId);
+    supabase = ctx.supabase;
+    branch_id = ctx.branch_id;
   } catch (e) {
     return { error: (e as Error).message };
   }
@@ -63,7 +58,7 @@ export async function cancelSubstitution(id: string, explicitBranchId?: string) 
     .eq('id', id)
     .eq('branch_id', branch_id);
 
-  if (error) return { error: mapDatabaseError(error) };
+  if (error) { console.error("Substitution mutation error:", error); return { error: mapDatabaseError(error) }; }
   revalidatePath('/scheduling/substitutions');
   return { success: true };
 }

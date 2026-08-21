@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { createClient } from '@/lib/supabase/server';
 import { TimetableManager } from './components/TimetableManager';

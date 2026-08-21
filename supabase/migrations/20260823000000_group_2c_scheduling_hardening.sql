@@ -152,3 +152,12 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+
+-- 4. FIX POSTGREST JOINS FOR TIMETABLE_ENTRIES
+-- ==========================================
+ALTER TABLE public.timetable_entries
+  ADD CONSTRAINT fk_timetable_class
+  FOREIGN KEY (class_id, academic_year_id, branch_id)
+  REFERENCES public.classes(id, academic_year_id, branch_id)
+  ON DELETE RESTRICT;
