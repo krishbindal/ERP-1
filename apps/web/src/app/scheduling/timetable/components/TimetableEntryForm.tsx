@@ -3,16 +3,19 @@
 import { useState } from 'react';
 import { createTimetableEntry, updateTimetableEntry } from '../actions';
 import { DrawerForm } from '@/app/academic-structure/components/DrawerForm';
+import { TimetableEntry, Period } from './TimetableGrid';
 
 interface Props {
   branchId: string;
-  periods: any[];
-  rooms: any[];
-  classes: any[];
-  sections: any[];
-  subjects: any[];
-  teachers: any[];
-  initialData?: any | null;
+  periods: Period[];
+  rooms: { id: string; name: string }[];
+  classes: { id: string; name: string }[];
+  sections: { id: string; name: string; class_id: string }[];
+  subjects: { id: string; name: string }[];
+  teachers: { id: string; staff?: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] }[];
+  initialData?: TimetableEntry | null;
+  triggerOpen?: boolean;
+  onClose?: () => void;
 }
 
 export function TimetableEntryForm({
@@ -139,10 +142,13 @@ export function TimetableEntryForm({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
               <select name="staff_branch_profile_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.staff_branch_profile_id || ''}>
-                <option value="">Select a teacher...</option>
-                {teachers.map(t => (
-                  <option key={t.id} value={t.id}>{t.staff.first_name} {t.staff.last_name}</option>
-                ))}
+                <option value="">Select Teacher...</option>
+                {teachers.map(t => {
+                  const name = t.staff ? (Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`) : 'Unknown';
+                  return (
+                    <option key={t.id} value={t.id}>{name}</option>
+                  );
+                })}
               </select>
             </div>
 

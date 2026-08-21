@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useMemo } from 'react';
-import { CalendarDays } from 'lucide-react';
 
-interface Period {
+export interface Period {
   id: string;
+  name?: string;
   start_time: string;
   end_time: string;
 }
 
-interface TimetableEntry {
+export interface TimetableEntry {
   id: string;
   day_of_week: number;
   time_range: string;
@@ -18,15 +18,23 @@ interface TimetableEntry {
   subjects?: { name: string };
   periods?: { name: string; start_time: string; end_time: string };
   rooms?: { name: string };
-  staff_branch_profiles?: { staff: { first_name: string; last_name: string } };
+  staff_branch_profiles?: { staff: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] };
+  is_substitution?: boolean;
+  substitution_id?: string;
+  class_id?: string;
+  section_id?: string;
+  subject_id?: string;
+  staff_branch_profile_id?: string;
+  room_id?: string;
+  period_id?: string;
+  status?: string;
 }
 
 interface Props {
-  entries: any[];
+  entries: TimetableEntry[];
   periods: Period[];
-  view?: string;
   isReadOnly?: boolean;
-  onEntryClick?: (entry: any) => void;
+  onEntryClick?: (entry: TimetableEntry) => void;
 }
 
 const DAYS = [
@@ -45,7 +53,7 @@ function parseTime(timeStr: string) {
   return hours * 60 + minutes;
 }
 
-export function TimetableGrid({ entries, periods, view, isReadOnly, onEntryClick }: Props) {
+export function TimetableGrid({ entries, periods, isReadOnly, onEntryClick }: Props) {
   // Determine dynamic time range based on actual periods
   const { minMinutes, maxMinutes } = useMemo(() => {
     let min = 8 * 60; // default 08:00
@@ -127,11 +135,17 @@ export function TimetableGrid({ entries, periods, view, isReadOnly, onEntryClick
                   const top = (startMin - minMinutes) * PIXELS_PER_MINUTE;
                   const height = (endMin - startMin) * PIXELS_PER_MINUTE;
 
-                  const teacherName = entry.staff_branch_profiles?.staff 
-                    ? `${entry.staff_branch_profiles.staff.first_name} ${entry.staff_branch_profiles.staff.last_name}`
-                    : 'Unassigned';
+                  let teacherName = 'Unassigned';
+                  if (entry.staff_branch_profiles?.staff) {
+                    const staff = entry.staff_branch_profiles.staff;
+                    if (Array.isArray(staff)) {
+                      teacherName = `${staff[0].first_name} ${staff[0].last_name}`;
+                    } else {
+                      teacherName = `${staff.first_name} ${staff.last_name}`;
+                    }
+                  }
 
-                  const isSub = (entry as any).is_substitution;
+                  const isSub = entry.is_substitution;
                   const bgClass = isSub ? 'bg-orange-50 border-orange-500 text-orange-900' : 'bg-blue-50 border-blue-500 text-blue-900';
 
                   return (

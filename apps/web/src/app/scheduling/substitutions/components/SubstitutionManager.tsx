@@ -1,17 +1,16 @@
 "use client";
 
 import { useState } from 'react';
-import { TimetableGrid } from '../../timetable/components/TimetableGrid';
-import { SubstitutionForm } from './SubstitutionForm';
+import { TimetableGrid, TimetableEntry, Period } from '../../timetable/components/TimetableGrid';
+import { SubstitutionForm, Room, Teacher } from './SubstitutionForm';
 
 interface Props {
   branchId: string;
-  entries: any[];
-  periods: any[];
-  rooms: any[];
-  canonicalEntries: any[];
-  teachers: any[];
-  view: string;
+  entries: TimetableEntry[];
+  periods: Period[];
+  rooms: Room[];
+  canonicalEntries: TimetableEntry[];
+  teachers: Teacher[];
   selectedDate: string;
   isReadOnly: boolean;
 }
@@ -23,7 +22,6 @@ export function SubstitutionManager({
   rooms,
   canonicalEntries,
   teachers,
-  view,
   selectedDate,
   isReadOnly
 }: Props) {
@@ -31,9 +29,9 @@ export function SubstitutionManager({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleEntryClick = (entry: any) => {
+  const handleEntryClick = (entry: TimetableEntry) => {
     if (isReadOnly) return;
-    if (entry.is_substitution) {
+    if (entry.is_substitution && entry.substitution_id) {
       setCancelingSubId(entry.substitution_id);
       setError(null);
     }
@@ -51,8 +49,8 @@ export function SubstitutionManager({
       } else {
         setCancelingSubId(null);
       }
-    } catch (e: any) {
-      setError(e.message || "An error occurred");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -76,7 +74,6 @@ export function SubstitutionManager({
         <TimetableGrid 
           entries={entries} 
           periods={periods} 
-          view={view} 
           isReadOnly={isReadOnly}
           onEntryClick={handleEntryClick}
         />

@@ -94,7 +94,6 @@ export default async function TimetablePage(props: { searchParams: Promise<{ bra
         sections={sections || []}
         subjects={subjects || []}
         teachers={teachers || []}
-        view={view}
         isReadOnly={isReadOnly}
       />
     </div>

@@ -122,7 +122,6 @@ export default async function SubstitutionsPage(props: { searchParams: Promise<{
         rooms={rooms || []}
         canonicalEntries={entriesData || []}
         teachers={teachers || []}
-        view={view}
         selectedDate={selectedDate}
         isReadOnly={isReadOnly}
       />

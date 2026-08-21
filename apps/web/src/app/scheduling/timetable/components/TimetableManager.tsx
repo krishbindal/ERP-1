@@ -1,19 +1,18 @@
 "use client";
 
 import { useState } from 'react';
-import { TimetableGrid } from './TimetableGrid';
+import { TimetableGrid, TimetableEntry, Period } from './TimetableGrid';
 import { TimetableEntryForm } from './TimetableEntryForm';
 
 interface Props {
   branchId: string;
-  entries: any[];
-  periods: any[];
-  rooms: any[];
-  classes: any[];
-  sections: any[];
-  subjects: any[];
-  teachers: any[];
-  view: string;
+  entries: TimetableEntry[];
+  periods: Period[];
+  rooms: { id: string; name: string }[];
+  classes: { id: string; name: string }[];
+  sections: { id: string; name: string; class_id: string }[];
+  subjects: { id: string; name: string }[];
+  teachers: { id: string; staff?: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] }[];
   isReadOnly: boolean;
 }
 
@@ -26,12 +25,11 @@ export function TimetableManager({
   sections,
   subjects,
   teachers,
-  view,
   isReadOnly
 }: Props) {
-  const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<TimetableEntry | null>(null);
 
-  const handleEntryClick = (entry: any) => {
+  const handleEntryClick = (entry: TimetableEntry) => {
     if (isReadOnly) return;
     setSelectedEntry(entry);
   };
@@ -56,7 +54,6 @@ export function TimetableManager({
         <TimetableGrid 
           entries={entries} 
           periods={periods} 
-          view={view} 
           isReadOnly={isReadOnly}
           onEntryClick={handleEntryClick}
         />

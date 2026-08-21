@@ -3,12 +3,29 @@
 import { useState } from 'react';
 import { createSubstitution } from '../actions';
 import { DrawerForm } from '@/app/academic-structure/components/DrawerForm';
+import { TimetableEntry } from '../../timetable/components/TimetableGrid';
+
+export interface Room {
+  id: string;
+  name: string;
+}
+
+export interface Teacher {
+  id: string;
+  staff?: {
+    first_name: string;
+    last_name: string;
+  } | {
+    first_name: string;
+    last_name: string;
+  }[];
+}
 
 interface Props {
   branchId: string;
-  canonicalEntries: any[];
-  rooms: any[];
-  teachers: any[];
+  canonicalEntries: TimetableEntry[];
+  rooms: Room[];
+  teachers: Teacher[];
   selectedDate: string;
 }
 
@@ -101,9 +118,12 @@ export function SubstitutionForm({
               <label className="block text-sm font-medium text-gray-700 mb-1">Substitute Teacher</label>
               <select name="substitute_staff_id" className="w-full border border-gray-300 rounded-md p-2" required>
                 <option value="">Select a teacher...</option>
-                {teachers.map(t => (
-                  <option key={t.id} value={t.id}>{t.staff.first_name} {t.staff.last_name}</option>
-                ))}
+                {teachers.map(t => {
+                  const name = t.staff ? (Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`) : 'Unknown';
+                  return (
+                    <option key={t.id} value={t.id}>{name}</option>
+                  );
+                })}
               </select>
             </div>
 
