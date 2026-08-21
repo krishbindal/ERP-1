@@ -144,7 +144,10 @@ export function TimetableEntryForm({
               <select id="staff_branch_profile_id" name="staff_branch_profile_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.staff_branch_profile_id || ''}>
                 <option value="">Select Teacher...</option>
                 {teachers.map(t => {
-                  const name = t.staff ? (Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`) : 'Unknown';
+                  let name = 'Unknown';
+                  if (t.staff) {
+                    name = Array.isArray(t.staff) ? `${t.staff[0].first_name} ${t.staff[0].last_name}` : `${t.staff.first_name} ${t.staff.last_name}`;
+                  }
                   return (
                     <option key={t.id} value={t.id}>{name}</option>
                   );
