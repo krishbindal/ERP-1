@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
+import { getContextBranchId } from '@/lib/branch-context';
 
 export type AppConfigPayload = {
   app_name: string;
@@ -16,6 +17,7 @@ export type AppConfigPayload = {
 
 
 export async function getBranchAppConfig(explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);
@@ -39,6 +41,7 @@ export async function getBranchAppConfig(explicitBranchId?: string) {
 }
 
 export async function updateBranchAppConfig(payload: AppConfigPayload, explicitBranchId?: string) {
+  const supabase = await createClient();
     let branch_id: string;
   try {
     branch_id = await getContextBranchId(explicitBranchId);

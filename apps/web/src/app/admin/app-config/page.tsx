@@ -43,7 +43,7 @@ export default async function AppConfigPage(props: { searchParams: Promise<{ bra
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Branch App Configuration</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Manage the mobile app configuration for {branchName}.
+          Manage the mobile app configuration for this branch.
         </p>
       </div>
 
