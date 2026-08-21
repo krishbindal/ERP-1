@@ -129,12 +129,12 @@ VALUES ('aaaaaaaa-2222-2222-2222-222222222223', 'eeeeeeee-eeee-eeee-eeee-eeeeeee
 ON CONFLICT DO NOTHING;
 
 -- Section (no status)
-INSERT INTO public.sections (id, branch_id, academic_year_id, class_id, name, level)
-VALUES ('aaaaaaaa-3333-3333-3333-333333333333', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222222', 'Section A', 10)
+INSERT INTO public.sections (id, branch_id, academic_year_id, class_id, name)
+VALUES ('aaaaaaaa-3333-3333-3333-333333333333', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222222', 'Section A')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.sections (id, branch_id, academic_year_id, class_id, name, level)
-VALUES ('aaaaaaaa-3333-3333-3333-333333333334', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222223', 'Section B', 11)
+INSERT INTO public.sections (id, branch_id, academic_year_id, class_id, name)
+VALUES ('aaaaaaaa-3333-3333-3333-333333333334', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222223', 'Section B')
 ON CONFLICT DO NOTHING;
 
 -- Subject
