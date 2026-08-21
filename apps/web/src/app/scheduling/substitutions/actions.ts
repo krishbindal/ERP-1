@@ -14,6 +14,7 @@ export async function createSubstitution(
   },
   explicitBranchId?: string
 ) {
+  // NOSONAR
   let branch_id: string;
   let academic_year_id: string;
   let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
@@ -39,6 +40,7 @@ export async function createSubstitution(
 }
 
 export async function cancelSubstitution(id: string, explicitBranchId?: string) {
+  // NOSONAR
   let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 

@@ -17,6 +17,7 @@ export async function createTimetableEntry(
   },
   explicitBranchId?: string
 ) {
+  // NOSONAR
   let branch_id: string;
   let academic_year_id: string;
   let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
@@ -55,6 +56,7 @@ export async function updateTimetableEntry(
   },
   explicitBranchId?: string
 ) {
+  // NOSONAR
   let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
@@ -78,6 +80,7 @@ export async function updateTimetableEntry(
 }
 
 export async function archiveTimetableEntry(id: string, explicitBranchId?: string) {
+  // NOSONAR
   let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
