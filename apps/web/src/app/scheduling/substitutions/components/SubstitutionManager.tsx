@@ -88,14 +88,14 @@ export function SubstitutionManager({
             </p>
             {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
             <div className="flex justify-end gap-3 mt-6">
-              <button 
+              <button type="button" 
                 onClick={() => setCancelingSubId(null)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 disabled={loading}
               >
                 Close
               </button>
-              <button 
+              <button type="button" 
                 onClick={handleCancelSub}
                 className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700"
                 disabled={loading}

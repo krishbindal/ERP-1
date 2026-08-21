@@ -75,7 +75,7 @@ export function SubstitutionForm({
 
   return (
     <>
-      <button 
+      <button type="button" 
         onClick={() => setIsOpen(true)}
         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
       >

@@ -2,7 +2,7 @@ import { verifyPageBranchContext } from '@/lib/branch-context';
 import { createClient } from '@/lib/supabase/server';
 import { SubstitutionManager } from './components/SubstitutionManager';
 
-export default async function SubstitutionsPage(props: { searchParams: Promise<{ branchId?: string; view?: string; date?: string }> }) {
+export default async function SubstitutionsPage(props: Readonly<{ searchParams: Promise<{ branchId?: string; view?: string; date?: string }> }>) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
   const view = searchParams.view || 'section';
