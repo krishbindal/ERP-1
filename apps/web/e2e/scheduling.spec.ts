@@ -18,67 +18,67 @@ test.describe('Scheduling Management', () => {
     // 2. Creates a room
     const uniqueRoomName = `Test Room ${randomUUID()}`;
     await page.getByRole('link', { name: 'Rooms' }).click();
-    await page.click('button:has-text("Create Room")');
-    await expect(page.locator('h2:has-text("New Room")')).toBeVisible();
+    await page.getByRole('button', { name: 'Create Room' }).click();
+    await expect(page.getByRole('heading', { name: 'New Room' })).toBeVisible();
     
     await page.fill('input[name="name"]', uniqueRoomName);
     await page.fill('input[name="capacity"]', '40');
     await page.selectOption('select[name="status"]', 'ACTIVE');
-    await page.click('button:has-text("Save")');
+    await page.getByRole('button', { name: 'Save' }).click();
     
     // Verify room is created
-    await expect(page.locator(`td:has-text("${uniqueRoomName}")`)).toBeVisible();
+    await expect(page.getByRole('cell', { name: uniqueRoomName, exact: true })).toBeVisible();
 
     // 3. Edits the room
-    await page.click(`tr:has(td:text-is("${uniqueRoomName}")) >> button:has-text("Edit")`);
-    await expect(page.locator('h2:has-text("Edit Room")')).toBeVisible();
+    await page.getByRole('row', { name: new RegExp(uniqueRoomName) }).getByRole('button', { name: 'Edit' }).click();
+    await expect(page.getByRole('heading', { name: 'Edit Room' })).toBeVisible();
     await page.fill('input[name="capacity"]', '45');
-    await page.click('button:has-text("Save")');
-    await expect(page.locator(`tr:has(td:text-is("${uniqueRoomName}")) >> td:has-text("45")`)).toBeVisible();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('row', { name: new RegExp(uniqueRoomName) }).getByRole('cell', { name: '45', exact: true })).toBeVisible();
 
     // 4. Archives the room
-    await page.click(`tr:has(td:text-is("${uniqueRoomName}")) >> button:has-text("Edit")`);
+    await page.getByRole('row', { name: new RegExp(uniqueRoomName) }).getByRole('button', { name: 'Edit' }).click();
     await page.selectOption('select[name="status"]', 'ARCHIVED');
-    await page.click('button:has-text("Save")');
-    await expect(page.locator(`tr:has(td:text-is("${uniqueRoomName}")) >> td:has-text("ARCHIVED")`)).toBeVisible();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('row', { name: new RegExp(uniqueRoomName) }).getByRole('cell', { name: 'ARCHIVED', exact: true })).toBeVisible();
 
     // 5. Creates a bell schedule
     const uniqueScheduleName = `Test Schedule ${randomUUID()}`;
     await page.getByRole('link', { name: 'Bell Schedules' }).click();
-    await page.click('button:has-text("Create Bell Schedule")');
-    await expect(page.locator('h2:has-text("New Bell Schedule")')).toBeVisible();
+    await page.getByRole('button', { name: 'Create Bell Schedule' }).click();
+    await expect(page.getByRole('heading', { name: 'New Bell Schedule' })).toBeVisible();
     
     await page.fill('input[name="name"]', uniqueScheduleName);
-    await page.click('button:has-text("Save")');
+    await page.getByRole('button', { name: 'Save' }).click();
     
-    await expect(page.locator(`td:has-text("${uniqueScheduleName}")`)).toBeVisible();
+    await expect(page.getByRole('cell', { name: uniqueScheduleName, exact: true })).toBeVisible();
 
     // 6. Creates periods
     await page.getByRole('link', { name: 'Periods' }).click();
-    await page.click('button:has-text("Create Period")');
-    await expect(page.locator('h2:has-text("New Period")')).toBeVisible();
+    await page.getByRole('button', { name: 'Create Period' }).click();
+    await expect(page.getByRole('heading', { name: 'New Period' })).toBeVisible();
     
     // Select the bell schedule we just created
     await page.selectOption('select[name="bell_schedule_id"]', { label: uniqueScheduleName });
     await page.fill('input[name="name"]', 'Period 1');
     await page.fill('input[name="start_time"]', '08:00');
     await page.fill('input[name="end_time"]', '08:50');
-    await page.click('button:has-text("Save")');
+    await page.getByRole('button', { name: 'Save' }).click();
 
-    await expect(page.locator(`tr:has(td:text-is("Period 1")) >> td:has-text("${uniqueScheduleName}")`)).toBeVisible();
+    await expect(page.getByRole('row', { name: /Period 1/ }).getByRole('cell', { name: uniqueScheduleName, exact: true })).toBeVisible();
 
     // 7. Invalid period time is rejected
-    await page.click('button:has-text("Create Period")');
+    await page.getByRole('button', { name: 'Create Period' }).click();
     await page.selectOption('select[name="bell_schedule_id"]', { label: uniqueScheduleName });
     await page.fill('input[name="name"]', 'Invalid Period');
     // start time AFTER end time
     await page.fill('input[name="start_time"]', '10:00');
     await page.fill('input[name="end_time"]', '09:00');
-    await page.click('button:has-text("Save")');
+    await page.getByRole('button', { name: 'Save' }).click();
     
     // Expect error message
-    await expect(page.locator('text=Start time must be before end time.')).toBeVisible();
-    await page.click('button:has-text("Cancel")');
+    await expect(page.getByText('Start time must be before end time.')).toBeVisible();
+    await page.getByRole('button', { name: 'Cancel' }).click();
   });
 });
 
@@ -90,11 +90,11 @@ test.describe('Scheduling Security - Teacher Role', () => {
     await expect(page.getByRole('heading', { name: 'Scheduling' })).toBeVisible();
     
     // Create buttons should not be visible
-    await expect(page.locator('button:has-text("Create Room")')).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create Room' })).not.toBeVisible();
     await page.getByRole('link', { name: 'Bell Schedules' }).click();
-    await expect(page.locator('button:has-text("Create Bell Schedule")')).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create Bell Schedule' })).not.toBeVisible();
     await page.getByRole('link', { name: 'Periods' }).click();
-    await expect(page.locator('button:has-text("Create Period")')).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Create Period' })).not.toBeVisible();
   });
 });
 
@@ -107,6 +107,6 @@ test.describe('Scheduling Security - Cross Branch', () => {
     const invalidBranchId = randomUUID();
     await page.goto(`/scheduling?branchId=${invalidBranchId}`);
     
-    await expect(page.locator('text=You are not authorized to view this branch.')).toBeVisible();
+    await expect(page.getByText('You are not authorized to view this branch.')).toBeVisible();
   });
 });
