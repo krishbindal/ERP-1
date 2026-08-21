@@ -1,7 +1,6 @@
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { createClient } from '@/lib/supabase/server';
-import { TimetableGrid } from '../timetable/components/TimetableGrid';
-import { SubstitutionForm } from './components/SubstitutionForm';
+import { SubstitutionManager } from './components/SubstitutionManager';
 
 export default async function SubstitutionsPage(props: { searchParams: Promise<{ branchId?: string; view?: string; date?: string }> }) {
   const searchParams = await props.searchParams;
@@ -75,6 +74,7 @@ export default async function SubstitutionsPage(props: { searchParams: Promise<{
       return {
         ...entry,
         is_substitution: true, // Custom flag to maybe highlight it
+        substitution_id: sub.id,
         staff_branch_profiles: sub.staff_branch_profiles || entry.staff_branch_profiles,
         rooms: sub.rooms || entry.rooms,
       };
@@ -96,45 +96,36 @@ export default async function SubstitutionsPage(props: { searchParams: Promise<{
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold text-gray-900">Substitutions</h1>
         
-        <div className="flex items-center gap-4">
-          <form className="flex items-center gap-2">
-            <input type="hidden" name="branchId" value={branchId} />
-            <input type="hidden" name="view" value={view} />
-            <label className="text-sm font-medium text-gray-700">Date:</label>
-            <input 
-              type="date" 
-              name="date" 
-              defaultValue={selectedDate} 
-              className="border border-gray-300 rounded-md p-2 text-sm" 
-            />
-            <button type="submit" className="px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 text-sm">
-              View
-            </button>
-          </form>
-
-          {!isReadOnly && (
-            <SubstitutionForm 
-              branchId={branchId} 
-              canonicalEntries={entriesData || []} 
-              rooms={rooms || []} 
-              teachers={teachers || []} 
-              selectedDate={selectedDate}
-            />
-          )}
-        </div>
+        <form className="flex items-center gap-2">
+          <input type="hidden" name="branchId" value={branchId} />
+          <input type="hidden" name="view" value={view} />
+          <label className="text-sm font-medium text-gray-700">Date:</label>
+          <input 
+            type="date" 
+            name="date" 
+            defaultValue={selectedDate} 
+            className="border border-gray-300 rounded-md p-2 text-sm" 
+          />
+          <button type="submit" className="px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 text-sm">
+            View
+          </button>
+        </form>
       </div>
 
-      <div className="bg-white rounded-lg shadow border border-gray-200">
-        <TimetableGrid 
-          entries={effectiveEntries} 
-          periods={periods || []} 
-          view={view} 
-          isReadOnly={isReadOnly} 
-        />
-      </div>
+      <SubstitutionManager
+        branchId={branchId}
+        entries={effectiveEntries}
+        periods={periods || []}
+        rooms={rooms || []}
+        canonicalEntries={entriesData || []}
+        teachers={teachers || []}
+        view={view}
+        selectedDate={selectedDate}
+        isReadOnly={isReadOnly}
+      />
     </div>
   );
 }

@@ -24,8 +24,10 @@ export function TimetableEntryForm({
   subjects,
   teachers,
   initialData,
-}: Props) {
-  const [isOpen, setIsOpen] = useState(false);
+  triggerOpen = false,
+  onClose,
+}: Props & { triggerOpen?: boolean; onClose?: () => void }) {
+  const [isOpen, setIsOpen] = useState(triggerOpen);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +35,11 @@ export function TimetableEntryForm({
   const [selectedClassId, setSelectedClassId] = useState<string>(initialData?.class_id || '');
 
   const filteredSections = sections.filter(s => !selectedClassId || s.class_id === selectedClassId);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    if (onClose) onClose();
+  };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,7 +69,7 @@ export function TimetableEntryForm({
       if (result?.error) {
         setError(result.error);
       } else {
-        setIsOpen(false);
+        handleClose();
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -87,7 +94,7 @@ export function TimetableEntryForm({
       {isOpen && (
         <DrawerForm
           title={initialData ? "Edit Timetable Entry" : "New Timetable Entry"}
-          onClose={() => setIsOpen(false)}
+          onClose={handleClose}
           onSubmit={handleSubmit}
           error={error}
           loading={loading}
@@ -173,13 +180,27 @@ export function TimetableEntryForm({
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select name="status" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.status || 'ACTIVE'}>
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="ARCHIVED">ARCHIVED</option>
-              </select>
-            </div>
+            {initialData && (
+              <div className="pt-4 border-t border-gray-200 mt-4">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm('Are you sure you want to archive this timetable entry?')) {
+                      setLoading(true);
+                      const { archiveTimetableEntry } = await import('../actions');
+                      const result = await archiveTimetableEntry(initialData.id, branchId);
+                      setLoading(false);
+                      if (result?.error) setError(result.error);
+                      else handleClose();
+                    }
+                  }}
+                  className="w-full py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 font-medium text-sm"
+                  disabled={loading}
+                >
+                  Archive Entry
+                </button>
+              </div>
+            )}
           </div>
         </DrawerForm>
       )}

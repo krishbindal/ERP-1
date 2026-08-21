@@ -22,10 +22,11 @@ interface TimetableEntry {
 }
 
 interface Props {
-  entries: TimetableEntry[];
+  entries: any[];
   periods: Period[];
-  view: string;
-  isReadOnly: boolean;
+  view?: string;
+  isReadOnly?: boolean;
+  onEntryClick?: (entry: any) => void;
 }
 
 const DAYS = [
@@ -44,7 +45,7 @@ function parseTime(timeStr: string) {
   return hours * 60 + minutes;
 }
 
-export function TimetableGrid({ entries, periods, view, isReadOnly }: Props) {
+export function TimetableGrid({ entries, periods, view, isReadOnly, onEntryClick }: Props) {
   // Determine dynamic time range based on actual periods
   const { minMinutes, maxMinutes } = useMemo(() => {
     let min = 8 * 60; // default 08:00
@@ -139,7 +140,12 @@ export function TimetableGrid({ entries, periods, view, isReadOnly }: Props) {
                       className="absolute w-full px-1 py-0.5"
                       style={{ top, height }}
                     >
-                      <div className={`border-l-4 h-full w-full rounded shadow-sm p-1 text-xs overflow-hidden leading-tight hover:shadow-md transition-shadow cursor-pointer ${bgClass}`}>
+                      <div 
+                        onClick={() => {
+                          if (!isReadOnly && onEntryClick) onEntryClick(entry);
+                        }}
+                        className={`border-l-4 h-full w-full rounded shadow-sm p-1 text-xs overflow-hidden leading-tight hover:shadow-md transition-shadow ${!isReadOnly && onEntryClick ? 'cursor-pointer' : ''} ${bgClass}`}
+                      >
                         <div className="font-semibold truncate">
                           {isSub && <span className="text-orange-600 mr-1 font-bold">[SUB]</span>}
                           {entry.subjects?.name}

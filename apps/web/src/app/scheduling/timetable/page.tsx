@@ -1,7 +1,6 @@
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { createClient } from '@/lib/supabase/server';
-import { TimetableGrid } from './components/TimetableGrid';
-import { TimetableEntryForm } from './components/TimetableEntryForm';
+import { TimetableManager } from './components/TimetableManager';
 
 export default async function TimetablePage(props: { searchParams: Promise<{ branchId?: string; view?: string }> }) {
   const searchParams = await props.searchParams;
@@ -69,29 +68,35 @@ export default async function TimetablePage(props: { searchParams: Promise<{ bra
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold text-gray-900">Timetable</h1>
-        {!isReadOnly && (
-          <TimetableEntryForm 
-            branchId={branchId} 
-            periods={periods || []} 
-            rooms={rooms || []} 
-            classes={classes || []} 
-            sections={sections || []} 
-            subjects={subjects || []} 
-            teachers={teachers || []} 
-          />
-        )}
+        
+        <form className="flex items-center gap-2">
+          <input type="hidden" name="branchId" value={branchId} />
+          <label className="text-sm font-medium text-gray-700">View:</label>
+          <select name="view" defaultValue={view} className="border border-gray-300 rounded-md p-2 text-sm">
+            <option value="section">By Section</option>
+            <option value="teacher">By Teacher</option>
+            <option value="room">By Room</option>
+          </select>
+          <button type="submit" className="px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 text-sm">
+            Apply
+          </button>
+        </form>
       </div>
 
-      <div className="bg-white rounded-lg shadow border border-gray-200">
-        <TimetableGrid 
-          entries={entriesData || []} 
-          periods={periods || []} 
-          view={view} 
-          isReadOnly={isReadOnly} 
-        />
-      </div>
+      <TimetableManager
+        branchId={branchId}
+        entries={entriesData || []}
+        periods={periods || []}
+        rooms={rooms || []}
+        classes={classes || []}
+        sections={sections || []}
+        subjects={subjects || []}
+        teachers={teachers || []}
+        view={view}
+        isReadOnly={isReadOnly}
+      />
     </div>
   );
 }

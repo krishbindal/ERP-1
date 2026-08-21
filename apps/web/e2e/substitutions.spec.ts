@@ -59,10 +59,13 @@ test.describe('Substitutions Management', () => {
       await page.goto('/scheduling/substitutions?branchId=invalid-branch-id');
       await expect(page.locator('text=Access Denied')).toBeVisible();
 
-      // 7. Cancel Substitution (Test will fail here as UI doesn't have cancel button yet)
+      // 7. Cancel Substitution
       await page.goto('/scheduling/substitutions');
+      await page.locator('.bg-orange-50').first().click();
       const cancelBtn = page.getByRole('button', { name: 'Cancel Substitution' });
-      await expect(cancelBtn).toBeVisible(); // Will fail
+      await expect(cancelBtn).toBeVisible();
+      await cancelBtn.click();
+      await expect(page.locator('.bg-orange-50')).not.toBeVisible();
     });
   });
 
