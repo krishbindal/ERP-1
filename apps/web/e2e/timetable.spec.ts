@@ -29,8 +29,6 @@ test.describe('Timetable Management', () => {
       await page.reload();
 
       // 2. Edit the entry (UI is currently missing this binding)
-      { const html = await page.content();
-      require('fs').writeFileSync('debug.html', html); }
       await page.locator('.bg-blue-50').first().click();
       await expect(page.getByRole('heading', { name: 'Edit Timetable Entry' })).toBeVisible();
       
@@ -39,8 +37,6 @@ test.describe('Timetable Management', () => {
       await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
 
       // 3. Archive the entry
-      { const html = await page.content();
-      require('fs').writeFileSync('debug.html', html); }
       await page.locator('.bg-blue-50').first().click();
       page.on('dialog', dialog => dialog.accept());
       await page.getByRole('button', { name: 'Archive Entry' }).click();
