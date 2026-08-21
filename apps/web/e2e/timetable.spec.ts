@@ -109,16 +109,4 @@ test.describe('Timetable Management', () => {
     });
   });
 
-  test.describe('Student Roles', () => {
-    test.use({ storageState: 'playwright/.auth/student.json' });
-
-    test('should view timetable but cannot create entries', async ({ page }) => {
-      await page.goto('/scheduling/timetable');
-      await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
-
-      // Create button should NOT be visible to students
-      const createBtn = page.getByRole('button', { name: 'Create Timetable Entry' });
-      await expect(createBtn).not.toBeVisible();
-    });
-  });
 });

@@ -111,3 +111,51 @@ INSERT INTO public.organization_memberships (organization_id, user_id)
 SELECT 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', id FROM auth.users WHERE email = 'teacher.a1.e2e@test.com'
 ON CONFLICT DO NOTHING;
 
+
+-- Seed data for Group 2C Timetable & Substitution E2E Tests
+-- Branch: eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02 (Test Branch)
+-- Academic Year
+INSERT INTO public.academic_years (id, branch_id, name, start_date, end_date, status)
+VALUES ('aaaaaaaa-1111-1111-1111-111111111111', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Test Year 2026', '2026-01-01', '2026-12-31', 'ACTIVE')
+ON CONFLICT DO NOTHING;
+
+-- Class (no status)
+INSERT INTO public.classes (id, branch_id, academic_year_id, name, level)
+VALUES ('aaaaaaaa-2222-2222-2222-222222222222', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'Class 10', 10)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.classes (id, branch_id, academic_year_id, name, level)
+VALUES ('aaaaaaaa-2222-2222-2222-222222222223', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'Class 11', 11)
+ON CONFLICT DO NOTHING;
+
+-- Section (no status)
+INSERT INTO public.sections (id, branch_id, academic_year_id, class_id, name, level)
+VALUES ('aaaaaaaa-3333-3333-3333-333333333333', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222222', 'Section A', 10)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.sections (id, branch_id, academic_year_id, class_id, name, level)
+VALUES ('aaaaaaaa-3333-3333-3333-333333333334', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222223', 'Section B', 11)
+ON CONFLICT DO NOTHING;
+
+-- Subject
+INSERT INTO public.subjects (id, branch_id, name, code, status)
+VALUES ('aaaaaaaa-4444-4444-4444-444444444444', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Mathematics', 'MATH101', 'ACTIVE')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.subjects (id, branch_id, name, code, status)
+VALUES ('aaaaaaaa-4444-4444-4444-444444444445', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Science', 'SCI101', 'ACTIVE')
+ON CONFLICT DO NOTHING;
+
+-- Room
+INSERT INTO public.rooms (id, branch_id, name, capacity, status)
+VALUES ('aaaaaaaa-5555-5555-5555-555555555555', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Room 101', 30, 'ACTIVE')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.rooms (id, branch_id, name, capacity, status)
+VALUES ('aaaaaaaa-5555-5555-5555-555555555556', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Room 102', 30, 'ACTIVE')
+ON CONFLICT DO NOTHING;
+
+-- Period
+INSERT INTO public.periods (id, branch_id, name, start_time, end_time, status)
+VALUES ('aaaaaaaa-6666-6666-6666-666666666666', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Period 1', '08:00', '09:00', 'ACTIVE')
+ON CONFLICT DO NOTHING;

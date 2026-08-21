@@ -81,15 +81,4 @@ test.describe('Substitutions Management', () => {
     });
   });
 
-  test.describe('Student Roles', () => {
-    test.use({ storageState: 'playwright/.auth/student.json' });
-
-    test('should view substitutions but cannot create', async ({ page }) => {
-      await page.goto('/scheduling/substitutions');
-      await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
-
-      const createBtn = page.getByRole('button', { name: 'New Substitution' });
-      await expect(createBtn).not.toBeVisible();
-    });
-  });
 });

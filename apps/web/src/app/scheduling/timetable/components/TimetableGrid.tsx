@@ -155,6 +155,13 @@ export function TimetableGrid({ entries, periods, isReadOnly, onEntryClick }: Pr
                       style={{ top, height }}
                     >
                       <div 
+                        tabIndex={!isReadOnly && onEntryClick ? 0 : undefined}
+                        onKeyDown={(e) => {
+                          if (!isReadOnly && onEntryClick && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            onEntryClick(entry);
+                          }
+                        }}
                         onClick={() => {
                           if (!isReadOnly && onEntryClick) onEntryClick(entry);
                         }}

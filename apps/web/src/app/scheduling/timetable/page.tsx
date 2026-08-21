@@ -54,8 +54,8 @@ export default async function TimetablePage(props: { searchParams: Promise<{ bra
   // We need to fetch necessary lookups for the form
   const { data: periods } = await supabase.from('periods').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('start_time');
   const { data: rooms } = await supabase.from('rooms').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('name');
-  const { data: classes } = await supabase.from('classes').select('*').eq('branch_id', branchId).eq('academic_year_id', academicYearId).eq('status', 'ACTIVE').order('name');
-  const { data: sections } = await supabase.from('sections').select('*').eq('branch_id', branchId).eq('academic_year_id', academicYearId).eq('status', 'ACTIVE').order('name');
+  const { data: classes } = await supabase.from('classes').select('*').eq('branch_id', branchId).eq('academic_year_id', academicYearId).order('name');
+  const { data: sections } = await supabase.from('sections').select('*').eq('branch_id', branchId).eq('academic_year_id', academicYearId).order('name');
   const { data: subjects } = await supabase.from('subjects').select('*').eq('branch_id', branchId).eq('status', 'ACTIVE').order('name');
   const { data: teachers } = await supabase
     .from('staff_branch_profiles')

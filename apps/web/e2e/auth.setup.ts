@@ -5,6 +5,7 @@ const roles = [
   { name: 'superadmin', email: 'superadmin.e2e@test.com' },
   { name: 'branchadmin', email: 'admin.a.e2e@test.com' },
   { name: 'teacher', email: 'teacher.a1.e2e@test.com' },
+
 ];
 
 for (const role of roles) {
