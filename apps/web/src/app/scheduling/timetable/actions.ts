@@ -1,9 +1,7 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
-import { getContextBranchId } from '@/lib/branch-context';
 import { getSchedulingContext, getBranchContextClient } from '../lib/scheduling-context';
 
 export async function createTimetableEntry(
@@ -21,7 +19,7 @@ export async function createTimetableEntry(
 ) {
   let branch_id: string;
   let academic_year_id: string;
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
 
   try {
     const ctx = await getSchedulingContext(explicitBranchId);
@@ -57,7 +55,7 @@ export async function updateTimetableEntry(
   },
   explicitBranchId?: string
 ) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -80,7 +78,7 @@ export async function updateTimetableEntry(
 }
 
 export async function archiveTimetableEntry(id: string, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {

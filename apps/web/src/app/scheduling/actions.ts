@@ -1,16 +1,14 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
-import { getContextBranchId } from '@/lib/branch-context';
 import { getBranchContextClient } from './lib/scheduling-context';
 
 
 
 // Rooms
 export async function createRoom(data: { name: string; capacity: number; status: string }, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -27,7 +25,7 @@ export async function createRoom(data: { name: string; capacity: number; status:
 }
 
 export async function updateRoom(id: string, data: { name: string; capacity: number; status: string }, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -37,14 +35,14 @@ export async function updateRoom(id: string, data: { name: string; capacity: num
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('rooms').update(data).eq('id', id);
+  const { error } = await supabase.from('rooms').update(data).eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/scheduling');
   return { success: true };
 }
 
 export async function deleteRoom(id: string, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -54,7 +52,7 @@ export async function deleteRoom(id: string, explicitBranchId?: string) {
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('rooms').delete().eq('id', id);
+  const { error } = await supabase.from('rooms').delete().eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/scheduling');
   return { success: true };
@@ -62,7 +60,7 @@ export async function deleteRoom(id: string, explicitBranchId?: string) {
 
 // Bell Schedules
 export async function createBellSchedule(data: { name: string; status: string }, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -79,7 +77,7 @@ export async function createBellSchedule(data: { name: string; status: string },
 }
 
 export async function updateBellSchedule(id: string, data: { name: string; status: string }, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -89,14 +87,14 @@ export async function updateBellSchedule(id: string, data: { name: string; statu
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('bell_schedules').update(data).eq('id', id);
+  const { error } = await supabase.from('bell_schedules').update(data).eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/scheduling');
   return { success: true };
 }
 
 export async function deleteBellSchedule(id: string, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -106,7 +104,7 @@ export async function deleteBellSchedule(id: string, explicitBranchId?: string) 
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('bell_schedules').delete().eq('id', id);
+  const { error } = await supabase.from('bell_schedules').delete().eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/scheduling');
   return { success: true };
@@ -114,7 +112,7 @@ export async function deleteBellSchedule(id: string, explicitBranchId?: string) 
 
 // Periods
 export async function createPeriod(data: { bell_schedule_id: string; name: string; start_time: string; end_time: string; status: string }, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -136,7 +134,7 @@ export async function createPeriod(data: { bell_schedule_id: string; name: strin
 }
 
 export async function updatePeriod(id: string, data: { name: string; start_time: string; end_time: string; status: string }, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -151,14 +149,14 @@ export async function updatePeriod(id: string, data: { name: string; start_time:
     return { error: "Start time must be before end time." };
   }
 
-  const { error } = await supabase.from('periods').update(data).eq('id', id);
+  const { error } = await supabase.from('periods').update(data).eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/scheduling');
   return { success: true };
 }
 
 export async function deletePeriod(id: string, explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
@@ -168,14 +166,14 @@ export async function deletePeriod(id: string, explicitBranchId?: string) {
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('periods').delete().eq('id', id);
+  const { error } = await supabase.from('periods').delete().eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/scheduling');
   return { success: true };
 }
 
 export async function getBellSchedules(explicitBranchId?: string) {
-  let supabase: any;
+  let supabase: Awaited<ReturnType<typeof getBranchContextClient>>['supabase'];
   let branch_id: string;
 
   try {
