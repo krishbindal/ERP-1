@@ -8,7 +8,7 @@ test.describe('Scheduling Management', () => {
   test('Branch Admin can manage rooms, bell schedules, and periods', async ({ page }) => {
     // 1. Branch Admin opens Scheduling.
     await page.goto('/scheduling');
-    await expect(page.locator('h1')).toHaveText('Scheduling');
+    await expect(page.getByRole('heading', { name: 'Scheduling' })).toBeVisible();
     
     // Check tabs
     await expect(page.locator('text=Rooms')).toBeVisible();
@@ -87,7 +87,7 @@ test.describe('Scheduling Security - Teacher Role', () => {
 
   test('Teacher cannot perform administrative mutations', async ({ page }) => {
     await page.goto('/scheduling');
-    await expect(page.locator('h1')).toHaveText('Scheduling');
+    await expect(page.getByRole('heading', { name: 'Scheduling' })).toBeVisible();
     
     // Create buttons should not be visible
     await expect(page.locator('button:has-text("Create Room")')).not.toBeVisible();
