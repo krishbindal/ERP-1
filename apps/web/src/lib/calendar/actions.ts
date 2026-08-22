@@ -53,9 +53,10 @@ async function fetchCalendarContext(
   supabase: SupabaseClient,
   branchId: string,
   startStr: string,
-  endStr: string
+  endStr: string,
+  explicitAcademicYearId?: string
 ) {
-  const academic_year_id = await getActiveAcademicYearId(supabase, branchId);
+  const academic_year_id = await resolveAcademicYearId(supabase, branchId, explicitAcademicYearId);
   
   // Fetch academic year operating days
   const { data: yearData, error: yearError } = await supabase
@@ -88,9 +89,9 @@ async function fetchCalendarContext(
   };
 }
 
-export async function getInstructionalDay(dateStr: string, explicitBranchId?: string) {
+export async function getInstructionalDay(dateStr: string, explicitBranchId?: string, explicitAcademicYearId?: string) {
   return branchAction(explicitBranchId, async (ctx) => {
-    const { data, error } = await fetchCalendarContext(ctx.supabase, ctx.branchId, dateStr, dateStr);
+    const { data, error } = await fetchCalendarContext(ctx.supabase, ctx.branchId, dateStr, dateStr, explicitAcademicYearId);
     if (error) return { error };
     
     const result = resolveInstructionalDay(dateStr, data.operating_days, data.events);
@@ -98,9 +99,9 @@ export async function getInstructionalDay(dateStr: string, explicitBranchId?: st
   });
 }
 
-export async function getInstructionalDaysForRangeAction(startStr: string, endStr: string, explicitBranchId?: string) {
+export async function getInstructionalDaysForRangeAction(startStr: string, endStr: string, explicitBranchId?: string, explicitAcademicYearId?: string) {
   return branchAction(explicitBranchId, async (ctx) => {
-    const { data, error } = await fetchCalendarContext(ctx.supabase, ctx.branchId, startStr, endStr);
+    const { data, error } = await fetchCalendarContext(ctx.supabase, ctx.branchId, startStr, endStr, explicitAcademicYearId);
     if (error) return { error };
     
     const result = getInstructionalDaysForRange(startStr, endStr, data.operating_days, data.events);
