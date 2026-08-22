@@ -24,12 +24,13 @@ export async function createAcademicYear(data: { name: string; start_date: strin
 
 export async function updateAcademicYear(id: string, data: { name: string; start_date: string; end_date: string; status: string }, explicitBranchId?: string) {
   const supabase = await createClient();
+    let branch_id: string;
     try {
-    await getContextBranchId(explicitBranchId);
+    branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('academic_years').update(data).eq('id', id);
+  const { error } = await supabase.from('academic_years').update(data).eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
@@ -37,12 +38,13 @@ export async function updateAcademicYear(id: string, data: { name: string; start
 
 export async function deleteAcademicYear(id: string, explicitBranchId?: string) {
   const supabase = await createClient();
+    let branch_id: string;
     try {
-    await getContextBranchId(explicitBranchId);
+    branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('academic_years').delete().eq('id', id);
+  const { error } = await supabase.from('academic_years').delete().eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
@@ -65,12 +67,13 @@ export async function createClass(data: { academic_year_id: string; name: string
 
 export async function updateClass(id: string, data: { name: string; level: number }, explicitBranchId?: string) {
   const supabase = await createClient();
+    let branch_id: string;
     try {
-    await getContextBranchId(explicitBranchId);
+    branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('classes').update(data).eq('id', id);
+  const { error } = await supabase.from('classes').update(data).eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
@@ -78,12 +81,13 @@ export async function updateClass(id: string, data: { name: string; level: numbe
 
 export async function deleteClass(id: string, explicitBranchId?: string) {
   const supabase = await createClient();
+    let branch_id: string;
     try {
-    await getContextBranchId(explicitBranchId);
+    branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('classes').delete().eq('id', id);
+  const { error } = await supabase.from('classes').delete().eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
@@ -106,12 +110,13 @@ export async function createSection(data: { class_id: string; name: string; capa
 
 export async function updateSection(id: string, data: { name: string; capacity: number }, explicitBranchId?: string) {
   const supabase = await createClient();
+    let branch_id: string;
     try {
-    await getContextBranchId(explicitBranchId);
+    branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('sections').update(data).eq('id', id);
+  const { error } = await supabase.from('sections').update(data).eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
@@ -119,12 +124,13 @@ export async function updateSection(id: string, data: { name: string; capacity: 
 
 export async function deleteSection(id: string, explicitBranchId?: string) {
   const supabase = await createClient();
+    let branch_id: string;
     try {
-    await getContextBranchId(explicitBranchId);
+    branch_id = await getContextBranchId(explicitBranchId);
   } catch (e) {
     return { error: (e as Error).message };
   }
-  const { error } = await supabase.from('sections').delete().eq('id', id);
+  const { error } = await supabase.from('sections').delete().eq('id', id).eq('branch_id', branch_id);
   if (error) return { error: mapDatabaseError(error) };
   revalidatePath('/academic-structure');
   return { success: true };
