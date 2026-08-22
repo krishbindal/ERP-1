@@ -29,6 +29,9 @@ let unexpectedSkips = 0;
 let requiredSecurityExecuted = 0;
 let requiredSecurityTotal = 0;
 
+let roleScopeSkips = 0;
+let projectScopeSkips = 0;
+
 for (const suite of report.suites || []) {
   processSuite(suite);
 }
@@ -41,7 +44,13 @@ function processSuite(suite) {
     // We count based on the tests array
     for (const test of spec.tests || []) {
       const results = test.results || [];
-      const isExpectedSkip = test.annotations?.some(a => a.type === 'skip' && a.description === 'Expected role-scope skip');
+      const skipAnnotation = test.annotations?.find(a => a.type === 'skip');
+      const isExpectedSkip = skipAnnotation && (skipAnnotation.description === 'EXPECTED_ROLE_SCOPE' || skipAnnotation.description === 'EXPECTED_PROJECT_SCOPE');
+
+      if (isExpectedSkip) {
+        if (skipAnnotation.description === 'EXPECTED_ROLE_SCOPE') roleScopeSkips++;
+        if (skipAnnotation.description === 'EXPECTED_PROJECT_SCOPE') projectScopeSkips++;
+      }
       
       const status = test.status;
       if (status === 'expected') {
@@ -50,6 +59,7 @@ function processSuite(suite) {
                expectedSkips++;
            } else {
                unexpectedSkips++;
+               console.error(`Unexpected skip (expected skip): ${test.projectName} | ${spec.title} | ${skipAnnotation?.description}`);
            }
         } else {
            passed++;
@@ -60,6 +70,7 @@ function processSuite(suite) {
             expectedSkips++;
         } else {
             unexpectedSkips++;
+            console.error(`Unexpected skip (status skip): ${test.projectName} | ${spec.title} | ${skipAnnotation?.description}`);
         }
       } else {
         failed++;
@@ -90,7 +101,9 @@ console.log(`Total tests: ${total * 3}`); // approx, since each spec runs in 3 p
 console.log(`Executed: ${executed}`);
 console.log(`Passed: ${passed}`);
 console.log(`Failed: ${failed}`);
-console.log(`Intentionally skipped (role-scoped): ${expectedSkips}`);
+console.log(`Intentionally skipped: ${expectedSkips}`);
+console.log(`  - EXPECTED_ROLE_SCOPE: ${roleScopeSkips}`);
+console.log(`  - EXPECTED_PROJECT_SCOPE: ${projectScopeSkips}`);
 console.log(`Unexpectedly skipped: ${unexpectedSkips}`);
 
 // We need exactly 60 tests (20 specs * 3 projects)

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('App Config Admin Tests', () => {
 
   test('Teacher gets Access Denied when trying to access app config', async ({ page }) => {
-    if (test.info().project.metadata?.role !== 'teacher') test.skip(true, 'Expected role-scope skip');
+    if (test.info().project.metadata?.role !== 'teacher') test.skip(true, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/admin/app-config');
     
@@ -13,7 +13,7 @@ test.describe('App Config Admin Tests', () => {
   });
 
   test('Branch Admin can view and edit their branch app config', async ({ page }) => {
-    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(true, 'Expected role-scope skip');
+    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(true, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/admin/app-config');
 
@@ -38,7 +38,7 @@ test.describe('App Config Admin Tests', () => {
   });
   
   test('Super Admin can view and edit app configs across branches', async ({ page }) => {
-    if (test.info().project.metadata?.role !== 'superadmin') test.skip(true, 'Expected role-scope skip');
+    if (test.info().project.metadata?.role !== 'superadmin') test.skip(true, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/admin/app-config');
     

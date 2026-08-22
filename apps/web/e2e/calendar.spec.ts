@@ -23,7 +23,7 @@ test.describe('Calendar UI', () => {
   // ================================================================
   test('Teacher cannot mutate calendar events or operating days', async ({ page }) => {
     const meta = test.info().project.metadata as { role?: string };
-    if (meta?.role !== 'teacher') test.skip(true, 'Expected role-scope skip');
+    if (meta?.role !== 'teacher') test.skip(true, 'EXPECTED_ROLE_SCOPE');
 
     await page.goto('/academic-structure/calendar');
     await expect(page.getByRole('heading', { name: 'Academic Structure' })).toBeVisible();
@@ -46,7 +46,7 @@ test.describe('Calendar UI', () => {
     // Gate to exact project to prevent mobile-chrome and other projects from running mutations
     test.beforeEach(({ }, testInfo) => {
       if (testInfo.project.name !== 'chromium-branchadmin') {
-        test.skip(true, 'Destructive calendar mutations run only on chromium-branchadmin');
+        test.skip(true, 'EXPECTED_PROJECT_SCOPE');
       }
     });
 

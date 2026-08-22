@@ -39,7 +39,7 @@ export function OperatingDaysEditor({
     
     const newSelection = selectedDays.includes(dayId)
       ? selectedDays.filter((d) => d !== dayId)
-      : [...selectedDays, dayId].sort();
+      : [...selectedDays, dayId].sort((a, b) => a - b);
 
     if (newSelection.length === 0) {
       setError('At least one operating day must be selected.');
@@ -67,7 +67,7 @@ export function OperatingDaysEditor({
     });
   };
 
-  const isDirty = JSON.stringify(selectedDays) !== JSON.stringify([...initialDays].sort());
+  const isDirty = JSON.stringify(selectedDays) !== JSON.stringify([...initialDays].sort((a, b) => a - b));
 
   return (
     <div className="bg-white p-6 shadow sm:rounded-lg border border-gray-200">

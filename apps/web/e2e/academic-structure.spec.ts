@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 test.describe('Academic Structure Role Tests', () => {
 
   test('Teacher gets Access Denied when trying to create and sees branch identity without switching', async ({ page }) => {
-    if (test.info().project.metadata?.role !== 'teacher') test.skip(true, 'Expected role-scope skip');
+    if (test.info().project.metadata?.role !== 'teacher') test.skip(true, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/academic-structure');
     
@@ -20,7 +20,7 @@ test.describe('Academic Structure Role Tests', () => {
   });
 
   test('Branch Admin can create, edit, and delete an Academic Year but cannot switch branch', async ({ page }) => {
-    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(true, 'Expected role-scope skip');
+    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(true, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/academic-structure');
 
@@ -56,7 +56,7 @@ test.describe('Academic Structure Role Tests', () => {
   });
   
   test('Branch Admin attempting to access another branch resource is denied', async ({ page, request }) => {
-    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(true, 'Expected role-scope skip');
+    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(true, 'EXPECTED_ROLE_SCOPE');
 
     await page.goto('/academic-structure');
 
