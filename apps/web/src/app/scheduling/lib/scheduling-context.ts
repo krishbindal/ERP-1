@@ -1,14 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
-import { getContextBranchId } from '@/lib/branch-context';
+import { SupabaseClient } from '@supabase/supabase-js';
 
-export async function getSchedulingContext(explicitBranchId?: string) {
-  const supabase = await createClient();
-  const branch_id = await getContextBranchId(explicitBranchId);
-  
+export async function getActiveAcademicYearId(supabase: SupabaseClient, branchId: string): Promise<string> {
   const { data: activeYear } = await supabase
     .from('academic_years')
     .select('id')
-    .eq('branch_id', branch_id)
+    .eq('branch_id', branchId)
     .eq('status', 'ACTIVE')
     .single();
     
@@ -16,11 +12,5 @@ export async function getSchedulingContext(explicitBranchId?: string) {
     throw new Error("No active academic year found for this branch.");
   }
   
-  return { branch_id, academic_year_id: activeYear.id, supabase };
-}
-
-export async function getBranchContextClient(explicitBranchId?: string) {
-  const supabase = await createClient();
-  const branch_id = await getContextBranchId(explicitBranchId);
-  return { supabase, branch_id };
+  return activeYear.id;
 }
