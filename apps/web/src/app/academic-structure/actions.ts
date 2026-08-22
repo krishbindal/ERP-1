@@ -8,14 +8,14 @@ import { SupabaseClient } from '@supabase/supabase-js';
 
 async function withBranchContext<T>(
   explicitBranchId: string | undefined,
-  action: (supabase: SupabaseClient, branchId: string) => Promise<{ error?: string | unknown; success?: boolean; data?: T }>
+  action: (supabase: SupabaseClient, branchId: string) => Promise<{ error?: string; success?: boolean; data?: T }>
 ) {
   const supabase = await createClient();
   let branchId: string;
   try {
     branchId = await getContextBranchId(explicitBranchId);
   } catch (e) {
-    return { error: (e as Error).message };
+    return { error: e instanceof Error ? e.message : String(e) };
   }
   return action(supabase, branchId);
 }
