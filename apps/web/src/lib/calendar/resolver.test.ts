@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error
 import { describe, it, expect } from 'vitest';
 import { resolveInstructionalDay, getInstructionalDaysForRange, CalendarEvent } from './resolver';
 
@@ -99,4 +99,5 @@ describe('Calendar Resolver', () => {
     });
   });
 });
+
 
