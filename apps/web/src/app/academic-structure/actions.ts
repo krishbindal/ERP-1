@@ -1,121 +1,72 @@
 "use server";
 
-import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
-import { mapDatabaseError } from '@/lib/db-error-mapper';
-import { getContextBranchId } from '@/lib/branch-context';
-import { SupabaseClient } from '@supabase/supabase-js';
-
-async function withBranchContext<T>(
-  explicitBranchId: string | undefined,
-  action: (supabase: SupabaseClient, branchId: string) => Promise<{ error?: string; success?: boolean; data?: T }>
-) {
-  const supabase = await createClient();
-  let branchId: string;
-  try {
-    branchId = await getContextBranchId(explicitBranchId);
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
-  }
-  return action(supabase, branchId);
-}
+import { branchAction } from '@/lib/server-actions';
 
 // Academic Years
 export async function createAcademicYear(data: { name: string; start_date: string; end_date: string; status: string }, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('academic_years').insert({ ...data, branch_id: branchId });
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('academic_years').insert({ ...data, branch_id: ctx.branchId });
+  }, '/academic-structure');
 }
 
 export async function updateAcademicYear(id: string, data: { name: string; start_date: string; end_date: string; status: string }, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('academic_years').update(data).eq('id', id).eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('academic_years').update(data).eq('id', id).eq('branch_id', ctx.branchId);
+  }, '/academic-structure');
 }
 
 export async function deleteAcademicYear(id: string, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('academic_years').delete().eq('id', id).eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('academic_years').delete().eq('id', id).eq('branch_id', ctx.branchId);
+  }, '/academic-structure');
 }
 
 // Classes
 export async function createClass(data: { academic_year_id: string; name: string; level: number }, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('classes').insert({ ...data, branch_id: branchId });
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('classes').insert({ ...data, branch_id: ctx.branchId });
+  }, '/academic-structure');
 }
 
 export async function updateClass(id: string, data: { name: string; level: number }, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('classes').update(data).eq('id', id).eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('classes').update(data).eq('id', id).eq('branch_id', ctx.branchId);
+  }, '/academic-structure');
 }
 
 export async function deleteClass(id: string, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('classes').delete().eq('id', id).eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('classes').delete().eq('id', id).eq('branch_id', ctx.branchId);
+  }, '/academic-structure');
 }
 
 // Sections
 export async function createSection(data: { class_id: string; name: string; capacity: number }, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('sections').insert({ ...data, branch_id: branchId });
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('sections').insert({ ...data, branch_id: ctx.branchId });
+  }, '/academic-structure');
 }
 
 export async function updateSection(id: string, data: { name: string; capacity: number }, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('sections').update(data).eq('id', id).eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('sections').update(data).eq('id', id).eq('branch_id', ctx.branchId);
+  }, '/academic-structure');
 }
 
 export async function deleteSection(id: string, explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { error } = await supabase.from('sections').delete().eq('id', id).eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    revalidatePath('/academic-structure');
-    return { success: true };
-  });
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('sections').delete().eq('id', id).eq('branch_id', ctx.branchId);
+  }, '/academic-structure');
 }
 
 export async function getAcademicYears(explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { data, error } = await supabase.from('academic_years').select('id, name').eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    return { data };
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('academic_years').select('id, name').eq('branch_id', ctx.branchId);
   });
 }
 
 export async function getClasses(explicitBranchId?: string) {
-  return withBranchContext(explicitBranchId, async (supabase, branchId) => {
-    const { data, error } = await supabase.from('classes').select('id, name').eq('branch_id', branchId);
-    if (error) return { error: mapDatabaseError(error) };
-    return { data };
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase.from('classes').select('id, name').eq('branch_id', ctx.branchId);
   });
 }

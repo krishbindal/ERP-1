@@ -1,6 +1,7 @@
 "use server";
 
-import { schedulingMutation, branchMutation } from '../lib/action-helpers';
+import { branchAction } from '@/lib/server-actions';
+import { getActiveAcademicYearId } from '../lib/scheduling-context';
 
 export async function createTimetableEntry(
   data: {
@@ -15,13 +16,14 @@ export async function createTimetableEntry(
   },
   explicitBranchId?: string
 ) {
-  return schedulingMutation(explicitBranchId, '/scheduling/timetable', ({ supabase, branch_id, academic_year_id }) =>
-    supabase.from('timetable_entries').insert({
+  return branchAction(explicitBranchId, async (ctx) => {
+    const academic_year_id = await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
+    return ctx.supabase.from('timetable_entries').insert({
       ...data,
-      branch_id,
+      branch_id: ctx.branchId,
       academic_year_id,
-    })
-  );
+    });
+  }, '/scheduling/timetable');
 }
 
 export async function updateTimetableEntry(
@@ -38,21 +40,21 @@ export async function updateTimetableEntry(
   },
   explicitBranchId?: string
 ) {
-  return branchMutation(explicitBranchId, '/scheduling/timetable', ({ supabase, branch_id }) =>
-    supabase
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase
       .from('timetable_entries')
       .update(data)
       .eq('id', id)
-      .eq('branch_id', branch_id)
-  );
+      .eq('branch_id', ctx.branchId);
+  }, '/scheduling/timetable');
 }
 
 export async function archiveTimetableEntry(id: string, explicitBranchId?: string) {
-  return branchMutation(explicitBranchId, '/scheduling/timetable', ({ supabase, branch_id }) =>
-    supabase
+  return branchAction(explicitBranchId, async (ctx) => {
+    return ctx.supabase
       .from('timetable_entries')
       .update({ status: 'ARCHIVED' })
       .eq('id', id)
-      .eq('branch_id', branch_id)
-  );
+      .eq('branch_id', ctx.branchId);
+  }, '/scheduling/timetable');
 }
