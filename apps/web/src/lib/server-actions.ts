@@ -23,9 +23,9 @@ export type ActionResult<T = void> = {
  * Automatically maps Supabase/Postgrest errors to user-friendly messages.
  * Automatically revalidates paths on success if provided.
  */
-export async function branchAction<T = any>(
+export async function branchAction<T = unknown>(
   explicitBranchId: string | undefined,
-  action: (ctx: ActionContext) => Promise<{ error: any; data?: T | null }>,
+  action: (ctx: ActionContext) => Promise<{ error: unknown; data?: T | null }>,
   pathToRevalidate?: string | string[]
 ): Promise<ActionResult<T>> {
   let branchId: string;
