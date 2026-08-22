@@ -133,7 +133,7 @@ test.describe('Calendar UI', () => {
       await page.getByLabel('Start Date').fill('2030-03-10');
       // Test invalid date validation
       await page.getByLabel('End Date').fill('2030-03-09');
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.getByText('Start date must be before or equal to end date.')).toBeVisible();
 
       // Fix the date
@@ -145,7 +145,7 @@ test.describe('Calendar UI', () => {
       await expect(instructionalCheckbox).not.toBeChecked();
       await expect(instructionalCheckbox).toBeDisabled();
 
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
 
       // Verify event appears in table
       const holidayRow = page.locator('tr', { hasText: TEST_EVENT_HOLIDAY });
@@ -159,7 +159,7 @@ test.describe('Calendar UI', () => {
       // For OTHER type, instructional checkbox should be enabled
       await expect(page.getByLabel('Is Instructional Day')).toBeEnabled();
       await page.getByLabel('Is Instructional Day').check();
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
 
       const editedRow = page.locator('tr', { hasText: TEST_EVENT_EDITED });
       await expect(editedRow).toBeVisible();
@@ -181,7 +181,7 @@ test.describe('Calendar UI', () => {
       await expect(page.getByLabel('Is Instructional Day')).toBeChecked();
       await expect(page.getByLabel('Is Instructional Day')).toBeDisabled();
 
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       const makeupRow = page.locator('tr', { hasText: TEST_EVENT_MAKEUP });
       await expect(makeupRow).toBeVisible();
       await expect(makeupRow.locator('td').nth(3)).toContainText('Yes');
