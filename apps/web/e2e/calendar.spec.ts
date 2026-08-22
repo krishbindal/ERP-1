@@ -130,14 +130,14 @@ test.describe('Calendar UI', () => {
       // --- Create HOLIDAY ---
       await page.getByRole('button', { name: 'Add Event' }).click();
       await page.getByLabel('Name').fill(TEST_EVENT_HOLIDAY);
-      await page.getByLabel('Start Date').fill('2030-03-10');
+      await page.getByLabel('Start Date').fill('2026-03-10');
       // Test invalid date validation
-      await page.getByLabel('End Date').fill('2030-03-09');
+      await page.getByLabel('End Date').fill('2026-03-09');
       await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.getByText('Start date must be before or equal to end date.')).toBeVisible();
 
       // Fix the date
-      await page.getByLabel('End Date').fill('2030-03-11');
+      await page.getByLabel('End Date').fill('2026-03-11');
       await page.getByLabel('Type').selectOption('HOLIDAY');
 
       // Instructional checkbox should be unchecked and disabled for HOLIDAY
@@ -173,8 +173,8 @@ test.describe('Calendar UI', () => {
       // --- Create MAKEUP_DAY ---
       await page.getByRole('button', { name: 'Add Event' }).click();
       await page.getByLabel('Name').fill(TEST_EVENT_MAKEUP);
-      await page.getByLabel('Start Date').fill('2030-03-12');
-      await page.getByLabel('End Date').fill('2030-03-12');
+      await page.getByLabel('Start Date').fill('2026-03-12');
+      await page.getByLabel('End Date').fill('2026-03-12');
       await page.getByLabel('Type').selectOption('MAKEUP_DAY');
 
       // For MAKEUP_DAY, instructional should be checked and disabled
