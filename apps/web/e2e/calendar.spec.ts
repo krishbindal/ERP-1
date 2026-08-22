@@ -56,7 +56,8 @@ test.describe('Calendar UI', () => {
 
       try {
         await page.goto('/academic-structure/calendar');
-        page.on('dialog', dialog => dialog.accept());
+        page.removeAllListeners('dialog');
+        page.on('dialog', dialog => dialog.accept().catch(() => {}));
 
         const testEventNames = [TEST_EVENT_HOLIDAY, TEST_EVENT_EDITED, TEST_EVENT_MAKEUP];
         for (const eventName of testEventNames) {
@@ -166,7 +167,8 @@ test.describe('Calendar UI', () => {
       await expect(editedRow.locator('td').nth(3)).toContainText('Yes');
 
       // --- Archive the edited event ---
-      page.on('dialog', dialog => dialog.accept());
+      page.removeAllListeners('dialog');
+      page.on('dialog', dialog => dialog.accept().catch(() => {}));
       await editedRow.getByRole('button', { name: 'Archive' }).click();
       await expect(editedRow).toBeHidden();
 
