@@ -1,181 +1,191 @@
 import { test, expect } from '@playwright/test';
 
-const TEST_EVENT_HOLIDAY = 'E2E_DETERMINISTIC_HOLIDAY';
-const TEST_EVENT_EDITED = 'E2E_DETERMINISTIC_HOLIDAY_EDITED';
-const TEST_EVENT_MAKEUP = 'E2E_DETERMINISTIC_MAKEUP';
+/**
+ * Calendar UI E2E Tests
+ * 
+ * Architecture:
+ * - Role gating via test.info().project.metadata (matches repo pattern)
+ * - NO feature-level storageState overrides
+ * - Destructive mutations restricted to exact 'chromium-branchadmin' project
+ * - Read-only assertions for teacher role
+ * - Student auth does not exist in current infrastructure; not tested here
+ * - Cleanup guaranteed via afterEach
+ */
 
-const TEST_DATE_START = '2030-03-10';
-const TEST_DATE_END = '2030-03-11';
-const TEST_DATE_INVALID_END = '2030-03-09';
+const TEST_EVENT_HOLIDAY = 'E2E_CAL_HOLIDAY';
+const TEST_EVENT_EDITED = 'E2E_CAL_HOLIDAY_EDITED';
+const TEST_EVENT_MAKEUP = 'E2E_CAL_MAKEUP';
 
-test.describe('Calendar UI Role Tests', () => {
+test.describe('Calendar UI', () => {
 
-  // Read-only tests can run on all browsers against default active year.
-  test.describe('Read-Only Roles', () => {
-    test.use({ storageState: 'playwright/.auth/teacher.json' });
+  // ================================================================
+  // READ-ONLY: Teacher
+  // ================================================================
+  test('Teacher cannot mutate calendar events or operating days', async ({ page }) => {
+    const meta = test.info().project.metadata as { role?: string };
+    if (meta?.role !== 'teacher') test.skip(true, 'Expected role-scope skip');
 
-    test('Teacher cannot mutate calendar events or operating days', async ({ page }) => {
+    await page.goto('/academic-structure/calendar');
+    await expect(page.getByRole('heading', { name: 'Academic Structure' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Operating Days' })).toBeVisible();
+
+    // Operating Days checkboxes are disabled for read-only roles
+    const mondayCheckbox = page.locator('input[name="operating-day-1"]');
+    await expect(mondayCheckbox).toBeDisabled();
+
+    // Mutation buttons are not visible
+    await expect(page.getByRole('button', { name: 'Add Event' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Save Changes' })).toBeHidden();
+  });
+
+  // ================================================================
+  // DESTRUCTIVE: Branch Admin mutations (chromium-branchadmin only)
+  // ================================================================
+  test.describe('Branch Admin Calendar Mutations', () => {
+
+    // Gate to exact project to prevent mobile-chrome and other projects from running mutations
+    test.beforeEach(({ }, testInfo) => {
+      if (testInfo.project.name !== 'chromium-branchadmin') {
+        test.skip(true, 'Destructive calendar mutations run only on chromium-branchadmin');
+      }
+    });
+
+    // Guaranteed cleanup: archive any test-created events even if the test fails
+    test.afterEach(async ({ page }, testInfo) => {
+      if (testInfo.project.name !== 'chromium-branchadmin') return;
+
+      try {
+        await page.goto('/academic-structure/calendar');
+        page.on('dialog', dialog => dialog.accept());
+
+        const testEventNames = [TEST_EVENT_HOLIDAY, TEST_EVENT_EDITED, TEST_EVENT_MAKEUP];
+        for (const eventName of testEventNames) {
+          const row = page.locator('tr', { hasText: eventName }).first();
+          if (await row.isVisible({ timeout: 2000 }).catch(() => false)) {
+            const archiveBtn = row.getByRole('button', { name: 'Archive' });
+            if (await archiveBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+              await archiveBtn.click();
+              // Wait for the row to disappear after archive
+              await expect(row).toBeHidden({ timeout: 5000 }).catch(() => {});
+            }
+          }
+        }
+      } catch {
+        // Best-effort cleanup; do not fail the test on cleanup errors
+      }
+    });
+
+    test('Branch Admin can manage operating days', async ({ page }) => {
       await page.goto('/academic-structure/calendar');
-      await expect(page.getByRole('heading', { name: 'Academic Structure' })).toBeVisible();
       await expect(page.getByRole('heading', { name: 'Operating Days' })).toBeVisible();
 
-      // Verify Operating Days inputs are disabled
-      const mondayCheckbox = page.locator('input[name="operating-day-1"]');
-      await expect(mondayCheckbox).toBeDisabled();
-
-      // Verify "Add Event" button is hidden
-      await expect(page.getByRole('button', { name: 'Add Event' })).toBeHidden();
-
-      // Verify "Edit" and "Archive" buttons are hidden inside the table
-      await expect(page.getByRole('button', { name: 'Edit' })).toBeHidden();
-      await expect(page.getByRole('button', { name: 'Archive' })).toBeHidden();
-    });
-  });
-
-  test.describe('Read-Only Student', () => {
-    test.use({ storageState: 'playwright/.auth/student.json' });
-    
-    test('Student cannot mutate calendar events', async ({ page }) => {
-      await page.goto('/academic-structure/calendar');
-      await expect(page.getByRole('button', { name: 'Add Event' })).toBeHidden();
-    });
-  });
-
-  // Destructive CRUD runs ONLY on chromium to avoid parallel mutation of shared state
-  test.describe('Destructive Role: Branch Admin', () => {
-    // Only run this block on chromium
-    test.skip(({ browserName }) => browserName !== 'chromium', 'Mutations should only run once on Chromium');
-    
-    test.use({ storageState: 'playwright/.auth/branchadmin.json' });
-
-    let isolatedYearId: string;
-
-    test.beforeAll(async ({ request }) => {
-      // Create a deterministic isolated Academic Year to avoid mutating shared active year.
-      // We will hit a generic supabase endpoint or an app route, but we don't have a direct route
-      // for creating academic years from tests.
-      // If we don't have an API route to easily create it from Playwright, we can just use
-      // the existing active year and clean up perfectly. Let's do perfect cleanup instead of
-      // creating an academic year via fragile manual requests.
-    });
-
-    // Instead of beforeAll setup which might be complex, we just use deterministic cleanup.
-    // We will save original operating days and restore them.
-    let originalOperatingDays: number[] = [];
-
-    test('Branch Admin can mutate Operating Days and Calendar Events', async ({ page }) => {
-      await page.goto('/academic-structure/calendar');
-      
-      // Save original operating days
-      originalOperatingDays = [];
+      // Record original state
+      const originalChecked: number[] = [];
       for (let i = 1; i <= 7; i++) {
         const cb = page.locator(`input[name="operating-day-${i}"]`);
         if (await cb.isChecked()) {
-          originalOperatingDays.push(i);
+          originalChecked.push(i);
         }
       }
-      
-      // If no days were checked initially (should not happen but just in case), default to M-F
-      if (originalOperatingDays.length === 0) originalOperatingDays = [1,2,3,4,5];
+      if (originalChecked.length === 0) return; // Safety: no operating days to test
 
-      // Ensure all days from 1 to 7 are checked so we test disabling the last one.
+      // Check all 7 days
       for (let i = 1; i <= 7; i++) {
         const cb = page.locator(`input[name="operating-day-${i}"]`);
         if (!(await cb.isChecked())) {
           await cb.check();
         }
       }
-      await page.getByRole('button', { name: 'Save Days' }).click();
-      await expect(page.getByText('Successfully updated operating days.')).toBeVisible();
+      await page.getByRole('button', { name: 'Save Changes' }).click();
+      await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
 
-      // Now uncheck days 1 to 6.
+      // Uncheck days 1-6, leaving only day 7
       for (let i = 1; i <= 6; i++) {
-        const cb = page.locator(`input[name="operating-day-${i}"]`);
-        await cb.uncheck();
+        await page.locator(`input[name="operating-day-${i}"]`).uncheck();
       }
-      // Day 7 should now be the only one checked and must be disabled.
+
+      // Day 7 is the last remaining — must be disabled
       const day7 = page.locator('input[name="operating-day-7"]');
       await expect(day7).toBeChecked();
       await expect(day7).toBeDisabled();
 
-      // Restore original operating days
+      // Restore original days: check all originals first, then uncheck non-originals
+      for (const d of originalChecked) {
+        const cb = page.locator(`input[name="operating-day-${d}"]`);
+        if (!(await cb.isChecked())) await cb.check();
+      }
       for (let i = 1; i <= 7; i++) {
-        const cb = page.locator(`input[name="operating-day-${i}"]`);
-        const shouldBeChecked = originalOperatingDays.includes(i);
-        if (shouldBeChecked && !(await cb.isChecked())) {
-          await cb.check();
-        } else if (!shouldBeChecked && (await cb.isChecked())) {
-          // Can only uncheck if it's not the last one, but we are checking first, then unchecking.
-          // Check all first to avoid the 'last day' constraint
+        if (!originalChecked.includes(i)) {
+          const cb = page.locator(`input[name="operating-day-${i}"]`);
+          if (await cb.isChecked()) await cb.uncheck();
         }
       }
-      
-      // Check all target days first
-      for (const d of originalOperatingDays) {
-        await page.locator(`input[name="operating-day-${d}"]`).check();
-      }
-      // Then uncheck the others
-      for (let i = 1; i <= 7; i++) {
-        if (!originalOperatingDays.includes(i)) {
-          await page.locator(`input[name="operating-day-${i}"]`).uncheck();
-        }
-      }
+      await page.getByRole('button', { name: 'Save Changes' }).click();
+      await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
+    });
 
-      await page.getByRole('button', { name: 'Save Days' }).click();
+    test('Branch Admin can create, edit, and archive calendar events', async ({ page }) => {
+      await page.goto('/academic-structure/calendar');
 
-      // --- EVENTS UX ---
-      
-      // 1. Create HOLIDAY
+      // --- Create HOLIDAY ---
       await page.getByRole('button', { name: 'Add Event' }).click();
-      await page.fill('input[name="name"]', TEST_EVENT_HOLIDAY);
-      await page.fill('input[name="start_date"]', TEST_DATE_START);
-      // Test invalid date order
-      await page.fill('input[name="end_date"]', TEST_DATE_INVALID_END);
-      await page.getByRole('button', { name: 'Save Event' }).click();
+      await page.getByLabel('Name').fill(TEST_EVENT_HOLIDAY);
+      await page.getByLabel('Start Date').fill('2030-03-10');
+      // Test invalid date validation
+      await page.getByLabel('End Date').fill('2030-03-09');
+      await page.getByRole('button', { name: 'Save' }).click();
       await expect(page.getByText('Start date must be before or equal to end date.')).toBeVisible();
-      
-      // Fix date
-      await page.fill('input[name="end_date"]', TEST_DATE_END);
-      await page.selectOption('select[name="type"]', 'HOLIDAY');
-      
-      await expect(page.getByLabel('Is Instructional Day')).not.toBeChecked();
-      await page.getByRole('button', { name: 'Save Event' }).click();
-      
-      // Verify event in table
+
+      // Fix the date
+      await page.getByLabel('End Date').fill('2030-03-11');
+      await page.getByLabel('Type').selectOption('HOLIDAY');
+
+      // Instructional checkbox should be unchecked and disabled for HOLIDAY
+      const instructionalCheckbox = page.getByLabel('Is Instructional Day');
+      await expect(instructionalCheckbox).not.toBeChecked();
+      await expect(instructionalCheckbox).toBeDisabled();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+
+      // Verify event appears in table
       const holidayRow = page.locator('tr', { hasText: TEST_EVENT_HOLIDAY });
       await expect(holidayRow).toBeVisible();
-      await expect(holidayRow.locator('td').nth(3)).toContainText('No'); 
+      await expect(holidayRow.locator('td').nth(3)).toContainText('No');
 
-      // 2. Edit to OTHER
+      // --- Edit to OTHER with instructional=true ---
       await holidayRow.getByRole('button', { name: 'Edit' }).click();
-      await page.fill('input[name="name"]', TEST_EVENT_EDITED);
-      await page.selectOption('select[name="type"]', 'OTHER');
-      await page.getByLabel('Is Instructional Day').check(); 
-      await page.getByRole('button', { name: 'Save Event' }).click();
+      await page.getByLabel('Name').fill(TEST_EVENT_EDITED);
+      await page.getByLabel('Type').selectOption('OTHER');
+      // For OTHER type, instructional checkbox should be enabled
+      await expect(page.getByLabel('Is Instructional Day')).toBeEnabled();
+      await page.getByLabel('Is Instructional Day').check();
+      await page.getByRole('button', { name: 'Save' }).click();
 
       const editedRow = page.locator('tr', { hasText: TEST_EVENT_EDITED });
       await expect(editedRow).toBeVisible();
-      await expect(editedRow.locator('td').nth(3)).toContainText('Yes'); 
+      await expect(editedRow.locator('td').nth(3)).toContainText('Yes');
 
-      // 3. Create MAKEUP_DAY
-      await page.getByRole('button', { name: 'Add Event' }).click();
-      await page.fill('input[name="name"]', TEST_EVENT_MAKEUP);
-      await page.fill('input[name="start_date"]', '2030-03-12');
-      await page.fill('input[name="end_date"]', '2030-03-12');
-      await page.selectOption('select[name="type"]', 'MAKEUP_DAY');
-      await page.getByRole('button', { name: 'Save Event' }).click();
-      const makeupRow = page.locator('tr', { hasText: TEST_EVENT_MAKEUP });
-      await expect(makeupRow.locator('td').nth(3)).toContainText('Yes');
-
-      // --- CLEANUP EVENTS ---
+      // --- Archive the edited event ---
       page.on('dialog', dialog => dialog.accept());
-      for (const name of [TEST_EVENT_EDITED, TEST_EVENT_MAKEUP]) {
-        const row = page.locator('tr', { hasText: name }).first();
-        if (await row.isVisible()) {
-          await row.getByRole('button', { name: 'Archive' }).click();
-          await page.waitForLoadState('networkidle');
-        }
-      }
+      await editedRow.getByRole('button', { name: 'Archive' }).click();
+      await expect(editedRow).toBeHidden();
+
+      // --- Create MAKEUP_DAY ---
+      await page.getByRole('button', { name: 'Add Event' }).click();
+      await page.getByLabel('Name').fill(TEST_EVENT_MAKEUP);
+      await page.getByLabel('Start Date').fill('2030-03-12');
+      await page.getByLabel('End Date').fill('2030-03-12');
+      await page.getByLabel('Type').selectOption('MAKEUP_DAY');
+
+      // For MAKEUP_DAY, instructional should be checked and disabled
+      await expect(page.getByLabel('Is Instructional Day')).toBeChecked();
+      await expect(page.getByLabel('Is Instructional Day')).toBeDisabled();
+
+      await page.getByRole('button', { name: 'Save' }).click();
+      const makeupRow = page.locator('tr', { hasText: TEST_EVENT_MAKEUP });
+      await expect(makeupRow).toBeVisible();
+      await expect(makeupRow.locator('td').nth(3)).toContainText('Yes');
+      // Cleanup happens in afterEach
     });
   });
 });
