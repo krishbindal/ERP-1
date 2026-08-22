@@ -112,8 +112,18 @@ export async function getInstructionalDaysForRangeAction(startStr: string, endSt
 // MUTATIONS
 // ============================================================================
 
+export type CreateCalendarEventInput = {
+  name: string;
+  start_date: string;
+  end_date: string;
+  type: string;
+  is_instructional: boolean;
+};
+
+export type UpdateCalendarEventInput = Partial<CreateCalendarEventInput>;
+
 export async function createCalendarEvent(
-  data: Omit<CalendarEvent, 'id'>, 
+  data: CreateCalendarEventInput, 
   explicitBranchId?: string
 ) {
   return branchAction(explicitBranchId, async (ctx) => {
@@ -126,12 +136,12 @@ export async function createCalendarEvent(
         branch_id: ctx.branchId,
         academic_year_id
       });
-  }, ROUTE_ACADEMIC_STRUCTURE); // Arbitrary existing placeholder route
+  }, ROUTE_ACADEMIC_STRUCTURE);
 }
 
 export async function updateCalendarEvent(
   id: string,
-  data: Partial<Omit<CalendarEvent, 'id'>>,
+  data: UpdateCalendarEventInput,
   explicitBranchId?: string
 ) {
   return branchAction(explicitBranchId, async (ctx) => {
@@ -149,6 +159,18 @@ export async function archiveCalendarEvent(id: string, explicitBranchId?: string
       .from(TABLE_CALENDAR_EVENTS)
       .update({ status: 'ARCHIVED' })
       .eq('id', id)
+      .eq(COL_BRANCH_ID, ctx.branchId);
+  }, ROUTE_ACADEMIC_STRUCTURE);
+}
+
+export async function updateOperatingDays(operatingDays: number[], explicitBranchId?: string) {
+  return branchAction(explicitBranchId, async (ctx) => {
+    const academic_year_id = await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
+    
+    return ctx.supabase
+      .from('academic_years')
+      .update({ operating_days: operatingDays })
+      .eq('id', academic_year_id)
       .eq(COL_BRANCH_ID, ctx.branchId);
   }, ROUTE_ACADEMIC_STRUCTURE);
 }
