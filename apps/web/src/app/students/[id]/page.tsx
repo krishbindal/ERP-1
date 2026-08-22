@@ -2,6 +2,7 @@ import React from 'react';
 import { StudentsService } from '@/services/students.service'
 import Link from 'next/link'
 import { verifyPageBranchContext } from '@/lib/branch-context';
+import { BranchAccessError } from '@/components/BranchAccessError';
 
 export default async function StudentDetailPage(props: { params: Promise<{ id: string }>; searchParams: Promise<{ branchId?: string }> }) {
   const params = await props.params;
@@ -10,17 +11,8 @@ export default async function StudentDetailPage(props: { params: Promise<{ id: s
 
   const { branchId, isAuthorized, errorState } = await verifyPageBranchContext(explicitBranchId);
 
-  if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available. Please log in.</div>;
-  if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch.</div>;
-  if (errorState === 'ACCESS_DENIED' || !branchId || !isAuthorized) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">You do not have permission to view this student.</p>
-        </div>
-      </div>
-    );
+  if (errorState || !branchId || !isAuthorized) {
+    return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} feature="students" />;
   }
 
   const { data: student, error } = await StudentsService.getStudent(params.id)
