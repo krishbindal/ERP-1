@@ -9,23 +9,32 @@ import { CalendarEventForm } from './CalendarEventForm';
 export function CalendarEventsTable({
   events,
   isReadOnly,
-  explicitBranchId
+  explicitBranchId,
+  explicitAcademicYearId
 }: {
   events: CalendarEvent[];
   isReadOnly: boolean;
   explicitBranchId?: string;
+  explicitAcademicYearId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleArchive = (id: string) => {
     if (!confirm('Are you sure you want to archive this event?')) return;
     
     startTransition(async () => {
-      await archiveCalendarEvent(id, explicitBranchId);
-      router.refresh();
+      setError(null);
+      const res = await archiveCalendarEvent(id, explicitBranchId);
+      if (res.error) {
+        setError(res.error);
+      } else {
+        router.refresh();
+      }
     });
   };
 
@@ -55,6 +64,8 @@ export function CalendarEventsTable({
           </button>
         )}
       </div>
+      
+      {error && <div className="px-4 sm:px-6 py-2 text-sm text-red-600 bg-red-50 border-t border-b border-red-200">{error}</div>}
       
       <div className="border-t border-gray-200 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -132,9 +143,10 @@ export function CalendarEventsTable({
       
       {isFormOpen && (
         <CalendarEventForm
-          initialData={editingEvent}
           onClose={() => setIsFormOpen(false)}
+          initialData={editingEvent || undefined}
           explicitBranchId={explicitBranchId}
+          explicitAcademicYearId={explicitAcademicYearId}
         />
       )}
     </div>

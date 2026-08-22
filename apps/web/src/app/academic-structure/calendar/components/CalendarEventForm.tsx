@@ -10,9 +10,10 @@ interface CalendarEventFormProps {
   initialData?: CalendarEvent | null;
   onClose: () => void;
   explicitBranchId?: string;
+  explicitAcademicYearId?: string;
 }
 
-export function CalendarEventForm({ initialData, onClose, explicitBranchId }: CalendarEventFormProps) {
+export function CalendarEventForm({ initialData, onClose, explicitBranchId, explicitAcademicYearId }: CalendarEventFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +52,7 @@ export function CalendarEventForm({ initialData, onClose, explicitBranchId }: Ca
 
       const res = initialData
         ? await updateCalendarEvent(initialData.id, payload, explicitBranchId)
-        : await createCalendarEvent(payload, explicitBranchId);
+        : await createCalendarEvent(payload, explicitBranchId, explicitAcademicYearId);
 
       if (res.error) {
         setError(res.error);

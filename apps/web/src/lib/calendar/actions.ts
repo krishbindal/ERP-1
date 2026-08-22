@@ -9,15 +9,15 @@ const TABLE_CALENDAR_EVENTS = 'calendar_events';
 const COL_BRANCH_ID = 'branch_id';
 const COL_ACADEMIC_YEAR_ID = 'academic_year_id';
 const STATUS_ACTIVE = 'ACTIVE';
-const ROUTE_ACADEMIC_STRUCTURE = '/academic-structure';
+const ROUTE_CALENDAR = '/academic-structure/calendar';
 
 // ============================================================================
 // READ OPERATIONS
 // ============================================================================
 
-export async function getCalendarEvents(explicitBranchId?: string, activeOnly = true) {
+export async function getCalendarEvents(explicitBranchId?: string, activeOnly = true, explicitAcademicYearId?: string) {
   return branchAction(explicitBranchId, async (ctx) => {
-    const academic_year_id = await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
+    const academic_year_id = explicitAcademicYearId || await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
     let query = ctx.supabase
       .from(TABLE_CALENDAR_EVENTS)
       .select('*')
@@ -112,22 +112,45 @@ export async function getInstructionalDaysForRangeAction(startStr: string, endSt
 // MUTATIONS
 // ============================================================================
 
+export type CalendarEventType = 'HOLIDAY' | 'CLOSURE' | 'MAKEUP_DAY' | 'OTHER';
+
 export type CreateCalendarEventInput = {
   name: string;
   start_date: string;
   end_date: string;
-  type: string;
+  type: CalendarEventType;
   is_instructional: boolean;
 };
 
 export type UpdateCalendarEventInput = Partial<CreateCalendarEventInput>;
 
+function validateEventInput(data: Partial<CreateCalendarEventInput>) {
+  if (data.start_date && data.end_date && data.start_date > data.end_date) {
+    throw new Error('Start date must be before or equal to end date.');
+  }
+  
+  if (data.type) {
+    if (!['HOLIDAY', 'CLOSURE', 'MAKEUP_DAY', 'OTHER'].includes(data.type)) {
+      throw new Error('Invalid event type.');
+    }
+    
+    if ((data.type === 'HOLIDAY' || data.type === 'CLOSURE') && data.is_instructional === true) {
+      throw new Error(`${data.type} cannot be an instructional day.`);
+    }
+    if (data.type === 'MAKEUP_DAY' && data.is_instructional === false) {
+      throw new Error('MAKEUP_DAY must be an instructional day.');
+    }
+  }
+}
+
 export async function createCalendarEvent(
   data: CreateCalendarEventInput, 
-  explicitBranchId?: string
+  explicitBranchId?: string,
+  explicitAcademicYearId?: string
 ) {
   return branchAction(explicitBranchId, async (ctx) => {
-    const academic_year_id = await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
+    validateEventInput(data);
+    const academic_year_id = explicitAcademicYearId || await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
     
     return ctx.supabase
       .from(TABLE_CALENDAR_EVENTS)
@@ -136,7 +159,7 @@ export async function createCalendarEvent(
         branch_id: ctx.branchId,
         academic_year_id
       });
-  }, ROUTE_ACADEMIC_STRUCTURE);
+  }, ROUTE_CALENDAR);
 }
 
 export async function updateCalendarEvent(
@@ -145,12 +168,13 @@ export async function updateCalendarEvent(
   explicitBranchId?: string
 ) {
   return branchAction(explicitBranchId, async (ctx) => {
+    validateEventInput(data);
     return ctx.supabase
       .from(TABLE_CALENDAR_EVENTS)
       .update(data)
       .eq('id', id)
       .eq(COL_BRANCH_ID, ctx.branchId);
-  }, ROUTE_ACADEMIC_STRUCTURE);
+  }, ROUTE_CALENDAR);
 }
 
 export async function archiveCalendarEvent(id: string, explicitBranchId?: string) {
@@ -160,17 +184,17 @@ export async function archiveCalendarEvent(id: string, explicitBranchId?: string
       .update({ status: 'ARCHIVED' })
       .eq('id', id)
       .eq(COL_BRANCH_ID, ctx.branchId);
-  }, ROUTE_ACADEMIC_STRUCTURE);
+  }, ROUTE_CALENDAR);
 }
 
-export async function updateOperatingDays(operatingDays: number[], explicitBranchId?: string) {
+export async function updateOperatingDays(operatingDays: number[], explicitBranchId?: string, explicitAcademicYearId?: string) {
   return branchAction(explicitBranchId, async (ctx) => {
-    const academic_year_id = await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
+    const academic_year_id = explicitAcademicYearId || await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
     
     return ctx.supabase
       .from('academic_years')
       .update({ operating_days: operatingDays })
       .eq('id', academic_year_id)
       .eq(COL_BRANCH_ID, ctx.branchId);
-  }, ROUTE_ACADEMIC_STRUCTURE);
+  }, ROUTE_CALENDAR);
 }

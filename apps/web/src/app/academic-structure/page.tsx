@@ -3,6 +3,7 @@ import { ClassesTable } from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext } from '@/lib/branch-context';
+import { BranchAccessError } from '@/components/BranchAccessError';
 import { AcademicYear, ClassWithYear, SectionWithClass } from './components/types';
 import { AcademicStructureNav } from './components/AcademicStructureNav';
 
@@ -15,17 +16,12 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
-  if (errorState === 'NO_CONTEXT') return <div className="text-gray-500">No context available.</div>;
-  if (errorState === 'NO_BRANCH_SELECTED') return <div className="text-gray-500">Please select a branch to view its academic structure.</div>;
-  if (errorState === 'ACCESS_DENIED' || !branchId || !isAuthorized) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">You do not have permission to view this branch&apos;s academic structure.</p>
-        </div>
-      </div>
-    );
+  if (errorState !== null && !branchId) {
+    return <BranchAccessError errorState={errorState} feature="academic structure" />;
+  }
+  
+  if (!isAuthorized || !branchId) {
+    return <BranchAccessError errorState="ACCESS_DENIED" feature="academic structure" />;
   }
 
   let years: AcademicYear[] = [];

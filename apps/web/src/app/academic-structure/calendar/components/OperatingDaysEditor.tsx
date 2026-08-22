@@ -17,11 +17,13 @@ const DAYS = [
 export function OperatingDaysEditor({
   initialDays,
   isReadOnly,
-  explicitBranchId
+  explicitBranchId,
+  explicitAcademicYearId
 }: {
   initialDays: number[];
   isReadOnly: boolean;
   explicitBranchId?: string;
+  explicitAcademicYearId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -53,7 +55,7 @@ export function OperatingDaysEditor({
     startTransition(async () => {
       setError(null);
       setSuccess(false);
-      const res = await updateOperatingDays(selectedDays, explicitBranchId);
+      const res = await updateOperatingDays(selectedDays, explicitBranchId, explicitAcademicYearId);
       
       if (res.error) {
         setError(res.error);
@@ -92,6 +94,9 @@ export function OperatingDaysEditor({
       <div className="flex flex-wrap gap-4">
         {DAYS.map((day) => {
           const isSelected = selectedDays.includes(day.id);
+          const isOnlyRemaining = isSelected && selectedDays.length === 1;
+          const isDisabled = isReadOnly || isPending || isOnlyRemaining;
+
           return (
             <div key={day.id} className="flex items-center">
               <input
@@ -99,13 +104,17 @@ export function OperatingDaysEditor({
                 name={`operating-day-${day.id}`}
                 type="checkbox"
                 checked={isSelected}
-                disabled={isReadOnly || isPending}
+                disabled={isDisabled}
                 onChange={() => toggleDay(day.id)}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                aria-disabled={isDisabled}
               />
               <label htmlFor={`operating-day-${day.id}`} className="ml-2 block text-sm text-gray-900">
                 {day.label}
               </label>
+              {isOnlyRemaining && (
+                <span className="sr-only">At least one operating day must remain selected.</span>
+              )}
             </div>
           );
         })}
