@@ -4,10 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { mapDatabaseError } from '@/lib/db-error-mapper';
 import { getContextBranchId } from '@/lib/branch-context';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 async function withBranchContext<T>(
   explicitBranchId: string | undefined,
-  action: (supabase: any, branchId: string) => Promise<{ error?: string | any; success?: boolean; data?: T }>
+  action: (supabase: SupabaseClient, branchId: string) => Promise<{ error?: string | unknown; success?: boolean; data?: T }>
 ) {
   const supabase = await createClient();
   let branchId: string;
