@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Simple mock for now if utils/supabase is not setup
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy'
-export const supabase = createClient(supabaseUrl, supabaseKey)
+import { createClient } from '@/lib/supabase/server';
 
 export type Student = {
   id: string;
@@ -40,6 +35,7 @@ export class StudentsService {
       gender?: string;
     }
   ): Promise<{ id: string } | { error: Error }> {
+    const supabase = await createClient();
     const { data: result, error } = await supabase.rpc('create_student_with_initial_placement', {
       p_organization_id: organizationId,
       p_branch_id: branchId,
@@ -62,6 +58,7 @@ export class StudentsService {
    * Fetch a single student. RLS will ensure we only see them if they have an active enrollment in a branch we can access.
    */
   static async getStudent(id: string): Promise<{ data?: Student, error?: Error }> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('students')
       .select('*')
@@ -76,6 +73,7 @@ export class StudentsService {
    * List all visible students. RLS restricts this to students enrolled in our active branches.
    */
   static async listStudents(): Promise<{ data?: Student[], error?: Error }> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('students')
       .select('*')
@@ -93,6 +91,7 @@ export class StudentsService {
     firstName: string,
     lastName: string
   ): Promise<{ data?: Guardian, error?: Error }> {
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('guardians')
       .insert({
@@ -115,6 +114,7 @@ export class StudentsService {
     guardianId: string,
     relationship: string
   ): Promise<{ error?: Error }> {
+    const supabase = await createClient();
     const { error } = await supabase
       .from('student_guardians')
       .insert({
