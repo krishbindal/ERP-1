@@ -1,8 +1,20 @@
-import React from 'react'
+import React from 'react';
 import { StudentsService } from '@/services/students.service'
 import Link from 'next/link'
+import { verifyPageBranchContext } from '@/lib/branch-context';
+import { BranchAccessError } from '@/components/BranchAccessError';
 
-export default async function StudentDetailPage({ params }: { params: { id: string } }) {
+export default async function StudentDetailPage(props: { params: Promise<{ id: string }>; searchParams: Promise<{ branchId?: string }> }) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+  const explicitBranchId = searchParams.branchId;
+
+  const { branchId, isAuthorized, errorState } = await verifyPageBranchContext(explicitBranchId);
+
+  if (errorState || !branchId || !isAuthorized) {
+    return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} feature="students" />;
+  }
+
   const { data: student, error } = await StudentsService.getStudent(params.id)
 
   if (error || !student) {

@@ -1,18 +1,46 @@
-import React from 'react'; import Link from 'next/link';
+import React from 'react';
+import Link from 'next/link';
 import { StudentsService } from '@/services/students.service'
 import { redirect } from 'next/navigation'
+import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
+import { BranchAccessError } from '@/components/BranchAccessError';
 
-export default function NewStudentPage() {
+export default async function NewStudentPage(props: { searchParams: Promise<{ branchId?: string }> }) {
+  const searchParams = await props.searchParams;
+  const explicitBranchId = searchParams.branchId;
+
+  const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
+
+  if (errorState || !branchId || !isAuthorized) {
+    return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} feature="students" />;
+  }
+
+  if (isReadOnly) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900">Insufficient Permissions</h2>
+          <p className="mt-2 text-gray-600">You do not have write access to create students.</p>
+        </div>
+      </div>
+    );
+  }
+
   async function createStudent(formData: FormData) {
     'use server'
-    
-    // Hardcode org/branch for dummy UI, normally from session context
-    const orgId = '11111111-1111-1111-1111-111111111111'
-    const branchId = '33333333-3333-3333-3333-333333333333'
-    
+
+    const appContext = await getAppContext();
+    if (!appContext) throw new Error('No authentication context');
+
+    const orgId = appContext.type === 'normal' ? appContext.organizationId : '';
+    if (!orgId) throw new Error('Organization context required');
+
+    const { getContextBranchId } = await import('@/lib/branch-context');
+    const resolvedBranchId = await getContextBranchId(explicitBranchId);
+
     const result = await StudentsService.createStudentWithPlacement(
-      orgId, 
-      branchId, 
+      orgId,
+      resolvedBranchId,
       {
         firstName: formData.get('firstName') as string,
         lastName: formData.get('lastName') as string,
@@ -22,7 +50,6 @@ export default function NewStudentPage() {
     
     if ('error' in result) {
       console.error(result.error)
-      // Normally return error to UI
       return
     }
     
@@ -52,7 +79,7 @@ export default function NewStudentPage() {
         <div className="pt-4 flex justify-end space-x-3">
           <Link href="/students" className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Create & Enroll
+            Create &amp; Enroll
           </button>
         </div>
       </form>
