@@ -10,6 +10,12 @@ export function mapDatabaseError(error: unknown): string {
   if (code === '23505') {
     return 'A record with this name already exists.';
   }
+  if (code === '23514') {
+    return 'This operation violates a data integrity rule.';
+  }
+  if (code === '23P01') {
+    return 'A scheduling conflict prevents this operation.';
+  }
   if (code === 'P0001') {
     return message as string;
   }

@@ -115,7 +115,7 @@ test.describe('Timetable Management', () => {
       await page.getByRole('button', { name: 'Save' }).click();
 
       // Verify: drawer stays open with exclusion error
-      await expect(page.locator('.text-red-600')).toContainText('violates exclusion constraint');
+      await expect(page.locator('.text-red-600')).toContainText('A scheduling conflict prevents this operation.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 6. CONFLICT: Teacher double-booking (Tuesday) ───
@@ -130,7 +130,7 @@ test.describe('Timetable Management', () => {
       await page.locator('select[name="day_of_week"]').selectOption('2'); // Tuesday
       await page.getByRole('button', { name: 'Save' }).click();
 
-      await expect(page.locator('.text-red-600')).toContainText('violates exclusion constraint');
+      await expect(page.locator('.text-red-600')).toContainText('A scheduling conflict prevents this operation.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 7. CONFLICT: Room double-booking (Tuesday) ───
@@ -145,7 +145,7 @@ test.describe('Timetable Management', () => {
       await page.locator('select[name="day_of_week"]').selectOption('2'); // Tuesday
       await page.getByRole('button', { name: 'Save' }).click();
 
-      await expect(page.locator('.text-red-600')).toContainText('violates exclusion constraint');
+      await expect(page.locator('.text-red-600')).toContainText('A scheduling conflict prevents this operation.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 8. Cross-branch rejection ───

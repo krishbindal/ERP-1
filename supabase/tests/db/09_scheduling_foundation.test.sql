@@ -30,8 +30,8 @@ BEGIN
     INSERT INTO public.branches (id, organization_id, name) VALUES (v_branch_b_id, v_org_id, 'Test Branch B');
 
     v_year_id := gen_random_uuid();
-    INSERT INTO public.academic_years (id, branch_id, name, start_date, end_date) 
-    VALUES (v_year_id, v_branch_id, '2026', '2026-01-01', '2026-12-31');
+    INSERT INTO public.academic_years (id, branch_id, name, start_date, end_date, status) 
+    VALUES (v_year_id, v_branch_id, '2026', '2026-01-01', '2026-12-31', 'ACTIVE');
 
     v_class_id := gen_random_uuid();
     INSERT INTO public.classes (id, branch_id, academic_year_id, name, level) 
@@ -243,7 +243,7 @@ SELECT throws_ok(
         '2026-09-07', current_setting('test.staff_id')::uuid -- staff_id is already busy with P2 canonical!
     );
     $$,
-    'P0001',
+    '23P01',
     'Physical conflict: Substitute resource is double-booked on this date via a canonical timetable entry',
     '8. Substitute teacher conflict against canonical entry rejected'
 );
@@ -279,7 +279,7 @@ SELECT throws_ok(
         '2026-09-07', current_setting('test.staff_id_3')::uuid
     );
     $$,
-    'P0001',
+    '23P01',
     'Physical conflict: Substitute resource is double-booked on this date via another substitution',
     '10. Substitute teacher conflict against another substitution rejected'
 );

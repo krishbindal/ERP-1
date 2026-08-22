@@ -27,21 +27,52 @@ test.describe('Substitutions Management', () => {
 
     test('should manage substitutions and handle conflicts', async ({ page }) => {
 
-      // ─── FIXTURE CLEANUP (retry resilience) ───
+            // 🛠️ FIXTURE CLEANUP (retry resilience) 🛠️
       // Cancel any leftover substitutions from previous failed runs
       for (const date of ['2026-08-19', '2026-08-20']) {
         await page.goto(`/scheduling/substitutions?date=${date}`);
-        const orangeCards = page.locator('.bg-orange-50');
-        let orangeCount = await orangeCards.count();
-        while (orangeCount > 0) {
+        let attempts = 0;
+        while (attempts < 5) {
+          const orangeCards = page.locator('.bg-orange-50');
+          const orangeCount = await orangeCards.count();
+          if (orangeCount === 0) break;
+          
           await orangeCards.first().click();
           const cancelBtn = page.getByRole('button', { name: 'Cancel Substitution' });
-          if (await cancelBtn.isVisible()) {
-            await cancelBtn.click();
-            await page.waitForTimeout(500);
-            await page.reload();
-          }
-          orangeCount = await page.locator('.bg-orange-50').count();
+          await expect(cancelBtn).toBeVisible();
+          await cancelBtn.click();
+          
+          await expect(cancelBtn).not.toBeVisible();
+          await page.reload();
+          
+          const newCount = await page.locator('.bg-orange-50').count();
+          expect(newCount).toBeLessThan(orangeCount);
+          attempts++;
+        }
+      }
+
+      // Archive any leftover timetable entries on our owned days (3, 4)
+      await page.goto('/scheduling/timetable');
+      await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
+      for (const day of ['3', '4']) {
+        let attempts = 0;
+        while (attempts < 5) {
+          const entryLocator = page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`);
+          const count = await entryLocator.count();
+          if (count === 0) break;
+          
+          await entryLocator.first().click();
+          page.once('dialog', d => d.accept());
+          
+          const archiveBtn = page.getByRole('button', { name: 'Archive Entry' });
+          await archiveBtn.click();
+          
+          await expect(archiveBtn).not.toBeVisible();
+          await page.reload();
+          
+          const newCount = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
+          expect(newCount).toBeLessThan(count);
+          attempts++;
         }
       }
 
@@ -54,7 +85,7 @@ test.describe('Substitutions Management', () => {
           await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).first().click();
           page.once('dialog', d => d.accept());
           await page.getByRole('button', { name: 'Archive Entry' }).click();
-          await page.waitForTimeout(500);
+          
           await page.reload();
           count = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
         }
@@ -64,7 +95,7 @@ test.describe('Substitutions Management', () => {
       // Class 11, Section B, Science, Branch Admin, Room 102, Period 1, Wednesday
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption('aaaaaaaa-2222-2222-2222-222222222223');
-      await page.waitForTimeout(1000);
+      await expect(page.locator('select[name="section_id"] option[value="aaaaaaaa-3333-3333-3333-333333333334"]')).toBeAttached();
       await page.locator('select[name="section_id"]').selectOption('aaaaaaaa-3333-3333-3333-333333333334');
       await page.locator('select[name="subject_id"]').selectOption('aaaaaaaa-4444-4444-4444-444444444445');
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Branch Admin' });
@@ -78,7 +109,7 @@ test.describe('Substitutions Management', () => {
       // Class 10, Section A, Mathematics, Teacher A, Room 101, Period 1, Thursday
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption('aaaaaaaa-2222-2222-2222-222222222222');
-      await page.waitForTimeout(1000);
+      await expect(page.locator('select[name="section_id"] option[value="aaaaaaaa-3333-3333-3333-333333333333"]')).toBeAttached();
       await page.locator('select[name="section_id"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
       await page.locator('select[name="subject_id"]').selectOption('aaaaaaaa-4444-4444-4444-444444444444');
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Teacher A' });
@@ -89,7 +120,7 @@ test.describe('Substitutions Management', () => {
       await expect(page.locator('text=New Timetable Entry')).not.toBeVisible();
 
       // Verify: 2 prerequisite entries created
-      await page.waitForTimeout(500);
+      
       await page.reload();
       await expect(page.locator('[data-testid="timetable-entry"][data-day="3"]')).toHaveCount(1);
       await expect(page.locator('[data-testid="timetable-entry"][data-day="4"]')).toHaveCount(1);
@@ -147,7 +178,8 @@ test.describe('Substitutions Management', () => {
       const cancelBtn = page.getByRole('button', { name: 'Cancel Substitution' });
       await expect(cancelBtn).toBeVisible();
       await cancelBtn.click();
-      await page.waitForTimeout(500);
+      
+      await expect(cancelBtn).not.toBeVisible();
       await page.reload();
 
       // Verify: no substitution entries on 2026-08-19
@@ -158,26 +190,45 @@ test.describe('Substitutions Management', () => {
 
       // Cancel remaining Thursday substitution first (if still active)
       await page.goto('/scheduling/substitutions?date=2026-08-20');
-      const remainingSubs = page.locator('.bg-orange-50');
-      if (await remainingSubs.count() > 0) {
+      let attempts = 0;
+      while (attempts < 5) {
+        const remainingSubs = page.locator('.bg-orange-50');
+        const count = await remainingSubs.count();
+        if (count === 0) break;
+        
         await remainingSubs.first().click();
         const cancelRemaining = page.getByRole('button', { name: 'Cancel Substitution' });
-        if (await cancelRemaining.isVisible()) {
-          await cancelRemaining.click();
-          await page.waitForTimeout(500);
-        }
+        await expect(cancelRemaining).toBeVisible();
+        await cancelRemaining.click();
+        
+        await expect(cancelRemaining).not.toBeVisible();
+        await page.reload();
+        const newCount = await page.locator('.bg-orange-50').count();
+        expect(newCount).toBeLessThan(count);
+        attempts++;
       }
 
       // Archive timetable entries on our owned days (3, 4)
       await page.goto('/scheduling/timetable');
       for (const day of ['3', '4']) {
-        const entryLocator = page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`);
-        if (await entryLocator.count() > 0) {
+        let archAttempts = 0;
+        while (archAttempts < 5) {
+          const entryLocator = page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`);
+          const count = await entryLocator.count();
+          if (count === 0) break;
+          
           await entryLocator.first().click();
           page.once('dialog', d => d.accept());
-          await page.getByRole('button', { name: 'Archive Entry' }).click();
-          await page.waitForTimeout(500);
+          
+          const archiveBtn = page.getByRole('button', { name: 'Archive Entry' });
+          await archiveBtn.click();
+          
+          await expect(archiveBtn).not.toBeVisible();
           await page.reload();
+          
+          const newCount = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
+          expect(newCount).toBeLessThan(count);
+          archAttempts++;
         }
       }
 
