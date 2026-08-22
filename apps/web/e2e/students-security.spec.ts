@@ -16,7 +16,7 @@ test.describe('Students Page Authorization', () => {
 
   test('Branch Admin can access /students for their own branch', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     await page.goto('/students');
@@ -34,7 +34,7 @@ test.describe('Students Page Authorization', () => {
 
   test('Teacher can access /students in read-only mode', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'teacher') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     await page.goto('/students');
@@ -51,7 +51,7 @@ test.describe('Students Page Authorization', () => {
 
   test('Students page rejects access with invalid branch context', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     // Access with a branch ID that the user does not belong to
@@ -66,7 +66,7 @@ test.describe('Students/New Page Authorization', () => {
 
   test('Branch Admin can access /students/new for their branch', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     await page.goto('/students/new');
@@ -79,7 +79,7 @@ test.describe('Students/New Page Authorization', () => {
 
   test('Teacher cannot access /students/new (read-only role)', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'teacher') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     await page.goto('/students/new');
@@ -90,7 +90,7 @@ test.describe('Students/New Page Authorization', () => {
 
   test('Students/new page does not contain hardcoded branch/org IDs', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     await page.goto('/students/new');
@@ -103,7 +103,7 @@ test.describe('Students/New Page Authorization', () => {
 
   test('Students/new rejects cross-branch access', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     // Attempt to access with a foreign branch
@@ -118,7 +118,7 @@ test.describe('Students Detail Page Authorization', () => {
 
   test('Student detail page enforces branch context', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     // Access a non-existent student ID within the authorized branch
@@ -130,7 +130,7 @@ test.describe('Students Detail Page Authorization', () => {
 
   test('Student detail page rejects cross-branch access', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') {
-      test.skip(true, 'Expected role-scope skip');
+      test.skip(true, 'EXPECTED_ROLE_SCOPE');
     }
 
     // Attempt to access with a foreign branch

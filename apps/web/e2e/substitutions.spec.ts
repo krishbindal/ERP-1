@@ -22,7 +22,7 @@ test.describe('Substitutions Management', () => {
   test.describe('Branch Admin CRUD & Conflicts', () => {
     test.beforeEach(async ({}, testInfo) => {
       test.skip(testInfo.project.name !== 'chromium-branchadmin',
-        'Expected role-scope skip');
+        'EXPECTED_ROLE_SCOPE');
     });
 
     test('should manage substitutions and handle conflicts', async ({ page }) => {
@@ -190,7 +190,7 @@ test.describe('Substitutions Management', () => {
   test.describe('Teacher Roles', () => {
     test.beforeEach(async ({}, testInfo) => {
       test.skip(testInfo.project.name !== 'chromium-teacher',
-        'Expected role-scope skip');
+        'EXPECTED_ROLE_SCOPE');
     });
 
     test('should view substitutions but cannot create', async ({ page }) => {
