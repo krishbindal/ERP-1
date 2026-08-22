@@ -8,6 +8,9 @@ RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
+    WITH constants AS (
+        SELECT 'ACTIVE'::text AS active_status
+    )
     SELECT EXISTS (
         SELECT 1
         FROM public.branch_memberships bm
@@ -15,12 +18,13 @@ AS $$
         JOIN public.organization_memberships om ON om.organization_id = b.organization_id AND om.user_id = auth.uid()
         JOIN public.user_role_assignments ura ON ura.branch_membership_id = bm.id
         JOIN public.roles r ON r.id = ura.role_id
+        CROSS JOIN constants c
         WHERE bm.user_id = auth.uid()
           AND bm.branch_id = target_branch_id
           AND lower(replace(r.name, ' ', '')) = lower(replace(target_role_name, ' ', ''))
-          AND bm.status = 'ACTIVE'
-          AND b.status = 'ACTIVE'
-          AND om.status = 'ACTIVE'
+          AND bm.status = c.active_status
+          AND b.status = c.active_status
+          AND om.status = c.active_status
     );
 $$;
 
