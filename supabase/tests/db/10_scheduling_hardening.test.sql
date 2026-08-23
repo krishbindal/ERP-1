@@ -29,8 +29,8 @@ BEGIN
     INSERT INTO public.branches (id, organization_id, name) VALUES (v_branch_id, v_org_id, 'Test Branch');
 
     v_year_id := gen_random_uuid();
-    INSERT INTO public.academic_years (id, branch_id, name, start_date, end_date) 
-    VALUES (v_year_id, v_branch_id, '2026', '2026-01-01', '2026-12-31');
+    INSERT INTO public.academic_years (id, branch_id, name, start_date, end_date, status) 
+    VALUES (v_year_id, v_branch_id, '2026', '2026-01-01', '2026-12-31', 'ACTIVE');
 
     v_class_id := gen_random_uuid();
     INSERT INTO public.classes (id, branch_id, academic_year_id, name, level) 
@@ -106,11 +106,11 @@ SELECT throws_ok('update_period_referenced', 'Cannot modify time bounds of a per
 -- 2. Academic Year Bounds Tests
 PREPARE insert_sub_out_of_bounds AS INSERT INTO public.timetable_substitutions (timetable_entry_id, branch_id, academic_year_id, substitution_date, substitute_staff_id)
 VALUES (current_setting('test.te_id')::uuid, current_setting('test.branch_id')::uuid, current_setting('test.year_id')::uuid, '2025-12-29', current_setting('test.staff_id_3')::uuid);
-SELECT throws_ok('insert_sub_out_of_bounds', 'Substitution date 2025-12-29 is outside the academic year bounds (2026-01-01 to 2026-12-31)', 'Substitution date must fall within academic year bounds');
+SELECT throws_ok('insert_sub_out_of_bounds', '23514', 'Substitution date 2025-12-29 is outside the academic year bounds (2026-01-01 to 2026-12-31)', 'Substitution date must fall within academic year bounds');
 
 PREPARE insert_sub_wrong_dow AS INSERT INTO public.timetable_substitutions (timetable_entry_id, branch_id, academic_year_id, substitution_date, substitute_staff_id)
 VALUES (current_setting('test.te_id')::uuid, current_setting('test.branch_id')::uuid, current_setting('test.year_id')::uuid, '2026-01-06', current_setting('test.staff_id_3')::uuid);
-SELECT throws_ok('insert_sub_wrong_dow', 'Substitution date 2026-01-06 does not match timetable day of week 1', 'Substitution date must match day of week');
+SELECT throws_ok('insert_sub_wrong_dow', 'P0001', 'Substitution date 2026-01-06 does not match timetable day of week 1', 'Substitution date must match day of week');
 
 -- 3. Room Conflict Fix Tests
 -- Sub 1: For Entry 1 (Room A). Changes teacher to C, room remains NULL (Room A).
@@ -121,18 +121,18 @@ SELECT lives_ok('insert_sub_null_room', 'Sub 1 (NULL room) succeeds');
 -- Sub 2: For Entry 2 (Room B). Attempt to move to Room A. Should fail because Room A is occupied by Sub 1.
 PREPARE insert_sub_room_conflict AS INSERT INTO public.timetable_substitutions (timetable_entry_id, branch_id, academic_year_id, substitution_date, substitute_staff_id, substitute_room_id)
 VALUES (current_setting('test.te_id_2')::uuid, current_setting('test.branch_id')::uuid, current_setting('test.year_id')::uuid, '2026-01-05', current_setting('test.staff_id_2')::uuid, current_setting('test.room_id')::uuid);
-SELECT throws_ok('insert_sub_room_conflict', 'Physical conflict: Substitute resource is double-booked on this date via another substitution', 'Sub 2 fails because Room A is still occupied by Sub 1');
+SELECT throws_ok('insert_sub_room_conflict', '23P01', 'Physical conflict: Substitute resource is double-booked on this date via another substitution', 'Sub 2 fails because Room A is still occupied by Sub 1');
 
 -- Cancel Sub 1
 UPDATE public.timetable_substitutions SET status = 'CANCELLED' WHERE timetable_entry_id = current_setting('test.te_id')::uuid;
 
 -- Sub 2 should STILL fail because Room A is occupied by CANONICAL Entry 1
-SELECT throws_ok('insert_sub_room_conflict', 'Physical conflict: Substitute resource is double-booked on this date via a canonical timetable entry', 'Sub 2 fails because Room A is occupied by Canonical Entry 1');
+SELECT throws_ok('insert_sub_room_conflict', '23P01', 'Physical conflict: Substitute resource is double-booked on this date via a canonical timetable entry', 'Sub 2 fails because Room A is occupied by Canonical Entry 1');
 
 -- Sub 3: For Entry 1 (Room A). Changes teacher to C AND moves to Room B. Should fail because Room B is occupied by Canonical Entry 2.
 PREPARE insert_sub_room_conflict_2 AS INSERT INTO public.timetable_substitutions (timetable_entry_id, branch_id, academic_year_id, substitution_date, substitute_staff_id, substitute_room_id)
 VALUES (current_setting('test.te_id')::uuid, current_setting('test.branch_id')::uuid, current_setting('test.year_id')::uuid, '2026-01-05', current_setting('test.staff_id_3')::uuid, current_setting('test.room_id_2')::uuid);
-SELECT throws_ok('insert_sub_room_conflict_2', 'Physical conflict: Substitute resource is double-booked on this date via a canonical timetable entry', 'Sub 3 fails because Room B is occupied by Canonical Entry 2');
+SELECT throws_ok('insert_sub_room_conflict_2', '23P01', 'Physical conflict: Substitute resource is double-booked on this date via a canonical timetable entry', 'Sub 3 fails because Room B is occupied by Canonical Entry 2');
 
 -- Sub 4: For Entry 2 (Room B). Moves to Room C.
 PREPARE insert_sub_4 AS INSERT INTO public.timetable_substitutions (timetable_entry_id, branch_id, academic_year_id, substitution_date, substitute_staff_id, substitute_room_id)

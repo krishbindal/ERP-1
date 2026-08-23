@@ -1,4 +1,3 @@
-// @ts-expect-error - vitest is not in the global tsconfig types
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getInstructionalDay, getInstructionalDaysForRangeAction } from './actions';
 
