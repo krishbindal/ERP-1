@@ -9,6 +9,9 @@ vi.mock('@/lib/server-actions', () => ({
       supabase: {
         rpc: vi.fn().mockImplementation((name, args) => {
           if (name === 'rpc_save_attendance') {
+            if (args.p_date === '2026-12-25') {
+              return { error: { message: 'Cannot record attendance on a non-instructional day' } };
+            }
             if (args.p_records.length > 0 && args.p_records[0].student_id === 'unauthorized-student') {
               return { error: { message: 'Not authorized' } };
             }
@@ -35,13 +38,6 @@ vi.mock('@/lib/server-actions', () => ({
   })
 }));
 
-// Mock resolveInstructionalDay
-vi.mock('@/lib/calendar/resolver', () => ({
-  resolveInstructionalDay: vi.fn().mockImplementation((date) => {
-    if (date === '2026-12-25') return { instructional: false };
-    return { instructional: true };
-  })
-}));
 
 describe('Attendance Actions', () => {
   it('saveAttendance should succeed for authorized request', async () => {

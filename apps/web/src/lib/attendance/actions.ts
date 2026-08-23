@@ -1,7 +1,6 @@
 "use server";
 
 import { branchAction } from '@/lib/server-actions';
-import { resolveInstructionalDay } from '@/lib/calendar/resolver';
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
 
@@ -20,32 +19,6 @@ export interface SaveAttendancePayload {
 
 export async function saveAttendance(branchId: string | undefined, payload: SaveAttendancePayload) {
   return branchAction(branchId, async ({ supabase, branchId: resolvedBranchId }) => {
-    // 1. Calendar resolution
-    const { data: ay, error: ayError } = await supabase
-      .from('academic_years')
-      .select('operating_days, start_date, end_date')
-      .eq('id', payload.academic_year_id)
-      .single();
-      
-    if (ayError || !ay) return { error: "Academic year not found" };
-    if (payload.date < ay.start_date || payload.date > ay.end_date) {
-      return { error: "Date is outside academic year" };
-    }
-    
-    const { data: events, error: eventsError } = await supabase
-      .from('calendar_events')
-      .select('*')
-      .eq('academic_year_id', payload.academic_year_id)
-      .eq('status', 'ACTIVE');
-      
-    if (eventsError) return { error: "Failed to fetch calendar" };
-    
-    // Explicit instructional day authority call
-    const dayResolution = resolveInstructionalDay(payload.date, ay.operating_days || [], events || []);
-    if (!dayResolution.instructional) {
-      return { error: "Cannot record attendance on a non-instructional day" };
-    }
-
     // Call atomic RPC for save
     const { data: sessionId, error: rpcError } = await supabase.rpc('rpc_save_attendance', {
       p_branch_id: resolvedBranchId,
