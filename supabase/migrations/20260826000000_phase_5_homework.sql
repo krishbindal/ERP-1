@@ -74,6 +74,16 @@ CREATE TABLE public.submission_attachments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+
+CREATE TABLE public.homework_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID NOT NULL REFERENCES public.homework_assignments(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    processed_at TIMESTAMPTZ
+);
+
 CREATE TABLE public.homework_audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     assignment_id UUID REFERENCES public.homework_assignments(id) ON DELETE SET NULL,
@@ -212,7 +222,7 @@ BEGIN
 
     RETURN v_assignment_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.rpc_update_homework_assignment(
     p_id UUID,
@@ -259,7 +269,7 @@ BEGIN
 
     RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.rpc_publish_homework(
     p_id UUID,
@@ -294,13 +304,16 @@ BEGIN
     UPDATE public.homework_assignments
     SET status = 'PUBLISHED', updated_at = now(), updated_by = auth.uid()
     WHERE id = p_id;
+    
+    INSERT INTO public.homework_events (assignment_id, event_type, payload)
+    VALUES (p_id, 'HOMEWORK_PUBLISHED', jsonb_build_object('assignment_id', p_id, 'status', 'PUBLISHED'));
 
     INSERT INTO public.homework_audit_logs (assignment_id, actor_id, action, previous_state, new_state)
     VALUES (p_id, auth.uid(), 'STATUS_CHANGED', jsonb_build_object('status', 'DRAFT'), jsonb_build_object('status', 'PUBLISHED'));
 
     RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.rpc_close_homework(
     p_id UUID,
@@ -341,7 +354,7 @@ BEGIN
 
     RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.rpc_submit_homework(
     p_assignment_id UUID,
@@ -412,7 +425,7 @@ BEGIN
 
     RETURN v_submission_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.rpc_grade_submission(
     p_submission_id UUID,
@@ -461,7 +474,7 @@ BEGIN
 
     RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.rpc_return_submission(
     p_submission_id UUID,
@@ -508,7 +521,7 @@ BEGIN
 
     RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 -- ==========================================
 -- 6. STORAGE BUCKET & POLICIES
@@ -604,7 +617,7 @@ BEGIN
 
     RETURN FALSE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE POLICY "Homework files are accessible by authorized users"
 ON storage.objects FOR SELECT
@@ -664,7 +677,7 @@ BEGIN
 
     RETURN FALSE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 CREATE POLICY "Homework files can be uploaded by authorized users"
 ON storage.objects FOR INSERT
@@ -679,6 +692,7 @@ ALTER TABLE public.homework_attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.homework_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.submission_attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.homework_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.homework_events ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Select homework_assignments" ON public.homework_assignments
 FOR SELECT USING (
@@ -731,10 +745,85 @@ FOR SELECT USING (
 
 CREATE POLICY "Select homework_attachments" ON public.homework_attachments
 FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.homework_assignments ha WHERE ha.id = homework_attachments.assignment_id)
+    EXISTS (
+        SELECT 1 FROM public.homework_assignments ha WHERE ha.id = homework_attachments.assignment_id
+        AND (
+    public.auth_user_has_branch_permission(ha.branch_id, 'homework.manage.all')
+    OR
+    EXISTS (
+        SELECT 1 FROM public.teacher_subject_assignments tsa
+        JOIN public.staff_branch_profiles sbp ON tsa.staff_branch_profile_id = sbp.id
+        JOIN public.staff s_auth ON sbp.staff_id = s_auth.id WHERE s_auth.profile_id = auth.uid() AND tsa.section_id = ha.section_id AND tsa.subject_id = ha.subject_id AND tsa.status = 'ACTIVE'
+    )
+    OR
+    (ha.status IN ('PUBLISHED', 'CLOSED') AND EXISTS (
+        SELECT 1 FROM public.enrollments e
+        JOIN public.students s ON e.student_id = s.id
+        WHERE s.profile_id = auth.uid() AND e.section_id = ha.section_id AND e.academic_year_id = ha.academic_year_id AND e.status = 'ENROLLED'
+    ))
+    OR
+    (ha.status IN ('PUBLISHED', 'CLOSED') AND EXISTS (
+        SELECT 1 FROM public.student_guardians sg
+        JOIN public.guardians g ON sg.guardian_id = g.id
+        JOIN public.enrollments e ON sg.student_id = e.student_id
+        WHERE g.profile_id = auth.uid() AND e.section_id = ha.section_id AND e.academic_year_id = ha.academic_year_id AND e.status = 'ENROLLED'
+    ))
+)
+    )
 );
 
 CREATE POLICY "Select submission_attachments" ON public.submission_attachments
 FOR SELECT USING (
-    EXISTS (SELECT 1 FROM public.homework_submissions hs WHERE hs.id = submission_attachments.submission_id)
+    EXISTS (
+        SELECT 1 FROM public.homework_submissions hs WHERE hs.id = submission_attachments.submission_id
+        AND (
+    EXISTS (SELECT 1 FROM public.students s WHERE s.profile_id = auth.uid() AND s.id = hs.student_id)
+    OR
+    EXISTS (
+        SELECT 1 FROM public.student_guardians sg
+        JOIN public.guardians g ON sg.guardian_id = g.id
+        WHERE g.profile_id = auth.uid() AND sg.student_id = hs.student_id
+    )
+    OR
+    EXISTS (
+        SELECT 1 FROM public.homework_assignments ha
+        WHERE ha.id = hs.assignment_id
+        AND (
+            public.auth_user_has_branch_permission(ha.branch_id, 'homework.manage.all')
+            OR
+            EXISTS (
+                SELECT 1 FROM public.teacher_subject_assignments tsa
+                JOIN public.staff_branch_profiles sbp ON tsa.staff_branch_profile_id = sbp.id
+                JOIN public.staff s_auth ON sbp.staff_id = s_auth.id WHERE s_auth.profile_id = auth.uid() AND tsa.section_id = ha.section_id AND tsa.subject_id = ha.subject_id AND tsa.status = 'ACTIVE'
+            )
+        )
+    )
+)
+    )
 );
+
+
+-- 8. RPC GRANTS
+REVOKE EXECUTE ON FUNCTION public.rpc_create_homework_assignment FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_create_homework_assignment TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_update_homework_assignment FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_update_homework_assignment TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_publish_homework FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_publish_homework TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_close_homework FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_close_homework TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_submit_homework FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_submit_homework TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_grade_submission FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_grade_submission TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rpc_return_submission FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_return_submission TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.auth_can_access_homework_file FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.auth_can_upload_homework_file FROM PUBLIC;

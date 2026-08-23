@@ -4,16 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { ActionResult } from '@/lib/server-actions'
 import { revalidatePath } from 'next/cache'
 
-// Note: EventBus is assumed to exist conceptually per previous modules, or we implement a simple placeholder.
-// The contract says: emit HOMEWORK_PUBLISHED asynchronously.
-// In this project, we might just use a placeholder function or a real service if available.
-async function emitHomeworkPublishedEvent(assignmentId: string) {
-  // Fire and forget, no await if we don't want to block, but in Next.js server actions, 
-  // dangling promises can be cancelled, so we typically await a background queue insert,
-  // or log it. Since we don't have the EventBus implementation details, we will just log it.
-  console.log(`[EventBus] HOMEWORK_PUBLISHED emitted for assignment: ${assignmentId}`)
-}
-
 export async function createHomeworkAssignment(params: {
   branchId: string
   academicYearId: string
@@ -90,13 +80,7 @@ export async function publishHomeworkAssignment(params: {
     return { success: false, error: error.message }
   }
 
-  // Emitting the event asynchronously, isolated from the DB transaction
-  try {
-    // Wait for the async event to queue, but catch any errors to prevent failing the request.
-    await emitHomeworkPublishedEvent(params.id)
-  } catch (eventErr) {
-    console.error('Failed to emit HOMEWORK_PUBLISHED event', eventErr)
-  }
+  
 
   revalidatePath('/homework')
   return { success: true, data }
@@ -181,5 +165,7 @@ export async function returnSubmission(params: {
   revalidatePath('/homework')
   return { success: true, data }
 }
+
+
 
 
