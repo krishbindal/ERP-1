@@ -184,3 +184,5 @@ All data mutation happens via explicit, locked `SECURITY DEFINER` RPCs:
 - **Storage**: Mirrors Phase 5 Homework architecture completely.
 - **Data Architecture**: De-normalizes targeting into `message_targets` while strictly tracking final delivery in `recipients`.
 - **Homework/Attendance**: `platform_events` is confirmed compatible with existing emitting logic.
+-   * * B r a n c h   A p p   F a c t o r y * * :   C o m p a t i b l e .   D e f e r s   p u s h   t o k e n   r o u t i n g   t o   E x p o / F C M   e d g e   f u n c t i o n s   s e a m l e s s l y   m a p p e d   v i a   b r a n c h _ i d   a s   r e q u i r e d .  
+ 
