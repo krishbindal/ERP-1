@@ -2,7 +2,6 @@
 
 import { branchAction } from '@/lib/server-actions';
 import { resolveInstructionalDay } from '@/lib/calendar/resolver';
-import { SupabaseClient } from '@supabase/supabase-js';
 
 export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
 
