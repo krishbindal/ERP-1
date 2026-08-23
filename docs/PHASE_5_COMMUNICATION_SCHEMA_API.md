@@ -1,14 +1,20 @@
 # Phase 5 — Communication: Schema & API Definition
 
-## 1. Domain Model
+## 1. Canonical Identity Model
+All communication principals (senders and recipients) must map to the established SchoolOS Identity architecture.
+- **Identity Path**: `auth.users` → `public.profiles`.
+- **References**: `sender_id` and `recipient_id` in the Communication schema strictly reference `public.profiles(id)`, NOT `auth.users(id)` directly. The domain layer operates exclusively on `profiles`.
 
-**1. `communication_messages`**
+## 2. Domain Model
+
+**1. `communication_messages`** (Aggregate Root)
 - `id` (UUID, PK)
+- `organization_id` (UUID, FK)
 - `branch_id` (UUID, FK)
-- `sender_id` (UUID, FK to users)
+- `sender_id` (UUID, FK to profiles)
 - `subject` (TEXT)
 - `body` (TEXT)
-- `status` (ENUM: DRAFT, SCHEDULED, QUEUED, DELIVERED, FAILED)
+- `status` (ENUM: DRAFT, SCHEDULED, QUEUED, PROCESSING, SENT, DELIVERED, PARTIALLY_FAILED, FAILED)
 - `type` (ENUM: ANNOUNCEMENT, SYSTEM_NOTIFICATION)
 - `scheduled_for` (TIMESTAMPTZ, nullable)
 - `expires_at` (TIMESTAMPTZ, nullable)
@@ -17,26 +23,37 @@
 **2. `communication_message_targets`**
 Defines the high-level targeting requested by the sender.
 - `message_id` (UUID, FK)
-- `target_type` (ENUM: BRANCH, CLASS, SECTION, GUARDIANS_OF_SECTION)
+- `target_type` (ENUM: BRANCH, CLASS, SECTION)
 - `target_id` (UUID, nullable, e.g., section_id)
 
-**3. `communication_recipients`**
-The resolved individual recipients.
+**3. `communication_recipients`** (Per-Recipient Delivery State)
+Maintains authoritative status of the recipient's personal delivery.
 - `id` (UUID, PK)
 - `message_id` (UUID, FK)
-- `recipient_id` (UUID, FK to users)
-- `delivery_status` (ENUM: PENDING, SENT, DELIVERED, READ, FAILED)
-- `read_at` (TIMESTAMPTZ)
-- `provider_message_id` (TEXT, e.g., FCM/Resend ID)
+- `recipient_id` (UUID, FK to profiles)
+- `status` (ENUM: QUEUED, SENT, DELIVERED, FAILED, READ)
+- `read_at` (TIMESTAMPTZ, nullable)
 
-**4. `communication_attachments`**
+**4. `communication_delivery_attempts`** (Attempt Evidence)
+Preserves historical retry/fallback evidence without overwriting previous attempt failures.
+- `id` (UUID, PK)
+- `recipient_id` (UUID, FK to communication_recipients)
+- `channel` (ENUM: IN_APP, PUSH, EMAIL)
+- `provider` (TEXT, e.g., FCM, RESEND)
+- `attempt_number` (INT)
+- `provider_message_id` (TEXT, nullable)
+- `error_details` (JSONB, nullable)
+- `attempt_timestamp` (TIMESTAMPTZ)
+- `success_delivery_timestamp` (TIMESTAMPTZ, nullable)
+
+**5. `communication_attachments`**
 - `id` (UUID, PK)
 - `message_id` (UUID, FK)
 - `file_path` (TEXT)
 - `file_size` (INT)
 - `content_type` (TEXT)
 
-**5. `communication_templates`**
+**6. `communication_templates`**
 - `id` (UUID, PK)
 - `branch_id` (UUID, FK)
 - `title` (TEXT)
@@ -44,20 +61,17 @@ The resolved individual recipients.
 - `variables_schema` (JSONB)
 - `is_active` (BOOLEAN)
 
-**6. `user_notification_preferences`**
-- `user_id` (UUID, PK)
-- `topic` (TEXT, PK)
-- `in_app_enabled` (BOOLEAN, default true)
-- `email_enabled` (BOOLEAN, default true)
-- `push_enabled` (BOOLEAN, default true)
-
 **7. `platform_events` (The Universal Outbox)**
+Strengthened universal event schema supporting all domains without accidental branch-only limitations.
 - `id` (UUID, PK)
-- `branch_id` (UUID, FK)
-- `topic` (TEXT) -- e.g., 'communication.message.queued'
+- `organization_id` (UUID, NOT NULL)
+- `branch_id` (UUID, NULLABLE) 
+- `aggregate_type` (TEXT) -- e.g., 'communication_message'
 - `aggregate_id` (UUID) -- e.g., message_id
+- `event_type` (TEXT) -- e.g., 'message.queued'
 - `payload` (JSONB)
-- `idempotency_key` (TEXT, UNIQUE)
+- `actor_id` (UUID, NULLABLE, FK to profiles)
+- `idempotency_key` (TEXT, UNIQUE NOT NULL)
 - `status` (ENUM: PENDING, PROCESSING, COMPLETED, FAILED, DLQ)
 - `attempts` (INT)
 - `max_attempts` (INT)
@@ -68,121 +82,96 @@ The resolved individual recipients.
 **8. `communication_audit_logs`**
 - `id` (UUID)
 - `message_id` (UUID)
-- `actor_id` (UUID)
+- `actor_id` (UUID, FK to profiles)
 - `action` (TEXT)
 - `metadata` (JSONB)
+- `created_at` (TIMESTAMPTZ)
 
-## 2. Exact Lifecycle
-- **DRAFT**: Message created, targets can be updated.
-- **SCHEDULED**: Message locked, queued for future dispatch.
-- **QUEUED**: Active dispatch; `platform_events` record inserted. Cannot be edited.
-- **DELIVERED**: Terminal success state (100% of targets processed).
-- **FAILED**: Terminal failure state (e.g., DLQ reached for dispatch).
-- **Retention/Archive**: Reaching `expires_at` (90 days for ephemeral) triggers hard-deletion of `communication_messages` body, but `communication_audit_logs` and anonymized delivery metrics remain.
+## 3. Exact Lifecycle
 
-## 3. Recipient Resolution
-Contextual recipient resolution occurs **server-side** during the outbox worker processing (or via a dedicated expansion RPC).
-- The client passes targets: `[{ target_type: 'SECTION', target_id: 'uuid' }]`.
-- **Branch-wide**: Admin `branch_id` expands to all active members in `branch_memberships`.
-- **Class/Section-wide**: Expands via `enrollments` for students.
-- **Guardian Audience**: Joins `student_guardians` on the resolved student list.
-- **Teacher-authorized**: Resolution strictly joins against `teacher_subject_assignments` to verify the sender is authorized to target the specified section.
-*The client NEVER downloads branch-wide directories to construct a payload.*
+**Message Aggregate Lifecycle**:
+The deterministic states and legal transitions for the message entity (`communication_messages`):
+1. **DRAFT**: Created, targets editable.
+2. **SCHEDULED**: Locked, queued for future dispatch.
+3. **QUEUED**: Target dispatch time reached, platform event inserted.
+4. **PROCESSING**: Worker is currently resolving recipients and fanning out delivery.
+5. **SENT**: All provider dispatches attempted.
+Terminal Aggregate States (aggregated asynchronously based on recipient resolutions):
+- **DELIVERED**: 100% of recipient attempts confirmed successful.
+- **PARTIALLY_FAILED**: Mixed delivery outcomes.
+- **FAILED**: 100% provider rejections or DLQ.
 
-## 4. Authorization / RLS
-- **Super Admin**: Global visibility.
-- **Branch Admin**: Full CRUD on messages within their `branch_id`.
-- **Teacher**: Can create/send messages. RLS restricts `target_id` to sections explicitly present in their active `teacher_subject_assignments`.
-- **Student / Guardian**: Strictly `SELECT` only on `communication_recipients` where `recipient_id = auth.uid()`. One-Way boundary enforced natively.
+**Recipient-Level Delivery State**:
+Authoritative individual delivery status (`communication_recipients`):
+1. **QUEUED**: Resolved, awaiting provider dispatch.
+2. **SENT**: Provider accepted the request (e.g., HTTP 202).
+3. **DELIVERED**: Provider confirmed delivery (e.g., webhook confirmation).
+4. **FAILED**: Terminal failure (provider rejected, or max retries exceeded).
+5. **READ**: User action confirmed visibility.
 
-**Explicit Test Denials**:
-- Cross-branch denial: User from Branch A attempts to read/send in Branch B.
-- Unauthorized teacher scope: Teacher sends to Section X they do not teach.
-- Recipient enumeration: Client invoking resolution RPC for an unauthorized section returns `403/[]`.
+## 4. Recipient Snapshot Semantics
+- **Resolution Policy**: Target audiences are deterministically resolved **at dispatch** (transition from `QUEUED` → `PROCESSING`). This ensures scheduled messages route to the current, correct `enrollments` at the time of sending, rather than generating stale snapshots at creation time.
+- **Client Constraint**: The client never downloads arbitrary directories. It passes `{ target_type: 'SECTION', target_id: 'uuid' }`. 
 
-## 5. Platform Outbox (Generic)
-- **Universal Abstraction**: Does NOT just store communications. It is an event sink.
-- **Event Insert**: Done synchronously inside the business transaction.
-- **Locking**: Workers poll using `SELECT ... FOR UPDATE SKIP LOCKED` combined with `WHERE status = 'PENDING' AND next_retry_at <= now()`.
-- **Idempotency Key**: Generated uniquely (e.g., `message_id + '_dispatch'`). `ON CONFLICT (idempotency_key) DO NOTHING` guarantees no double-queuing.
-- **DLQ Behavior**: If `attempts >= max_attempts`, `status` transitions to `DLQ`. Requires manual/admin intervention.
-- **Compatibility**: Future migration will route `HOMEWORK_PUBLISHED` events through this exact table.
+## 5. Authorization / Teacher Scoping
+- **Teacher Authorization**: A Teacher targeting a `SECTION` is authorized **strictly** if an active mapping exists between the Teacher's `profile_id` and the requested `section_id` in the `teacher_subject_assignments` table for the current academic year. Vague overlapping scopes are eliminated.
+- **Cross-Branch / Unauthorized Data**: Strict `organization_id` and `branch_id` RLS isolation prevents inter-branch leakage and enumeration.
+- **Guardians/Students**: Strictly read-only to messages where their `profile_id` exists in `communication_recipients`.
 
-## 6. Delivery Architecture
-`Business TX (message status = QUEUED) -> INSERT platform_events -> Commit`
-`Worker -> SELECT SKIP LOCKED -> rpc_resolve_recipients() -> Check Preferences -> INSERT communication_recipients -> Call FCM/Resend -> Update platform_events (COMPLETED)`
+## 6. Idempotency & Retries
+Replaced vague "exactly-once delivery" concepts with precise operational semantics:
+- **Exactly-once Enqueueing**: The database guarantees exactly-once idempotent event creation. `platform_events` uses a strictly unique `idempotency_key` with a Postgres `UNIQUE` constraint, allowing atomic `ON CONFLICT DO NOTHING`.
+- **At-least-once Processing**: The worker drains the outbox with at-least-once semantics. If a worker crashes after success but before DB commit, it will retry.
+- **Provider Idempotency**: Where supported by the provider (e.g., Resend, FCM), the worker supplies the same `idempotency_key` via HTTP headers. The provider detects the duplicate and prevents a double-send, returning the cached successful response.
+
+## 7. Delivery Architecture & Channels
 - **Channels**: In-App, Push (FCM/APNs), Email. SMS explicitly omitted (V2).
-
-## 7. Idempotency & Retries
-- **Provider Duplicate**: Worker passes a unique deterministic `Idempotency-Key` HTTP header to Resend/FCM.
-- **Worker Crash**: If worker crashes after provider success but before DB update, the `next_retry_at` is reached. Worker retries. Provider sees the `Idempotency-Key` header and returns `200 OK` (cached success) without re-sending. Worker updates DB to `COMPLETED`.
-- **Duplicate Send Request**: RLS and state checks `WHERE status = 'DRAFT'` prevent a double RPC call from enqueueing twice.
+- **Flow**: `Business TX (message status = QUEUED)` → `INSERT platform_events` → `Worker SELECT SKIP LOCKED` → `Resolves Recipients (at dispatch)` → `Insert communication_recipients` → `Provider attempt (records to communication_delivery_attempts)` → `Update platform_events`.
 
 ## 8. Retention
-- **Ephemeral**: 90-day default via `expires_at` column.
-- **Official**: Driven by org configuration (can be infinite).
-- **Purge Job**: A `pg_cron` worker hard-deletes `communication_messages` rows where `expires_at < now()`. 
-- **Audit Preservation**: Deletion cascades to `communication_recipients`, but `communication_audit_logs` retains delivery facts (de-identified counts). Replays are strictly impossible post-purge because the payload is destroyed.
+Data lifecycles are explicitly decoupled to balance privacy and compliance:
+- **Ephemeral Notification Body**: Default 90-day retention auto-purge.
+- **Official Announcement Body**: Follows organizational configuration (e.g., 2 years). No forced permanent retention.
+- **Delivery-Attempt Retention**: Separate from payload retention. Retained for 1 year to diagnose routing failures.
+- **Audit Retention**: Maintained for 7 years for compliance.
+- **Purge Action**: When a message body purges, `communication_messages.body` and `subject` are destroyed. De-identified delivery facts remain intact in audit and recipient tables. Replay post-purge is structurally blocked.
 
-## 9. Attachments
-- **Storage Pattern**: Uses a private Supabase Storage bucket `communication_attachments`.
-- **Authorization**: `fn_check_message_access()` maps to bucket RLS. Sender has full access. Recipients have read-only access.
-- **Branch Isolation**: Path pattern: `branch_id/message_id/file_uuid`.
-- **Validation**: Uploads restricted to 10MB, safe mime-types.
+## 9. Attachment Cleanup
+Attachments reuse the hardened Homework Storage pattern with an explicit lifecycle:
+1. **DB Purge**: Scheduled DB job hard-deletes (or nullifies) the DB reference when retention expires.
+2. **Storage Cleanup Job**: An asynchronous worker listens for the DB purge event and executes physical deletion in the Supabase Storage bucket.
+3. **Retry**: If the API call to Storage fails, it enters a DLQ for retry.
+4. **Orphan Reconciliation**: A weekly operational cron compares DB records against Bucket objects, force-deleting any orphaned files (resolving edge-case DB/Storage desyncs).
 
 ## 10. Templates
 - **Design**: `communication_templates` scoped to `branch_id`.
-- **Variables**: Driven by `variables_schema` (JSON Schema). Strict server-side variable replacement via Handlebars/regex. Arbitrary DB lookups via template variables are explicitly banned to prevent data exfiltration.
+- **Variables**: Strict Handlebars/regex substitution using `variables_schema`. Arbitrary relational DB queries inside templates are strictly prohibited to prevent data exfiltration.
 
-## 11. Notification Preferences
-- **Resolution**: Worker checks `user_notification_preferences` before routing to FCM/Email.
-- **Mandatory**: Certain `topics` (e.g., 'EMERGENCY') bypass user preferences based on branch policy.
-- **Quiet Hours**: Deferred to V2 (mobile OS level "Do Not Disturb" handles this effectively for V1).
+## 11. Rate Limiting / Abuse
+- **Configurable Platform Limits**: Defined natively in branch configuration (e.g., `max_teacher_announcements_per_day = 5`, `max_admin_announcements_per_day = 20`).
+- **Enforcement**: API Gateway or Database Trigger intercepts limit violations and logs to `communication_audit_logs` as `RATE_LIMITED`.
 
-## 12. Rate Limiting / Abuse
-- **Mechanism**: API Gateway / Edge Function token-bucket rate limits.
-- **Limits**: Teachers limited to X announcements/day. Branch admins limited to Y branch-wide blasts/day.
-- **Tracking**: Recorded in `communication_audit_logs` as `RATE_LIMITED`.
+## 12. API / RPC Contracts
+State transitions are locked behind strictly defined `SECURITY DEFINER` RPCs:
+- `rpc_create_message(...)`
+- `rpc_schedule_message(...)`
+- `rpc_send_message(...)`
+- `rpc_mark_read(...)`
+- `rpc_resolve_recipients(...)` (Dry-run expansion count for UI)
 
-## 13. API / RPC Contracts
-All data mutation happens via explicit, locked `SECURITY DEFINER` RPCs:
-- `rpc_create_message(branch_id, subject, body, targets, type)` -> returns `message_id`
-- `rpc_schedule_message(message_id, scheduled_for)`
-- `rpc_send_message(message_id)` -> transitions to QUEUED, inserts outbox.
-- `rpc_mark_read(message_id)` -> Updates `communication_recipients`.
-- `rpc_resolve_recipients(targets)` -> Returns recipient count (Admin/Teacher only).
+## 13. Concurrency
+- **Duplicate Publish Prevention**: Enforced via deterministic state progression (`UPDATE ... WHERE id = X AND status = 'DRAFT'`).
+- **Worker Concurrency**: Postgres `SKIP LOCKED` absolutely isolates outbox processing.
 
-## 14. Concurrency
-- **Duplicate Publish**: `UPDATE communication_messages SET status = 'QUEUED' WHERE id = X AND status IN ('DRAFT', 'SCHEDULED')`. If 0 rows updated, throw error (already sent).
-- **Two Workers**: `SKIP LOCKED` natively prevents two workers from processing the same outbox row.
-- **Purge vs Read**: Deletes are standard Postgres atomic operations. In-flight reads succeed or return 404 cleanly.
+## 14. Master Consistency Audit
 
-## 15. Performance
-- **Indexes**: 
-  - `CREATE INDEX idx_outbox_pending ON platform_events(status, next_retry_at) WHERE status = 'PENDING';`
-  - `CREATE INDEX idx_recipients_user ON communication_recipients(recipient_id, delivery_status);`
-- **Asynchronous Expansion**: Client does not wait for 5,000 recipients to be inserted. Client calls `rpc_send_message` and gets 200 OK instantly. Worker handles the O(N) expansion.
+This updated schema definition has been re-audited against the Master SchoolOS Architecture:
 
-## 16. Test Matrix
-- **pgTAP/RLS**: 
-  - Teacher cross-section denial.
-  - Branch admin cross-branch denial.
-  - Guardian reading other student's messages denial.
-- **Concurrency**: Simulate 2 simultaneous `rpc_send_message` calls.
-- **Worker/Idempotency**: Inject fake provider failures, verify retry logic and DLQ routing.
-- **E2E / Playwright**: Verify Teacher UI only shows assigned sections in the target dropdown.
-
-## 17. Work-Efficiency Requirements
-- **Contextual Selection**: Dropdown automatically populates with the Teacher's active sections.
-- **Zero-Click Targeting**: "Send to Class" sends to all valid guardians natively; teacher does not have to click 30 checkboxes.
-- **Smart Defaults**: Ephemeral expiration auto-populates for Attendance/Homework alerts.
-
-## 18. Consistency Audit Results
-- **Notification Architecture**: Fully genericized. `platform_events` serves as the robust foundation.
-- **API Architecture**: RPC-first state transitions protect complex multi-table inserts.
-- **RBAC/RLS**: Matches Phase 2 boundaries perfectly.
-- **Storage**: Mirrors Phase 5 Homework architecture completely.
-- **Data Architecture**: De-normalizes targeting into `message_targets` while strictly tracking final delivery in `recipients`.
-- **Homework/Attendance**: `platform_events` is confirmed compatible with existing emitting logic.
--   * * B r a n c h   A p p   F a c t o r y * * :   C o m p a t i b l e .   D e f e r s   p u s h   t o k e n   r o u t i n g   t o   E x p o / F C M   e d g e   f u n c t i o n s   s e a m l e s s l y   m a p p e d   v i a   b r a n c h _ i d   a s   r e q u i r e d .  
- 
+- **Identity**: Fully aligned. Replaced `auth.uid()` with the canonical `public.profiles` reference map.
+- **RBAC & RLS**: Fully aligned. Preserves `branch_memberships` and `teacher_subject_assignments` natively.
+- **Notification Architecture**: Fully aligned. Universal `platform_events` replaces bespoke logic and safely scales.
+- **Data Architecture**: Fully aligned. Separates Aggregate vs Recipient state, and Message Retention vs Audit Retention explicitly.
+- **Storage**: Fully aligned. Adopts the exact hardened Homework bucket RLS and defines the strict physical cleanup loop.
+- **Attendance & Homework**: Fully aligned. The `platform_events` abstraction robustly accommodates their existing payloads seamlessly.
+- **Branch App Factory**: Compatible. Defers push token routing to Expo/FCM edge functions seamlessly mapped via `branch_id`.
+- **Cross-Cutting Master Roadmap**: Verified and documented separately; no cross-cutting capabilities were miscategorized as domain-specific.
