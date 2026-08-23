@@ -1,20 +1,20 @@
 # SchoolOS — Project Roadmap
 
-## Phase 0 — Discovery
+## Phase 0 — Discovery (COMPLETED)
 - client requirements
 - competitor research
 - actors
 - journeys
 - non-functional requirements
 
-## Phase 1 — Architecture
+## Phase 1 — Architecture (COMPLETED)
 - system architecture
 - technology choices
 - environments
 - app strategy
 - data strategy
 
-## Phase 2 — Tenancy/security foundation
+## Phase 2 — Tenancy/security foundation (COMPLETED)
 - organization
 - branches
 - memberships
@@ -26,7 +26,7 @@
 - branch configuration
 - Super Admin
 
-## Phase 3 — Academic foundation
+## Phase 3 — Academic foundation (COMPLETED)
 - people
 - years
 - classes
@@ -34,7 +34,7 @@
 - subjects
 - enrollment
 
-## Phase 4 — Scheduling
+## Phase 4 — Scheduling (COMPLETED)
 - bell schedules
 - periods
 - rooms

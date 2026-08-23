@@ -1,15 +1,15 @@
 # SchoolOS — Project State
 
-- **Current Phase**: Phase 3A
+- **Current Phase**: Phase 4 (Scheduling & Calendar Integration)
 - **Status**: CERTIFIED AND MERGED
-- **CI Governance**: MERGED (Phase 3A.5 Security Remediation & Actions Modernization)
+- **CI Governance**: HARDENED (R2.1 & R2.2 Security & Integrity Remediation)
 - **Canonical Repository**: https://github.com/krishbindal/ERP-1.git
 - **Feature Branch**: master
-- **Final Feature Commit**: 7fd877aae4e77efb85d37af7f9d1bf9b0c61cf92
-- **PR**: MERGED
+- **Final Feature Commit**: 7929756a8bb613f166122e1863649604c095a8ff
+- **PR**: MERGED (PR #27, PR #28, PR #29)
 - **CI**: PASS
-- **Local Tests**: 55/55 Passed
-- **Fresh Reset**: 55/55 Passed
+- **Local Tests**: 201/201 Passed (Playwright), 378/378 Passed (pgTAP)
+- **Fresh Reset**: PASS
 - **Post-Merge Regression**: PASS
-- **Security**: PASS
-- **Next Phase**: Phase 3B
+- **Security**: PASS (R2.2 substitution integrity certified)
+- **Next Phase**: Phase 5 (Operations / Attendance)
