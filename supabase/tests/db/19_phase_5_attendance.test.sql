@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(13);
+SELECT plan(17);
 
 -- 1. Check Tables and Constraints
 SELECT has_table('public', 'attendance_sessions', 'attendance_sessions table exists');
@@ -9,6 +9,9 @@ SELECT has_table('public', 'attendance_audit_logs', 'attendance_audit_logs table
 SELECT col_is_pk('public', 'attendance_sessions', 'id', 'attendance_sessions has id PK');
 SELECT col_is_fk('public', 'attendance_sessions', 'branch_id', 'attendance_sessions branch_id is FK');
 SELECT col_is_fk('public', 'attendance_records', 'student_id', 'attendance_records student_id is FK');
+
+SELECT has_column('public', 'attendance_sessions', 'locked_by', 'locked_by exists');
+SELECT has_column('public', 'attendance_sessions', 'published_by', 'published_by exists');
 
 -- 2. Test Enum Types
 SELECT has_type('public', 'attendance_status', 'attendance_status enum exists');
@@ -21,6 +24,8 @@ SELECT has_index('public', 'attendance_records', 'idx_attendance_records_session
 -- 5. Test RPC
 SELECT has_function('public', 'rpc_auto_lock_attendance', 'rpc_auto_lock_attendance function exists');
 SELECT function_returns('public', 'rpc_auto_lock_attendance', 'integer', 'rpc_auto_lock_attendance returns integer');
+SELECT has_function('public', 'rpc_save_attendance', 'rpc_save_attendance exists');
+SELECT has_function('public', 'rpc_correct_attendance', 'rpc_correct_attendance exists');
 
 -- 6. Test basic constraint behavior
 PREPARE insert_dup_session AS

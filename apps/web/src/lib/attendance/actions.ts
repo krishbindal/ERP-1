@@ -21,6 +21,7 @@ export interface SaveAttendancePayload {
 
 export async function saveAttendance(branchId: string | undefined, payload: SaveAttendancePayload) {
   return branchAction(branchId, async ({ supabase, branchId: resolvedBranchId }) => {
+    // 1. Calendar resolution
     const { data: ay, error: ayError } = await supabase
       .from('academic_years')
       .select('operating_days, start_date, end_date')
@@ -40,53 +41,22 @@ export async function saveAttendance(branchId: string | undefined, payload: Save
       
     if (eventsError) return { error: "Failed to fetch calendar" };
     
+    // Explicit instructional day authority call
     const dayResolution = resolveInstructionalDay(payload.date, ay.operating_days || [], events || []);
     if (!dayResolution.instructional) {
       return { error: "Cannot record attendance on a non-instructional day" };
     }
 
-    const { data: session, error: sessionError } = await supabase
-      .from('attendance_sessions')
-      .select('id, locked_at, published_at')
-      .eq('section_id', payload.section_id)
-      .eq('date', payload.date)
-      .maybeSingle();
+    // Call atomic RPC for save
+    const { data: sessionId, error: rpcError } = await supabase.rpc('rpc_save_attendance', {
+      p_branch_id: resolvedBranchId,
+      p_academic_year_id: payload.academic_year_id,
+      p_section_id: payload.section_id,
+      p_date: payload.date,
+      p_records: payload.records
+    });
 
-    if (sessionError) return { error: sessionError };
-    if (session && session.locked_at) {
-      return { error: "Attendance is locked for this section and date" };
-    }
-
-    let sessionId = session?.id;
-
-    if (!sessionId) {
-      const { data: newSession, error: newSessionError } = await supabase
-        .from('attendance_sessions')
-        .insert({
-          branch_id: resolvedBranchId,
-          academic_year_id: payload.academic_year_id,
-          section_id: payload.section_id,
-          date: payload.date
-        })
-        .select()
-        .single();
-        
-      if (newSessionError) return { error: newSessionError };
-      sessionId = newSession.id;
-    }
-
-    const recordsToInsert = payload.records.map(r => ({
-      session_id: sessionId!,
-      student_id: r.student_id,
-      status: r.status,
-      notes: r.notes || null
-    }));
-
-    const { error: upsertError } = await supabase
-      .from('attendance_records')
-      .upsert(recordsToInsert, { onConflict: 'session_id,student_id' });
-      
-    if (upsertError) return { error: upsertError };
+    if (rpcError) return { error: rpcError.message };
     
     return { error: null, data: { sessionId } };
   });
@@ -94,11 +64,13 @@ export async function saveAttendance(branchId: string | undefined, payload: Save
 
 export async function lockAttendance(branchId: string | undefined, sessionId: string) {
   return branchAction(branchId, async ({ supabase }) => {
+    const { data: user } = await supabase.auth.getUser();
+
     const { error } = await supabase
       .from('attendance_sessions')
-      .update({ locked_at: new Date().toISOString() })
+      .update({ locked_at: new Date().toISOString(), locked_by: user?.user?.id })
       .eq('id', sessionId)
-      .is('locked_at', null);
+      .is('locked_at', null); // Protects against save-vs-lock concurrency
       
     if (error) return { error };
     return { error: null, data: { success: true } };
@@ -107,15 +79,19 @@ export async function lockAttendance(branchId: string | undefined, sessionId: st
 
 export async function publishAttendance(branchId: string | undefined, sessionId: string) {
   return branchAction(branchId, async ({ supabase }) => {
+    const { data: user } = await supabase.auth.getUser();
+
     const { error } = await supabase
       .from('attendance_sessions')
-      .update({ published_at: new Date().toISOString() })
+      .update({ published_at: new Date().toISOString(), published_by: user?.user?.id })
       .eq('id', sessionId)
+      .not('locked_at', 'is', null) // Must be locked to publish
       .is('published_at', null);
       
     if (error) return { error };
     
-    console.log('[EventBus] emit attendance.published for session', sessionId);
+    // Notification creation is decoupled from the transaction
+    console.log(`[EventBus] emit attendance.published for session ${sessionId}`);
     
     return { error: null, data: { success: true } };
   });
@@ -128,48 +104,22 @@ export async function correctAttendance(
   newStatus: AttendanceStatus, 
   reason: string
 ) {
-  return branchAction(branchId, async ({ supabase }) => {
+  return branchAction(branchId, async ({ supabase, branchId: resolvedBranchId }) => {
     if (!reason || reason.trim().length === 0) {
       return { error: "Correction reason is mandatory" };
     }
 
-    const { data: record, error: fetchError } = await supabase
-      .from('attendance_records')
-      .select('*')
-      .eq('session_id', sessionId)
-      .eq('student_id', studentId)
-      .single();
-      
-    if (fetchError || !record) return { error: "Record not found" };
-    
-    const beforeState = { status: record.status, notes: record.notes };
-    const afterState = { status: newStatus, notes: record.notes };
+    const { data: success, error: rpcError } = await supabase.rpc('rpc_correct_attendance', {
+      p_branch_id: resolvedBranchId,
+      p_session_id: sessionId,
+      p_student_id: studentId,
+      p_new_status: newStatus,
+      p_reason: reason
+    });
 
-    const { error: updateError } = await supabase
-      .from('attendance_records')
-      .update({ status: newStatus })
-      .eq('id', record.id);
-      
-    if (updateError) return { error: updateError };
-    
-    const { data: user } = await supabase.auth.getUser();
-    
-    const { error: auditError } = await supabase
-      .from('attendance_audit_logs')
-      .insert({
-        session_id: sessionId,
-        record_id: record.id,
-        actor_id: user.user?.id,
-        action: 'CORRECT',
-        reason,
-        before_state: beforeState,
-        after_state: afterState
-      });
-      
-    if (auditError) return { error: auditError };
+    if (rpcError) return { error: rpcError.message };
+    if (!success) return { error: "Correction failed" };
     
     return { error: null, data: { success: true } };
   });
 }
-
-
