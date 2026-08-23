@@ -102,7 +102,7 @@ test.describe('Substitutions Management', () => {
       await page.locator('select[name="room_id"]').selectOption('aaaaaaaa-5555-5555-5555-555555555556');
       await page.locator('select[name="period_id"]').selectOption('aaaaaaaa-6666-6666-6666-666666666666');
       await page.locator('select[name="day_of_week"]').selectOption('3'); // Wednesday
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.locator('text=New Timetable Entry')).not.toBeVisible();
 
       // ─── 0b. CREATE prerequisite timetable entry (Thursday) ───
@@ -116,7 +116,7 @@ test.describe('Substitutions Management', () => {
       await page.locator('select[name="room_id"]').selectOption('aaaaaaaa-5555-5555-5555-555555555555');
       await page.locator('select[name="period_id"]').selectOption('aaaaaaaa-6666-6666-6666-666666666666');
       await page.locator('select[name="day_of_week"]').selectOption('4'); // Thursday
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.locator('text=New Timetable Entry')).not.toBeVisible();
 
       // Verify: 2 prerequisite entries created
@@ -125,8 +125,36 @@ test.describe('Substitutions Management', () => {
       await expect(page.locator('[data-testid="timetable-entry"][data-day="3"]')).toHaveCount(1);
       await expect(page.locator('[data-testid="timetable-entry"][data-day="4"]')).toHaveCount(1);
 
+      // --- CALENDAR INTEGRATION: CREATE HOLIDAY ---
+      await page.goto('/academic-structure/calendar');
+      await page.getByRole('button', { name: 'Add Event' }).click();
+      await page.getByLabel('Name').fill('E2E Holiday');
+      await page.getByLabel('Start Date').fill('2026-08-19');
+      await page.getByLabel('End Date').fill('2026-08-19');
+      await page.getByLabel('Type').selectOption('HOLIDAY');
+      // Instructional checkbox is automatically disabled for HOLIDAY
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Add Event' })).not.toBeVisible();
+
+      // --- CALENDAR INTEGRATION: VERIFY SUBSTITUTION BLOCKED ---
+      await page.goto('/scheduling/substitutions?date=2026-08-19');
+      await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
+      
+      // Verify Non-instructional Banner
+      await expect(page.locator('text=Non-instructional Day:')).toBeVisible();
+      await expect(page.locator('text=E2E Holiday').first()).toBeVisible();
+
+      // Verify "New Substitution" is hidden
+      await expect(page.getByRole('button', { name: 'New Substitution' })).not.toBeVisible();
+
+      // --- CALENDAR INTEGRATION: ARCHIVE HOLIDAY ---
+      await page.goto('/academic-structure/calendar');
+      const eventRow = page.locator('tr').filter({ hasText: 'E2E Holiday' }).first();
+      page.once('dialog', d => d.accept());
+      await eventRow.getByRole('button', { name: 'Archive' }).click();
+        await expect(eventRow).toBeHidden({ timeout: 15000 });
       // ─── 1. CREATE a substitution for Wednesday ───
-      await page.goto('/scheduling/substitutions');
+      await page.goto('/scheduling/substitutions?date=2026-08-19');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
 
       await page.getByRole('button', { name: 'New Substitution' }).click();
@@ -136,7 +164,7 @@ test.describe('Substitutions Management', () => {
       await page.locator('select[name="substitute_staff_id"]').selectOption({ label: 'Teacher A' });
       await page.locator('select[name="substitute_room_id"]').selectOption('aaaaaaaa-5555-5555-5555-555555555555');
       await page.fill('input[name="reason"]', 'E2E Testing Sick Leave');
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
 
       // Verify: drawer closes (success)
       await expect(page.locator('text=Create Substitution')).not.toBeVisible();
@@ -146,7 +174,7 @@ test.describe('Substitutions Management', () => {
       await page.locator('input[name="substitution_date"]').fill('2026-08-20'); // Thursday
       await page.locator('select[name="timetable_entry_id"]').selectOption({ label: 'Class 10 Section A - Mathematics (Period 1)' });
       await page.locator('select[name="substitute_staff_id"]').selectOption({ label: 'Branch Admin' });
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.locator('text=Create Substitution')).not.toBeVisible();
 
       // ─── 3. NEGATIVE: Wrong weekday ───
@@ -154,7 +182,7 @@ test.describe('Substitutions Management', () => {
       await page.locator('input[name="substitution_date"]').fill('2026-08-18'); // Tuesday ≠ Wednesday
       await page.locator('select[name="timetable_entry_id"]').selectOption({ label: 'Class 11 Section B - Science (Period 1)' });
       await page.locator('select[name="substitute_staff_id"]').selectOption({ label: 'Teacher A' });
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.locator('.text-red-600')).toBeVisible();
       await page.getByRole('button', { name: 'Cancel' }).click();
 
@@ -163,7 +191,7 @@ test.describe('Substitutions Management', () => {
       await page.locator('input[name="substitution_date"]').fill('2099-01-01');
       await page.locator('select[name="timetable_entry_id"]').selectOption({ label: 'Class 11 Section B - Science (Period 1)' });
       await page.locator('select[name="substitute_staff_id"]').selectOption({ label: 'Teacher A' });
-      await page.getByRole('button', { name: 'Save' }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.locator('.text-red-600')).toBeVisible();
       await page.getByRole('button', { name: 'Cancel' }).click();
 
@@ -245,7 +273,7 @@ test.describe('Substitutions Management', () => {
     });
 
     test('should view substitutions but cannot create', async ({ page }) => {
-      await page.goto('/scheduling/substitutions');
+      await page.goto('/scheduling/substitutions?date=2026-08-19');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
 
       const createBtn = page.getByRole('button', { name: 'New Substitution' });
