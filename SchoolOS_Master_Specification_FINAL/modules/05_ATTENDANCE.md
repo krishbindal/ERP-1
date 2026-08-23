@@ -91,18 +91,18 @@
 ## 7. Security
 
 **Permissions:**
-- `attendance.view`
-- `attendance.manage` (teachers)
-- `attendance.publish` (admins)
-- `attendance.correct` (admins)
+- `attendance.session.read`
+- `attendance.session.manage` (teachers)
+- `attendance.session.publish` (admins)
+- `attendance.session.correct` (admins)
 
 **RLS Policies:**
 - **`attendance_sessions` & `attendance_records`:**
-  - **SELECT (Staff):** `auth_user_has_branch_role(branch_id)` and specific permissions.
-  - **SELECT (Parent):** Joins `student_guardians` on `student_id` AND `attendance_sessions.published_at IS NOT NULL`.
-  - **SELECT (Student):** `student_id = auth.uid()` AND `published_at IS NOT NULL`.
-  - **INSERT/UPDATE (Teacher):** `locked_at IS NULL` AND `auth_user_has_branch_role(branch_id)`.
-  - **INSERT/UPDATE (Admin):** Requires `attendance.correct` bypassing `locked_at`.
+  - **SELECT (Staff):** `auth_user_has_branch_role(branch_id)` and specific permissions (`attendance.session.read`).
+  - **SELECT (Parent):** Joins `student_guardians` on `student_id` through the canonical Identity mapping resolving `auth.uid()` to `guardians(id)`, AND `attendance_sessions.published_at IS NOT NULL`.
+  - **SELECT (Student):** Uses `get_auth_students(auth.uid())` to map the `auth.users` profile to the `students` row, AND `published_at IS NOT NULL`. (Do NOT use `student_id = auth.uid()` as they are separate systems).
+  - **INSERT/UPDATE (Teacher):** `locked_at IS NULL` AND `auth_user_has_branch_role(branch_id)` AND permission `attendance.session.manage`.
+  - **INSERT/UPDATE (Admin):** Requires `attendance.session.correct` bypassing `locked_at` enforcement.
 - **Ownership:** Hardbound to `branch_id`. Cross-branch mutation throws access denied.
 - **Ownership Tampering:** RLS ensures the `branch_id` matches the actor's authorized branches.
 
@@ -113,11 +113,12 @@ Allowed transitions:
 1. `Draft` (Created by Teacher)
 2. `Locked` (By Teacher explicitly, or System EOD Cron)
 3. `Published` (By Branch Admin)
-4. `Corrected` (By Branch Admin post-lock/publish, creates Audit Log)
+
+Corrections do not create a separate lifecycle state. A correction is an audited mutation operation that preserves the existing lock/publish status of the record.
 
 ### Concurrency and Transactions
 - **Bulk Save Atomicity:** Standard Postgres transactions ensure all-or-nothing saves.
-- **Race conditions:** If two teachers submit the same section, standard last-write-wins applies at the row level, or a version column can be used. Lock racing with save fails if the transaction commits the lock first (the save transaction fails the `locked_at IS NULL` server check). EOD cron uses `SELECT ... FOR UPDATE` to lock rows securely.
+- **Race conditions:** PostgreSQL row-level locking (`SELECT ... FOR UPDATE`) is the explicit concurrency policy. If two teachers submit the same section simultaneously, transaction blocking ensures deterministic last-write-wins without application versioning. If `save` races with `lock`, the transaction holding the lock commits first, causing the `save` transaction to definitively fail its `locked_at IS NULL` verification check. EOD cron uses `SELECT ... FOR UPDATE` to securely sweep rows.
 
 ### Operations
 
@@ -140,7 +141,7 @@ Allowed transitions:
 
 4. **`POST /api/attendance/sessions/auto-lock` (Internal Cron)**
    - **Actor:** System Service Role
-   - **Logic:** Identifies open sessions where `date < CURRENT_DATE AT TIME ZONE branches.timezone` and locks them.
+   - **Logic:** Identifies open sessions where the current UTC time exceeds 23:59:59 converted to the branch's local timezone for the session's `date`. The comparison rigorously executes `timezone(branches.timezone, now()) > (session.date + interval '1 day')`. Locks the matching rows.
 
 5. **`POST /api/attendance/sessions/:id/publish`**
    - **Actor:** Branch Admin

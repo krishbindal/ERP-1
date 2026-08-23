@@ -28,36 +28,25 @@ This document is a decision gate. It does **not** authorize database migrations,
 
 ## 3. Attendance model decision
 
-### 3.1 Recommended product model: support both daily and scheduled-lesson attendance
+### 3.1 Product model: Daily attendance only
 
-**Decision:** Attendance should support two related modes from one coherent domain:
+**Decision:** The authoritative product decision for Phase 5 is daily attendance only. Lesson/period attendance is explicitly excluded to avoid matrix complexity.
 
-- **Daily attendance:** one attendance outcome for a student for an instructional date.
-- **Lesson/period attendance:** an attendance outcome for a student in the context of a specific scheduled instructional lesson/period on a date.
+**Why:** A single daily attendance outcome per student significantly reduces integration friction with calendar, timetable, and enrollment matrices.
 
-**Why:** Mature school ERP products support both daily and subject/period attendance, while SchoolOS already has a strong Calendar + Timetable foundation. Supporting both avoids forcing one operational model onto schools with different policies.
-
-**Important:** This does not mean two unrelated attendance systems. They must share canonical student, enrollment, branch, academic-year, Calendar, and audit concepts.
-
-**Implementation consequence:** The eventual data design must make the attendance mode explicit and must define deterministic uniqueness rules so the same student cannot receive accidental duplicate records for the same attendance context.
+**Important:** The system must share canonical student, enrollment, branch, academic-year, Calendar, and audit concepts.
 
 ### 3.2 Daily attendance semantics
 
-A daily attendance record represents a student's attendance outcome for a particular instructional date and relevant enrollment/branch context.
+A daily attendance record represents a student's attendance outcome for a particular instructional date anchored to their primary enrolled section.
 
 A daily record must not be created for an invalid/non-instructional date unless an explicitly authorized exception workflow is defined.
 
-### 3.3 Lesson attendance semantics
+### 3.3 Student attendance is primary scope for Phase 5
 
-A lesson attendance record represents attendance for a student against a concrete scheduled lesson/period occurrence.
+Phase 5 Attendance centers entirely on **student attendance**.
 
-The occurrence must resolve to authoritative scheduling/calendar context rather than relying on client-supplied labels such as period name or subject name.
-
-### 3.4 Student attendance is primary scope for Phase 5
-
-Phase 5 Attendance should initially center on **student attendance**.
-
-Staff/employee attendance remains a separate future HR/Payroll concern even though the module placeholder mentions teacher/staff attendance. Staff attendance must not be mixed into the student attendance schema merely for convenience.
+Staff/employee attendance remains a separate future HR/Payroll concern. Staff attendance must not be mixed into the student attendance schema merely for convenience.
 
 ## 4. Relationship to enrollment
 
@@ -84,15 +73,12 @@ Attendance must not independently decide that Saturday, Sunday, a holiday, or a 
 
 A privileged administrator may need to record attendance in exceptional circumstances, but such a workflow must be an explicit business operation with an audit reason. It must not be implemented as a hidden bypass of Calendar rules.
 
-## 6. Relationship to Timetable
+## 6. Relationship to Timetable and Enrollment
 
-Lesson attendance depends on a valid scheduled lesson occurrence.
-
+Daily attendance anchors to a student's enrolled Section on a specific Date, rather than to granular Timetable entries. 
 The authoritative chain is conceptually:
 
-`Academic Year -> Calendar Date -> Timetable/Scheduling Context -> Lesson Occurrence -> Attendance`
-
-Substitution data must be respected when the timetable engine establishes the effective teacher for a specific lesson occurrence. Attendance must not invent a second substitution model.
+Academic Year -> Section Enrollment -> Calendar Date -> Daily Attendance
 
 ## 7. Attendance statuses
 
@@ -109,10 +95,9 @@ The implementation should be designed so additional school-approved statuses can
 
 The product contract must define which statuses participate in attendance percentage calculations before production reporting is built.
 
-### Pending client/product decision
+### Calculation Policies
 
-Whether `LATE` is counted as present, partial attendance, or a separately weighted status is a **business-policy configuration**, not a universal database invariant.
-
+LATE counts as PRESENT for the percentage denominator, but occurrences are tracked separately for disciplinary reporting. EXCUSED is explicitly excluded from the percentage denominator.
 ## 8. Lock and publish are distinct concepts
 
 ### 8.1 Lock
@@ -343,7 +328,6 @@ Required screens are expected to include, at minimum:
 
 - Attendance dashboard/landing;
 - Daily attendance entry;
-- Lesson/period attendance entry where enabled;
 - Attendance history/detail;
 - Lock/publish controls for privileged users;
 - Correction workflow;
