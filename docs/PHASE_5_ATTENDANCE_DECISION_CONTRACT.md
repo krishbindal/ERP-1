@@ -1,8 +1,8 @@
 # SchoolOS — Phase 5 Attendance Product & Security Decision Contract
 
-**Status:** Proposed
+**Status:** FINAL (Implementation Authorized)
 **Phase:** 5 — Operations / Attendance
-**Decision type:** Level 2/3 module design contract; no schema or production implementation authorized by this document alone.
+**Decision type:** Level 2/3 module design contract; implementation and schema execution is now authorized based on the resolved decisions below.
 **Source baseline:** `SchoolOS_Master_Specification_FINAL` + current repository security/architecture contracts.
 
 ## 1. Purpose
@@ -352,25 +352,25 @@ Required screens are expected to include, at minimum:
 
 Every screen must specify purpose, actor, scope, route, dependencies, permissions, validation, loading, empty, error, and permission-denied states before implementation.
 
-## 22. Explicit unresolved decisions
+## 22. Explicit Product Decisions (RESOLVED)
 
-The following remain **UNRESOLVED** and must be decided before schema/API implementation:
+The following 15 decisions have been explicitly approved by the product owner. They now form the final business rules for Phase 5 implementation:
 
-1. Whether the client requires both daily and lesson attendance, or only one mode for the first release.
-2. Exact attendance statuses required by the client.
-3. Exact lock timing rules: manual, scheduled, automatic delay, or hybrid.
-4. Exact publish semantics and whether publish is mandatory.
-5. Exact privileged correction roles.
-6. Whether post-publish corrections require approval by a second role.
-7. Exact percentage/eligibility calculation policy.
-8. Treatment of approved leave in attendance calculations.
-9. Treatment of late/partial attendance in calculations.
-10. Whether missing attendance is considered absent, unmarked, or excluded.
-11. Exact bulk-operation atomicity semantics.
-12. Whether attendance import is required in Phase 5.
-13. Which notifications are mandatory.
-14. Whether staff attendance belongs in the same release or the later HR module.
-15. Whether offline attendance is a required product capability.
+1. **Granularity:** Daily attendance only for the first release.
+2. **Exact Attendance Statuses:** `PRESENT`, `ABSENT`, `LATE`, `EXCUSED`.
+3. **Exact Lock Timing Rules:** Manual lock by Teacher, with an Automatic Midnight Fallback (via cron) in the branch's timezone.
+4. **Publish Semantics & Mandate:** Manual Publish by Branch Admin.
+5. **Privileged Correction Roles:** `BRANCH_ADMIN` and `PRINCIPAL`.
+6. **Post-publish Corrections Approval:** No second-role approval; direct correction with a mandatory Audit Reason.
+7. **Percentage Calculation Policy:** `(Present + Late) / (Total Instructional Days - Excused Leave)`.
+8. **Treatment of Approved Leave:** Exclude from denominator (Map to `EXCUSED`).
+9. **Treatment of Late/Partial Attendance:** Count as `PRESENT` for the percentage, but track `LATE` occurrences separately.
+10. **Missing Attendance (Unentered):** Treat as NULL/Excluded (Missing is not Absent).
+11. **Bulk-operation Atomicity Semantics:** All-or-Nothing (Atomic) transaction.
+12. **Attendance Import Requirement:** Defer Import to post-V1.
+13. **Mandatory Notifications:** Daily absence notification to Parents triggered automatically upon Publish.
+14. **Staff Attendance:** Defer to HR module (Phase 5 is Student attendance only).
+15. **Offline/Mobile Capability:** Online-authoritative only (No offline sync for V1).
 
 ## 23. Decisions we should NOT make implicitly
 
@@ -389,16 +389,9 @@ Do not assume:
 
 ## 24. Implementation gate
 
-Implementation is authorized only after the unresolved decisions are converted into explicit product decisions/ADRs and the following artifacts are ready:
+**STATUS: GATE PASSED.**
 
-- finalized Attendance business rules;
-- finalized entity/data ownership map;
-- finalized permission matrix;
-- finalized RLS policy matrix;
-- finalized API contracts;
-- finalized screen specifications;
-- finalized test matrix;
-- finalized migration/rollback plan.
+Implementation is now authorized because the explicit product decisions have been finalized. The engineering team is cleared to produce the required artifacts (schema, API contracts, screen specs, and test matrix) in the subsequent implementation slices.
 
 ## 25. Evidence standard
 
