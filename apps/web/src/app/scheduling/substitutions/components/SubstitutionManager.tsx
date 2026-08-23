@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { TimetableGrid, TimetableEntry, Period } from '../../timetable/components/TimetableGrid';
 import { SubstitutionForm, Room, Teacher } from './SubstitutionForm';
+import { InstructionalDayResolution } from '@/lib/calendar/resolver';
 
 type Props = Readonly<{
   branchId: string;
@@ -13,6 +14,7 @@ type Props = Readonly<{
   teachers: Teacher[];
   selectedDate: string;
   isReadOnly: boolean;
+  instructionalDay?: InstructionalDayResolution | null;
 }>;
 
 export function SubstitutionManager({
@@ -23,7 +25,8 @@ export function SubstitutionManager({
   canonicalEntries,
   teachers,
   selectedDate,
-  isReadOnly
+  isReadOnly,
+  instructionalDay
 }: Props) {
   const [cancelingSubId, setCancelingSubId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,10 +59,32 @@ export function SubstitutionManager({
     }
   };
 
+  if (!selectedDate) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-500">
+        Please select a date to view and manage substitutions.
+      </div>
+    );
+  }
+
+  const isNonInstructional = Boolean(instructionalDay && !instructionalDay.instructional);
+
   return (
     <>
+      {isNonInstructional && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                <strong>Non-instructional Day:</strong> Substitutions cannot be scheduled for this date ({instructionalDay?.reason}).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end mb-4">
-        {!isReadOnly && (
+        {!isReadOnly && !isNonInstructional && (
           <SubstitutionForm 
             branchId={branchId} 
             canonicalEntries={canonicalEntries} 
@@ -70,11 +95,18 @@ export function SubstitutionManager({
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-white rounded-lg shadow border border-gray-200 relative">
+        {isNonInstructional && (
+          <div className="absolute inset-0 bg-gray-50 bg-opacity-75 z-10 flex items-center justify-center pointer-events-none">
+            <span className="text-gray-500 font-medium text-lg bg-white px-4 py-2 rounded shadow-sm">
+              {instructionalDay?.reason}
+            </span>
+          </div>
+        )}
         <TimetableGrid 
           entries={entries} 
           periods={periods} 
-          isReadOnly={isReadOnly}
+          isReadOnly={isReadOnly || isNonInstructional}
           onEntryClick={handleEntryClick}
         />
       </div>

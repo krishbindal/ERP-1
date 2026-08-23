@@ -3,6 +3,7 @@ export const revalidate = 0;
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '../components/BranchAccessError';
 import { fetchSchedulingPageData } from '../lib/page-data';
+import { getInstructionalDay } from '@/lib/calendar/actions';
 
 import { SubstitutionManager } from './components/SubstitutionManager';
 
@@ -10,7 +11,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
   const view = searchParams.view || 'section';
-  const selectedDate = searchParams.date || new Date().toISOString().split('T')[0]; // Default to today
+  const selectedDate = searchParams.date || ''; // Default to empty to prevent SSR timezone skew
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
@@ -18,20 +19,33 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
 
   const { supabase, academicYearId, entriesData, periods, rooms, teachers } = await fetchSchedulingPageData(branchId);
 
+  // Calendar Context
+  let instructionalDay = null;
+  if (selectedDate) {
+    const { data: calData, error: calError } = await getInstructionalDay(selectedDate, branchId, academicYearId);
+    if (!calError) {
+      instructionalDay = calData;
+    }
+  }
+
   // Fetch active substitutions for the selected date
-  const { data: subsData } = await supabase
-    .from('timetable_substitutions')
-    .select(`
-      *,
-      staff_branch_profiles!fk_substitution_teacher (
-        staff ( first_name, last_name )
-      ),
-      rooms!fk_substitution_room ( name )
-    `)
-    .eq('branch_id', branchId)
-    .eq('academic_year_id', academicYearId)
-    .eq('substitution_date', selectedDate)
-    .eq('status', 'ACTIVE');
+  let subsData: Array<Record<string, unknown>> = [];
+  if (selectedDate) {
+    const { data } = await supabase
+      .from('timetable_substitutions')
+      .select(`
+        *,
+        staff_branch_profiles!fk_substitution_teacher (
+          staff ( first_name, last_name )
+        ),
+        rooms!fk_substitution_room ( name )
+      `)
+      .eq('branch_id', branchId)
+      .eq('academic_year_id', academicYearId)
+      .eq('substitution_date', selectedDate)
+      .eq('status', 'ACTIVE');
+    subsData = data || [];
+  }
 
   // Merge substitutions over canonical entries
   const effectiveEntries = (entriesData || []).map(entry => {
@@ -78,6 +92,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
         teachers={teachers || []}
         selectedDate={selectedDate}
         isReadOnly={isReadOnly}
+        instructionalDay={instructionalDay}
       />
     </div>
   );

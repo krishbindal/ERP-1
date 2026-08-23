@@ -1,6 +1,7 @@
 "use server";
 
 import { branchAction } from '@/lib/server-actions';
+import { getInstructionalDay } from '@/lib/calendar/actions';
 
 export async function createSubstitution(
   data: {
@@ -26,6 +27,21 @@ export async function createSubstitution(
       return { error: 'Timetable entry not found or belongs to a different branch' };
     }
 
+    // CALENDAR INTEGRATION: Verify the specific date is instructional
+    const calendarCheck = await getInstructionalDay(
+      data.substitution_date,
+      ctx.branchId,
+      entry.academic_year_id
+    );
+
+    if (calendarCheck.error) {
+      return { error: calendarCheck.error || 'Failed to verify instructional day' };
+    }
+
+    if (!calendarCheck.data?.instructional) {
+      return { error: 'Cannot schedule substitution on a non-instructional day: ' + (calendarCheck.data?.reason || 'Holiday/Closure') };
+    }
+
     return ctx.supabase.from('timetable_substitutions').insert({
       timetable_entry_id: data.timetable_entry_id,
       substitution_date: data.substitution_date,
@@ -48,3 +64,4 @@ export async function cancelSubstitution(id: string, explicitBranchId?: string) 
       .eq('branch_id', ctx.branchId);
   }, '/scheduling/substitutions');
 }
+
