@@ -104,7 +104,6 @@ The Homework & Learning module operates inside the operational Branch boundaries
 **Legal Transitions:**
 - `DRAFT -> PUBLISHED` (By Teacher/Admin via `rpc_publish_homework`).
 - `PUBLISHED -> CLOSED` (By Teacher/Admin via `rpc_close_homework`).
-- `DRAFT -> CLOSED` (By Teacher/Admin via `rpc_close_homework` - e.g. cancelled).
 
 **Illegal Transitions:**
 - `PUBLISHED -> DRAFT` (Prevents hiding already visible work).
@@ -174,7 +173,7 @@ Client-selected section/teacher IDs are discarded during RPC processing; the ser
   - For Assignments: Returns `TRUE` if user is teacher of the section, branch admin, enrolled student, or guardian.
   - For Submissions: Returns `TRUE` if user is teacher, admin, the EXACT student, or the guardian.
 - **Upload Authorization**: Only authoring teachers can upload to `/assignments/`. Only owning students can upload to `/submissions/`. Handled via path extraction in `storage.objects` INSERT policy.
-- **Deletion**: Archiving is supported via Soft Delete in DB. Binary files can be deleted by authors/owners but we prefer retaining them for history.
+- **Deletion**: Homework assignments, submissions, and their attachments are NOT user-deletable in V1. Historical records and associated files remain permanently preserved.
 
 ## 8. API/RPC Contract
 
@@ -191,7 +190,7 @@ All state mutations occur inside atomic PostgreSQL RPCs utilizing Optimistic Con
    - Concurrency: Aborts if `updated_at != p_expected_updated_at`.
    - Emits event mapping in Server Action *after* successful return.
 4. `rpc_close_homework(p_id, p_expected_updated_at)`:
-   - Transitions `DRAFT|PUBLISHED -> CLOSED`.
+   - Transitions `PUBLISHED -> CLOSED`.
 5. `rpc_submit_homework(p_assignment_id, p_student_id, p_expected_version, p_comment)`:
    - Checks `assignments.status == 'PUBLISHED'`.
    - Bumps `submissions.version`.
@@ -245,3 +244,4 @@ Implementation must pass explicit pgTAP assertions for:
 - **F. Concurrency**: Explicitly solved using OCC (`updated_at` and `version`).
 - **G. Test Coverage**: Matrix mapped 1-to-1 with invariants.
 - **H. Remaining Ambiguity**: None. Schema and API are locked and implementation-ready.
+

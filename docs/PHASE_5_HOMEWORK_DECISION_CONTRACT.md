@@ -115,7 +115,7 @@ This document is a decision gate. It does **not** authorize database migrations,
 
 | Actor | Action | Scope / Boundary |
 |-------|--------|------------------|
-| **Branch Admin** | Manage all | Can create, edit, grade, delete (soft/archive) any homework in their branch via the `homework.manage.all` permission. |
+| **Branch Admin** | Manage all | Can create, edit, grade, and transition lifecycle states of any homework (deletion is explicitly prohibited) in their branch via the `homework.manage.all` permission. |
 | **Teacher** | Manage assigned | Can create, edit, grade homework ONLY for sections/subjects they are actively assigned to via `teacher_subject_assignments`. |
 | **Student** | View | Can view `PUBLISHED` or `CLOSED` homework ONLY for their active `enrollments`. |
 | **Student** | Submit | Can submit work ONLY if enrolled, assignment is `PUBLISHED`, and student is the owner of the submission. |
