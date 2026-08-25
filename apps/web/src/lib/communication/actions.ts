@@ -12,7 +12,7 @@ export async function createMessage(
   scheduledFor?: Date,
   expiresAt?: Date
 ) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('rpc_create_message', {
     p_branch_id: branchId,
     p_subject: subject,
@@ -30,7 +30,7 @@ export async function createMessage(
 }
 
 export async function scheduleMessage(messageId: string, scheduledFor: Date) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc('rpc_schedule_message', {
     p_message_id: messageId,
     p_scheduled_for: scheduledFor.toISOString()
@@ -42,7 +42,7 @@ export async function scheduleMessage(messageId: string, scheduledFor: Date) {
 }
 
 export async function sendMessage(messageId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc('rpc_send_message', {
     p_message_id: messageId,
   });
@@ -53,7 +53,7 @@ export async function sendMessage(messageId: string) {
 }
 
 export async function markMessageRead(messageId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc('rpc_mark_read', {
     p_message_id: messageId,
   });
@@ -64,7 +64,7 @@ export async function markMessageRead(messageId: string) {
 }
 
 export async function resolveRecipients(branchId: string, targets: Array<{ target_type: string; target_id?: string }>) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.rpc('rpc_resolve_recipients', {
     p_branch_id: branchId,
     p_targets: targets
