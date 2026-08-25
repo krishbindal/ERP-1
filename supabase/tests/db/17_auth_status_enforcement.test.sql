@@ -20,8 +20,12 @@ BEGIN
     v_branch_id := gen_random_uuid();
     INSERT INTO public.branches (id, organization_id, name, status) VALUES (v_branch_id, v_org_id, 'Test Branch', 'ACTIVE');
 
-    v_other_branch_id := gen_random_uuid();
-    INSERT INTO public.branches (id, organization_id, name, status) VALUES (v_other_branch_id, v_org_id, 'Other Branch', 'ACTIVE');
+    DECLARE v_other_org_id UUID := gen_random_uuid();
+    BEGIN
+        INSERT INTO public.organizations (id, name, status) VALUES (v_other_org_id, 'Other Org', 'ACTIVE');
+        v_other_branch_id := gen_random_uuid();
+        INSERT INTO public.branches (id, organization_id, name, status) VALUES (v_other_branch_id, v_other_org_id, 'Other Branch', 'ACTIVE');
+    END;
 
     -- Create role if not exists
     SELECT id INTO v_role_id FROM public.roles WHERE name = 'Branch Admin';
@@ -137,7 +141,7 @@ SELECT set_config('request.jwt.claims', format('{"sub":"%s", "app_metadata": {"i
 PREPARE insert_room_sa AS INSERT INTO public.rooms (id, branch_id, name) VALUES ('00000000-0000-0000-0000-000000000005'::uuid, current_setting('test.branch_id')::uuid, 'Room 5');
 SELECT lives_ok('insert_room_sa', 'Super Admin: authorized branch allowed');
 
-PREPARE insert_room_sa_unauth AS INSERT INTO public.rooms (id, branch_id, name) VALUES ('00000000-0000-0000-0000-000000000006'::uuid, '33333333-3333-3333-3333-333333333333'::uuid, 'Room 6');
+PREPARE insert_room_sa_unauth AS INSERT INTO public.rooms (id, branch_id, name) VALUES ('00000000-0000-0000-0000-000000000006'::uuid, current_setting('test.other_branch_id')::uuid, 'Room 6');
 SELECT throws_ok('insert_room_sa_unauth', '42501', 'new row violates row-level security policy for table "rooms"', 'Super Admin: unauthorized branch denied');
 
 SELECT * FROM finish();
