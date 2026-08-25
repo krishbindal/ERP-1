@@ -152,13 +152,18 @@ BEGIN
         SELECT DISTINCT s.profile_id AS p_id
         FROM public.communication_message_targets cmt
         JOIN public.enrollments e ON (
-            (cmt.target_type = 'BRANCH' AND e.branch_id = v_msg.branch_id) OR
-            (cmt.target_type = 'CLASS' AND e.class_id = cmt.target_id) OR
-            (cmt.target_type = 'SECTION' AND e.section_id = cmt.target_id)
+            e.branch_id = v_msg.branch_id AND
+            (
+                (cmt.target_type = 'BRANCH' AND e.branch_id = v_msg.branch_id) OR
+                (cmt.target_type = 'CLASS' AND e.class_id = cmt.target_id) OR
+                (cmt.target_type = 'SECTION' AND e.section_id = cmt.target_id)
+            )
         )
+        JOIN public.academic_years ay ON e.academic_year_id = ay.id
         JOIN public.students s ON e.student_id = s.id
         WHERE cmt.message_id = p_message_id
           AND e.status = 'ACTIVE'
+          AND ay.status = 'ACTIVE'
           AND s.profile_id IS NOT NULL
 
         UNION
@@ -166,14 +171,19 @@ BEGIN
         SELECT DISTINCT g.profile_id AS p_id
         FROM public.communication_message_targets cmt
         JOIN public.enrollments e ON (
-            (cmt.target_type = 'BRANCH' AND e.branch_id = v_msg.branch_id) OR
-            (cmt.target_type = 'CLASS' AND e.class_id = cmt.target_id) OR
-            (cmt.target_type = 'SECTION' AND e.section_id = cmt.target_id)
+            e.branch_id = v_msg.branch_id AND
+            (
+                (cmt.target_type = 'BRANCH' AND e.branch_id = v_msg.branch_id) OR
+                (cmt.target_type = 'CLASS' AND e.class_id = cmt.target_id) OR
+                (cmt.target_type = 'SECTION' AND e.section_id = cmt.target_id)
+            )
         )
+        JOIN public.academic_years ay ON e.academic_year_id = ay.id
         JOIN public.student_guardians sg ON e.student_id = sg.student_id
         JOIN public.guardians g ON sg.guardian_id = g.id
         WHERE cmt.message_id = p_message_id
           AND e.status = 'ACTIVE'
+          AND ay.status = 'ACTIVE'
           AND g.profile_id IS NOT NULL
           AND g.status = 'ACTIVE'
     ) sub;
