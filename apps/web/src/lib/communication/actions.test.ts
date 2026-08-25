@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { createMessage, sendMessage, markMessageRead, scheduleMessage, resolveRecipients } from './actions';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -16,7 +16,7 @@ describe('Communication Server Actions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (createClient as any).mockReturnValue({
+    (createClient as Mock).mockReturnValue({
       rpc: mockRpc,
     });
   });

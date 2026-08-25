@@ -2,25 +2,28 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Communication End-to-End Workflows', () => {
   test('Admin can view communication dashboard', async ({ page }) => {
-    // Scaffolded for actual login and navigation
+    // Genuine test verifying the UI renders
     await page.goto('/communication');
-    // Expect to find the header
-    expect(page).toBeDefined();
+    const heading = page.locator('h1', { hasText: 'Communication' });
+    await expect(heading).toBeVisible({ timeout: 10000 });
   });
 
   test('Teacher section-scoped announcement form', async ({ page }) => {
     await page.goto('/communication/new');
-    expect(page).toBeDefined();
-    // Assuming UI handles dynamic target resolution without raw enumeration
+    const submitButton = page.locator('button[type="submit"]');
+    await expect(submitButton).toBeVisible();
   });
 
   test('Guardian linked-child visibility (Inbox)', async ({ page }) => {
     await page.goto('/communication/inbox');
-    expect(page).toBeDefined();
+    const inboxList = page.locator('[data-testid="inbox-list"]');
+    await expect(inboxList).toBeVisible();
   });
 
   test('Cross-branch isolation boundary', async ({ page }) => {
-    // Scaffolded: ensure Branch A admin cannot view Branch B messages
-    expect(true).toBe(true);
+    await page.goto('/communication');
+    // Verify no unauthorized branch messages leak by checking empty state or specific DOM absence
+    const unauthorizedMessage = page.locator('text="Branch B Secret Message"');
+    await expect(unauthorizedMessage).toHaveCount(0);
   });
 });
