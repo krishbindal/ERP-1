@@ -13,11 +13,22 @@ SELECT function_privs_are('public', 'rpc_create_message', ARRAY['uuid', 'text', 
 SELECT function_privs_are('public', 'rpc_send_message', ARRAY['uuid'], 'public', ARRAY[]::text[], 'Public cannot send messages');
 SELECT function_privs_are('public', 'rpc_schedule_message', ARRAY['uuid', 'timestamp with time zone'], 'public', ARRAY[]::text[], 'Public cannot schedule messages');
 
--- 3. Idempotency Check on Platform Events
-PREPARE insert_event AS 
-    INSERT INTO public.platform_events (organization_id, aggregate_type, aggregate_id, event_type, payload, idempotency_key)
-    VALUES (gen_random_uuid(), 'msg', gen_random_uuid(), 'queued', '{}'::jsonb, 'idem-123');
 
+-- 3. Idempotency Check on Platform Events
+DO $$
+DECLARE
+    v_org_id UUID;
+    v_branch_id UUID;
+BEGIN
+    INSERT INTO public.organizations (name) VALUES ('Test Org Comm') RETURNING id INTO v_org_id;
+    INSERT INTO public.branches (organization_id, name) VALUES (v_org_id, 'Test Branch Comm') RETURNING id INTO v_branch_id;
+    
+    EXECUTE '
+        PREPARE insert_event AS 
+        INSERT INTO public.platform_events (organization_id, branch_id, aggregate_type, aggregate_id, event_type, payload, idempotency_key)
+        VALUES (' || quote_literal(v_org_id) || ', ' || quote_literal(v_branch_id) || ', ''msg'', gen_random_uuid(), ''queued'', ''{}''::jsonb, ''idem-123'');
+    ';
+END $$;
 SELECT lives_ok('insert_event', 'First platform event insert succeeds');
 SELECT throws_ok('insert_event', '23505', NULL, 'Duplicate idempotency key throws unique violation on platform_events');
 

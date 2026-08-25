@@ -79,7 +79,7 @@ jobs:
 
       - name: Start Local Supabase
         run: |
-          if ! timeout 300s npx --no-install supabase start -x realtime -x storage-api -x edge-runtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
+          if ! timeout 300s npx --no-install supabase start -x realtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
             echo "::error::Supabase start failed or timed out!"
             echo "--- Diagnostic Trap ---"
             docker ps -a
