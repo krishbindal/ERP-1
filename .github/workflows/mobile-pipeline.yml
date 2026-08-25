@@ -45,6 +45,3 @@ jobs:
 
       - name: Typecheck
         run: npx tsc --noEmit
-
-      - name: Validate Native Configuration (Prebuild)
-        run: npx expo prebuild --no-install
