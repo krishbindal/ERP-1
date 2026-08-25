@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(19);
+SELECT plan(21);
 
 -- 1. Structural Checks
 SELECT has_table('public', 'communication_messages', 'communication_messages exists');
@@ -39,6 +39,9 @@ SELECT has_function('public', 'fn_check_rate_limits', ARRAY['uuid', 'uuid', 'boo
 SELECT has_function('public', 'rpc_process_platform_events', ARRAY['integer'], 'Outbox event processor exists');
 SELECT has_function('public', 'rpc_process_scheduled_messages', 'Scheduled message processor exists');
 SELECT has_function('public', 'fn_resolve_message_recipients', ARRAY['uuid'], 'Canonical recipient resolution exists');
+SELECT function_privs_are('public', 'fn_resolve_message_recipients', ARRAY['uuid'], 'authenticated', ARRAY[]::text[], 'Authenticated cannot resolve recipients directly');
+SELECT function_privs_are('public', 'rpc_process_scheduled_messages', ARRAY[]::text[], 'authenticated', ARRAY[]::text[], 'Authenticated cannot process scheduled messages directly');
+
 
 -- 6. RLS & Isolation Setup
 SELECT policies_are('public', 'communication_messages', ARRAY[

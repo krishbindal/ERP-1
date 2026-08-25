@@ -1,4 +1,5 @@
-BEGIN;
+﻿import json
+sql = """BEGIN;
 
 -- 1. rpc_schedule_message
 CREATE OR REPLACE FUNCTION public.rpc_schedule_message(p_message_id UUID, p_scheduled_for TIMESTAMPTZ)
@@ -181,35 +182,11 @@ BEGIN
     RETURN COALESCE(v_recipients, ARRAY[]::UUID[]);
 END;
 $$;
-REVOKE EXECUTE ON FUNCTION public.fn_resolve_message_recipients(UUID) FROM PUBLIC, authenticated;
+REVOKE EXECUTE ON FUNCTION public.fn_resolve_message_recipients(UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.fn_resolve_message_recipients(UUID) TO service_role;
 
 COMMIT;
-
--- 6. Storage Bucket and Policies
-INSERT INTO storage.buckets (id, name, public) VALUES ('communication_assets', 'communication_assets', false) ON CONFLICT DO NOTHING;
-
-CREATE POLICY "Users can upload communication attachments to their own drafts"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (
-  bucket_id = 'communication_assets' AND
-  (SELECT sender_id FROM public.communication_messages WHERE id::text = (string_to_array(name, '/'))[1]) = auth.uid() AND
-  (SELECT status FROM public.communication_messages WHERE id::text = (string_to_array(name, '/'))[1]) = 'DRAFT'
-);
-
-CREATE POLICY "Users can read communication attachments for messages they received or sent"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (
-  bucket_id = 'communication_assets' AND
-  (
-    (SELECT sender_id FROM public.communication_messages WHERE id::text = (string_to_array(name, '/'))[1]) = auth.uid()
-    OR
-    EXISTS (
-      SELECT 1 FROM public.communication_recipients 
-      WHERE message_id::text = (string_to_array(name, '/'))[1] 
-      AND recipient_id = auth.uid()
-    )
-  )
-);
+"""
+with open('supabase/migrations/20260827000035_phase_5_communication_rpc_fix.sql', 'w', encoding='utf-8') as f:
+    f.write(sql)
+print("done")
