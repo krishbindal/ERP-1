@@ -224,4 +224,18 @@ USING (
   )
 );
 
-GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.communication_messages TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.communication_message_targets TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.communication_recipients TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.communication_delivery_attempts TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.communication_audit_logs TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.platform_events TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.notification_rules TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_devices TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_delivery_jobs TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.branch_communication_settings TO service_role;
+
+GRANT SELECT ON public.communication_messages TO authenticated;
+GRANT SELECT ON public.communication_recipients TO authenticated;
+GRANT SELECT ON public.communication_message_targets TO authenticated;
+
