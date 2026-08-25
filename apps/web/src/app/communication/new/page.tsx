@@ -1,22 +1,19 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { createAndSendAnnouncement } from '../actions';
+import { getAppContext } from '@/lib/auth/context';
 
 export default async function NewAnnouncementPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // simplified fetching of branch
-  const { data: branches } = await supabase.from('branches').select('id, organization_id').limit(1);
-  const branch = branches?.[0];
+  const context = await getAppContext();
   
-  if (!branch) return <div>No branch found</div>;
+  if (!context?.branchId) return <div>No branch context found</div>;
 
   return (
     <div>
       <h1>New Announcement</h1>
       <form action={createAndSendAnnouncement}>
-        <input type="hidden" name="organization_id" value={branch.organization_id} />
-        <input type="hidden" name="branch_id" value={branch.id} />
+        <input type="hidden" name="organization_id" value={context.organizationId!} />
+        <input type="hidden" name="branch_id" value={context.branchId} />
         
         <div>
           <label>Subject</label>
