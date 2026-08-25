@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMessage, sendMessage, markMessageRead } from './actions';
+import { createMessage, sendMessage, markMessageRead, scheduleMessage, resolveRecipients } from './actions';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -25,7 +25,6 @@ describe('Communication Server Actions', () => {
     mockRpc.mockResolvedValue({ data: 'mock-uuid', error: null });
 
     const result = await createMessage(
-      'org-1',
       'branch-1',
       'Test Subject',
       'Test Body',
@@ -35,12 +34,18 @@ describe('Communication Server Actions', () => {
 
     expect(result).toBe('mock-uuid');
     expect(mockRpc).toHaveBeenCalledWith('rpc_create_message', expect.objectContaining({
-      p_organization_id: 'org-1',
       p_branch_id: 'branch-1',
       p_subject: 'Test Subject',
       p_targets: [{ target_type: 'BRANCH' }],
     }));
     expect(revalidatePath).toHaveBeenCalledWith('/communication');
+  });
+
+  it('scheduleMessage calls rpc_schedule_message successfully', async () => {
+    mockRpc.mockResolvedValue({ error: null });
+    const d = new Date();
+    await scheduleMessage('msg-1', d);
+    expect(mockRpc).toHaveBeenCalledWith('rpc_schedule_message', { p_message_id: 'msg-1', p_scheduled_for: d.toISOString() });
   });
 
   it('sendMessage calls rpc_send_message successfully', async () => {
@@ -55,8 +60,16 @@ describe('Communication Server Actions', () => {
     expect(mockRpc).toHaveBeenCalledWith('rpc_mark_read', { p_message_id: 'msg-1' });
   });
 
+  it('resolveRecipients calls rpc_resolve_recipients successfully', async () => {
+    mockRpc.mockResolvedValue({ data: 42, error: null });
+    const count = await resolveRecipients('branch-1', [{ target_type: 'BRANCH' }]);
+    expect(count).toBe(42);
+    expect(mockRpc).toHaveBeenCalledWith('rpc_resolve_recipients', { p_branch_id: 'branch-1', p_targets: [{ target_type: 'BRANCH' }] });
+  });
+
   it('throws error on rpc failure', async () => {
     mockRpc.mockResolvedValue({ error: { message: 'RPC Error' } });
     await expect(sendMessage('msg-1')).rejects.toThrow('Failed to send message: RPC Error');
+    await expect(resolveRecipients('branch-1', [])).rejects.toThrow('Failed to resolve recipients: RPC Error');
   });
 });

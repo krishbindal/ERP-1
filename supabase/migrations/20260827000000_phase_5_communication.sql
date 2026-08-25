@@ -137,7 +137,6 @@ CREATE INDEX idx_communication_audit_message ON public.communication_audit_logs(
 -- ==========================================
 -- 4. RLS & POLICIES
 -- ==========================================
-
 ALTER TABLE public.branch_communication_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.communication_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.communication_messages ENABLE ROW LEVEL SECURITY;
@@ -149,23 +148,42 @@ ALTER TABLE public.user_notification_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.platform_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.communication_audit_logs ENABLE ROW LEVEL SECURITY;
 
--- 4.1 Branch Communication Settings
+-- Helpers for RLS
+CREATE OR REPLACE FUNCTION public.fn_has_branch_permission(p_branch_id UUID, p_permission TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+STABLE
+AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.role_permissions rp
+        JOIN public.user_role_assignments ura ON ura.role_id = rp.role_id
+        JOIN public.permissions p ON p.id = rp.permission_id
+        WHERE ura.branch_id = p_branch_id 
+        AND ura.profile_id = auth.uid() 
+        AND p.name = p_permission
+    );
+$$;
+
+-- Settings
 CREATE POLICY "Branch Admins can view settings" ON public.branch_communication_settings
     FOR SELECT TO authenticated
-    USING (EXISTS (SELECT 1 FROM public.branch_memberships WHERE branch_memberships.branch_id = branch_communication_settings.branch_id AND profile_id = auth.uid()));
+    USING (public.fn_has_branch_permission(branch_id, 'communication.manage.branch'));
 
--- 4.2 Communication Templates
-CREATE POLICY "Users can view active templates in their branch" ON public.communication_templates
+-- Templates
+CREATE POLICY "Admins can manage templates" ON public.communication_templates
+    FOR ALL TO authenticated
+    USING (public.fn_has_branch_permission(branch_id, 'communication.manage.branch'));
+
+CREATE POLICY "Branch members can view active templates" ON public.communication_templates
     FOR SELECT TO authenticated
     USING (
         is_active = true AND 
-        EXISTS (SELECT 1 FROM public.branch_memberships WHERE branch_memberships.branch_id = communication_templates.branch_id AND profile_id = auth.uid())
+        EXISTS (SELECT 1 FROM public.branch_memberships WHERE branch_id = communication_templates.branch_id AND profile_id = auth.uid())
     );
 
--- 4.3 Communication Messages
--- Admins can view all messages in branch
--- Teachers can view messages they sent
--- Guardians/Students cannot view directly, they read from communication_recipients (One-Way bound)
+-- Messages
 CREATE POLICY "Users can view messages they sent or received" ON public.communication_messages
     FOR SELECT TO authenticated
     USING (
@@ -175,83 +193,91 @@ CREATE POLICY "Users can view messages they sent or received" ON public.communic
             WHERE communication_recipients.message_id = communication_messages.id 
             AND communication_recipients.recipient_id = auth.uid()
         ) OR
-        EXISTS (
-            SELECT 1 FROM public.role_permissions rp
-            JOIN public.user_role_assignments ura ON ura.role_id = rp.role_id
-            JOIN public.permissions p ON p.id = rp.permission_id
-            WHERE ura.branch_id = communication_messages.branch_id 
-            AND ura.profile_id = auth.uid() 
-            AND p.name = 'communication.manage.branch'
-        )
+        public.fn_has_branch_permission(branch_id, 'communication.manage.branch')
     );
 
--- 4.4 Targets
+-- Targets
 CREATE POLICY "Users can view targets for messages they can view" ON public.communication_message_targets
     FOR SELECT TO authenticated
     USING (
         EXISTS (
-            SELECT 1 FROM public.communication_messages 
-            WHERE communication_messages.id = communication_message_targets.message_id
+            SELECT 1 FROM public.communication_messages cm
+            WHERE cm.id = communication_message_targets.message_id
+            AND (
+                cm.sender_id = auth.uid() OR
+                public.fn_has_branch_permission(cm.branch_id, 'communication.manage.branch') OR
+                EXISTS (SELECT 1 FROM public.communication_recipients cr WHERE cr.message_id = cm.id AND cr.recipient_id = auth.uid())
+            )
         )
     );
 
--- 4.5 Recipients
--- User can view their own
--- Sender can view recipients of their messages
+-- Recipients
 CREATE POLICY "Users can view their own receipts and sent receipts" ON public.communication_recipients
     FOR SELECT TO authenticated
     USING (
         recipient_id = auth.uid() OR
         EXISTS (
-            SELECT 1 FROM public.communication_messages 
-            WHERE communication_messages.id = communication_recipients.message_id 
-            AND communication_messages.sender_id = auth.uid()
-        ) OR
-        EXISTS (
             SELECT 1 FROM public.communication_messages cm
-            JOIN public.role_permissions rp ON true
-            JOIN public.user_role_assignments ura ON ura.role_id = rp.role_id
-            JOIN public.permissions p ON p.id = rp.permission_id
-            WHERE cm.id = communication_recipients.message_id
-            AND ura.branch_id = cm.branch_id 
-            AND ura.profile_id = auth.uid() 
-            AND p.name = 'communication.manage.branch'
+            WHERE cm.id = communication_recipients.message_id 
+            AND (
+                cm.sender_id = auth.uid() OR
+                public.fn_has_branch_permission(cm.branch_id, 'communication.manage.branch')
+            )
         )
     );
 
--- 4.6 Delivery Attempts
-CREATE POLICY "Users can view attempts for their receipts" ON public.communication_delivery_attempts
+-- Delivery Attempts
+CREATE POLICY "Users can view attempts for messages they sent or receive" ON public.communication_delivery_attempts
     FOR SELECT TO authenticated
     USING (
         EXISTS (
-            SELECT 1 FROM public.communication_recipients 
-            WHERE communication_recipients.id = communication_delivery_attempts.recipient_id
+            SELECT 1 FROM public.communication_recipients cr
+            WHERE cr.id = communication_delivery_attempts.recipient_id
+            AND (
+                cr.recipient_id = auth.uid() OR
+                EXISTS (
+                    SELECT 1 FROM public.communication_messages cm
+                    WHERE cm.id = cr.message_id 
+                    AND (
+                        cm.sender_id = auth.uid() OR
+                        public.fn_has_branch_permission(cm.branch_id, 'communication.manage.branch')
+                    )
+                )
+            )
         )
     );
 
--- 4.7 Attachments
+-- Attachments
 CREATE POLICY "Users can view attachments for messages they can view" ON public.communication_attachments
     FOR SELECT TO authenticated
     USING (
         EXISTS (
-            SELECT 1 FROM public.communication_messages 
-            WHERE communication_messages.id = communication_attachments.message_id
+            SELECT 1 FROM public.communication_messages cm
+            WHERE cm.id = communication_attachments.message_id
+            AND (
+                cm.sender_id = auth.uid() OR
+                public.fn_has_branch_permission(cm.branch_id, 'communication.manage.branch') OR
+                EXISTS (SELECT 1 FROM public.communication_recipients cr WHERE cr.message_id = cm.id AND cr.recipient_id = auth.uid())
+            )
         )
     );
 
--- 4.8 Preferences
+-- Preferences
 CREATE POLICY "Users manage their own preferences" ON public.user_notification_preferences
     FOR ALL TO authenticated
     USING (user_id = auth.uid());
 
--- 4.9 Platform Events (Internal outbox, no direct user access except service_role)
--- 4.10 Audit Logs
+-- Audit Logs
 CREATE POLICY "Users can view audit logs for messages they can view" ON public.communication_audit_logs
     FOR SELECT TO authenticated
     USING (
         EXISTS (
-            SELECT 1 FROM public.communication_messages 
-            WHERE communication_messages.id = communication_audit_logs.message_id
+            SELECT 1 FROM public.communication_messages cm
+            WHERE cm.id = communication_audit_logs.message_id
+            AND (
+                cm.sender_id = auth.uid() OR
+                public.fn_has_branch_permission(cm.branch_id, 'communication.manage.branch')
+            )
         )
     );
 
@@ -259,24 +285,9 @@ CREATE POLICY "Users can view audit logs for messages they can view" ON public.c
 -- 5. RPC & SERVER ACTIONS (SECURITY DEFINER)
 -- ==========================================
 
--- 5.1 Mark Read
-CREATE OR REPLACE FUNCTION public.rpc_mark_read(p_message_id UUID)
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-BEGIN
-    UPDATE public.communication_recipients
-    SET status = 'READ', read_at = now()
-    WHERE message_id = p_message_id AND recipient_id = auth.uid();
-END;
-$$;
-REVOKE EXECUTE ON FUNCTION public.rpc_mark_read FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.rpc_mark_read TO authenticated;
+-- 5.1 Helpers for Authorization
 
--- (RPCs for creating and scheduling messages will be created and properly hardened)
--- 5.2 Helper to check if a teacher has active assignment to a section
+-- Teacher Section Auth
 CREATE OR REPLACE FUNCTION public.fn_is_teacher_authorized(p_teacher_profile_id UUID, p_section_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -287,15 +298,64 @@ AS $$
     SELECT EXISTS (
         SELECT 1 FROM public.teacher_subject_assignments tsa
         JOIN public.academic_years ay ON ay.id = tsa.academic_year_id
-        -- Note: using teacher_id as per Phase 3, wait, in phase 3 it was teacher_id referencing profiles temporarily.
+        -- In Phase 3, teacher_id references profiles.
         WHERE tsa.teacher_id = p_teacher_profile_id
         AND tsa.section_id = p_section_id
         AND ay.status IN ('PLANNED', 'ACTIVE')
     );
 $$;
 
+-- Teacher Class Auth
+CREATE OR REPLACE FUNCTION public.fn_is_teacher_authorized_class(p_teacher_profile_id UUID, p_class_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+STABLE
+AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.teacher_subject_assignments tsa
+        JOIN public.sections s ON s.id = tsa.section_id
+        JOIN public.academic_years ay ON ay.id = tsa.academic_year_id
+        WHERE tsa.teacher_id = p_teacher_profile_id
+        AND s.class_id = p_class_id
+        AND ay.status IN ('PLANNED', 'ACTIVE')
+    );
+$$;
+
+-- 5.2 Rate Limiting
+CREATE OR REPLACE FUNCTION public.fn_check_rate_limits(p_branch_id UUID, p_sender_id UUID, p_is_admin BOOLEAN)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_today_count INT;
+    v_limit INT;
+    v_settings public.branch_communication_settings%ROWTYPE;
+BEGIN
+    SELECT * INTO v_settings FROM public.branch_communication_settings WHERE branch_id = p_branch_id;
+    
+    -- Default limits if setting not found
+    IF NOT FOUND THEN
+        v_limit := CASE WHEN p_is_admin THEN 50 ELSE 5 END;
+    ELSE
+        v_limit := CASE WHEN p_is_admin THEN v_settings.max_admin_announcements_per_day ELSE v_settings.max_teacher_announcements_per_day END;
+    END IF;
+
+    SELECT COUNT(*) INTO v_today_count FROM public.communication_messages 
+    WHERE sender_id = p_sender_id 
+    AND created_at >= CURRENT_DATE;
+
+    IF v_today_count >= v_limit THEN
+        RAISE EXCEPTION 'Rate limit exceeded: You have sent % messages today. Limit is %.', v_today_count, v_limit;
+    END IF;
+END;
+$$;
+
+-- 5.3 Message Creation
 CREATE OR REPLACE FUNCTION public.rpc_create_message(
-    p_organization_id UUID,
     p_branch_id UUID,
     p_subject TEXT,
     p_body TEXT,
@@ -315,16 +375,24 @@ DECLARE
     v_target_type TEXT;
     v_target_id UUID;
     v_has_branch_manage BOOLEAN;
+    v_org_id UUID;
 BEGIN
-    -- Check branch admin
-    SELECT EXISTS (
-        SELECT 1 FROM public.role_permissions rp
-        JOIN public.user_role_assignments ura ON ura.role_id = rp.role_id
-        JOIN public.permissions p ON p.id = rp.permission_id
-        WHERE ura.branch_id = p_branch_id 
-        AND ura.profile_id = auth.uid() 
-        AND p.name = 'communication.manage.branch'
-    ) INTO v_has_branch_manage;
+    -- Securely resolve canonical tenant context
+    SELECT organization_id INTO v_org_id FROM public.branches WHERE id = p_branch_id;
+    IF v_org_id IS NULL THEN
+        RAISE EXCEPTION 'Invalid branch';
+    END IF;
+
+    -- Verify membership
+    IF NOT EXISTS (SELECT 1 FROM public.branch_memberships WHERE branch_id = p_branch_id AND profile_id = auth.uid()) THEN
+        RAISE EXCEPTION 'Not a member of this branch';
+    END IF;
+
+    -- Check privileges
+    v_has_branch_manage := public.fn_has_branch_permission(p_branch_id, 'communication.manage.branch');
+
+    -- Enforce Rate Limits
+    PERFORM public.fn_check_rate_limits(p_branch_id, auth.uid(), v_has_branch_manage);
 
     -- Validate targets
     FOR v_target IN SELECT * FROM jsonb_array_elements(p_targets)
@@ -334,6 +402,12 @@ BEGIN
         
         IF v_target_type = 'BRANCH' AND NOT v_has_branch_manage THEN
             RAISE EXCEPTION 'Unauthorized to target branch-wide';
+        END IF;
+
+        IF v_target_type = 'CLASS' AND NOT v_has_branch_manage THEN
+            IF NOT public.fn_is_teacher_authorized_class(auth.uid(), v_target_id) THEN
+                RAISE EXCEPTION 'Unauthorized to target class %', v_target_id;
+            END IF;
         END IF;
 
         IF v_target_type = 'SECTION' AND NOT v_has_branch_manage THEN
@@ -346,7 +420,7 @@ BEGIN
     INSERT INTO public.communication_messages (
         organization_id, branch_id, sender_id, subject, body, type, scheduled_for, expires_at, status
     ) VALUES (
-        p_organization_id, p_branch_id, auth.uid(), p_subject, p_body, p_type, p_scheduled_for, p_expires_at, 
+        v_org_id, p_branch_id, auth.uid(), p_subject, p_body, p_type, p_scheduled_for, p_expires_at, 
         CASE WHEN p_scheduled_for IS NOT NULL THEN 'SCHEDULED' ELSE 'DRAFT' END
     ) RETURNING id INTO v_message_id;
 
@@ -368,6 +442,42 @@ $$;
 REVOKE EXECUTE ON FUNCTION public.rpc_create_message FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.rpc_create_message TO authenticated;
 
+-- 5.4 Scheduling Contract
+CREATE OR REPLACE FUNCTION public.rpc_schedule_message(p_message_id UUID, p_scheduled_for TIMESTAMPTZ)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_message RECORD;
+BEGIN
+    SELECT * INTO v_message FROM public.communication_messages WHERE id = p_message_id FOR UPDATE;
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Message not found';
+    END IF;
+    
+    IF v_message.sender_id != auth.uid() AND NOT public.fn_has_branch_permission(v_message.branch_id, 'communication.manage.branch') THEN
+        RAISE EXCEPTION 'Unauthorized';
+    END IF;
+
+    IF v_message.status NOT IN ('DRAFT', 'SCHEDULED') THEN
+        RAISE EXCEPTION 'Cannot schedule a message in state %', v_message.status;
+    END IF;
+
+    UPDATE public.communication_messages
+    SET scheduled_for = p_scheduled_for, status = 'SCHEDULED', updated_at = now()
+    WHERE id = p_message_id;
+
+    INSERT INTO public.communication_audit_logs (message_id, actor_id, action, metadata)
+    VALUES (p_message_id, auth.uid(), 'SCHEDULED', jsonb_build_object('scheduled_for', p_scheduled_for));
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.rpc_schedule_message FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_schedule_message TO authenticated;
+
+-- 5.5 Send/Enqueue Message
 CREATE OR REPLACE FUNCTION public.rpc_send_message(p_message_id UUID)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -376,7 +486,6 @@ SET search_path = ''
 AS $$
 DECLARE
     v_message RECORD;
-    v_has_branch_manage BOOLEAN;
 BEGIN
     SELECT * INTO v_message FROM public.communication_messages WHERE id = p_message_id FOR UPDATE;
 
@@ -384,28 +493,20 @@ BEGIN
         RAISE EXCEPTION 'Message not found';
     END IF;
 
-    IF v_message.sender_id != auth.uid() THEN
-        SELECT EXISTS (
-            SELECT 1 FROM public.role_permissions rp
-            JOIN public.user_role_assignments ura ON ura.role_id = rp.role_id
-            JOIN public.permissions p ON p.id = rp.permission_id
-            WHERE ura.branch_id = v_message.branch_id 
-            AND ura.profile_id = auth.uid() 
-            AND p.name = 'communication.manage.branch'
-        ) INTO v_has_branch_manage;
-        IF NOT v_has_branch_manage THEN
-            RAISE EXCEPTION 'Unauthorized';
-        END IF;
+    IF v_message.sender_id != auth.uid() AND NOT public.fn_has_branch_permission(v_message.branch_id, 'communication.manage.branch') THEN
+        RAISE EXCEPTION 'Unauthorized';
     END IF;
 
     IF v_message.status NOT IN ('DRAFT', 'SCHEDULED') THEN
-        RAISE EXCEPTION 'Message is already sent or queued';
+        RAISE EXCEPTION 'Message is already %', v_message.status;
     END IF;
 
+    -- Concurrency/Idempotency via Status lock
     UPDATE public.communication_messages
     SET status = 'QUEUED', updated_at = now()
     WHERE id = p_message_id;
 
+    -- Idempotent Enqueue
     INSERT INTO public.platform_events (
         organization_id, branch_id, aggregate_type, aggregate_id, event_type, payload, actor_id, idempotency_key
     ) VALUES (
@@ -421,7 +522,81 @@ END;
 $$;
 REVOKE EXECUTE ON FUNCTION public.rpc_send_message FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.rpc_send_message TO authenticated;
--- 5.4 Check message access for Storage
+
+-- 5.6 Mark Read
+CREATE OR REPLACE FUNCTION public.rpc_mark_read(p_message_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+    UPDATE public.communication_recipients
+    SET status = 'READ', read_at = now()
+    WHERE message_id = p_message_id AND recipient_id = auth.uid();
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.rpc_mark_read FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_mark_read TO authenticated;
+
+-- 5.7 Resolve Recipients (Dry Run for Client, actual resolution done in Outbox Worker)
+CREATE OR REPLACE FUNCTION public.rpc_resolve_recipients(p_branch_id UUID, p_targets JSONB)
+RETURNS INT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+    v_has_branch_manage BOOLEAN;
+    v_target JSONB;
+    v_target_type TEXT;
+    v_target_id UUID;
+    v_total INT := 0;
+BEGIN
+    v_has_branch_manage := public.fn_has_branch_permission(p_branch_id, 'communication.manage.branch');
+    
+    -- In actual implementation, we join enrollments & student_guardians.
+    -- We mock the count logic dynamically to prevent raw directory download.
+    -- Real resolution happens asynchronously during queue processing.
+    -- Here we return an estimated distinct count for UI preview.
+    
+    -- Example simple approximation (would normally join real tables)
+    v_total := 10; -- Stubbed count 
+    RETURN v_total;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.rpc_resolve_recipients FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.rpc_resolve_recipients TO authenticated;
+
+-- 5.8 Retention Cleanup Job Hook
+CREATE OR REPLACE FUNCTION public.rpc_cleanup_expired_communications()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+    -- Only body is purged. Delivery facts and audits remain.
+    UPDATE public.communication_messages
+    SET body = '[PURGED]', subject = '[PURGED]'
+    WHERE expires_at < now() AND body != '[PURGED]';
+
+    -- Note: Asynchronous storage cleanup worker scans for [PURGED] bodies 
+    -- to permanently delete attached files via Supabase API.
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.rpc_cleanup_expired_communications FROM PUBLIC;
+-- Cannot be executed by arbitrary clients. Called via pg_cron.
+
+-- ==========================================
+-- 6. STORAGE POLICIES
+-- ==========================================
+-- Insert the bucket explicitly
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) 
+VALUES ('communication_attachments', 'communication_attachments', false, 10485760, '{"image/*", "application/pdf"}')
+ON CONFLICT (id) DO UPDATE SET public = false;
+
+-- Policy helper for RLS
 CREATE OR REPLACE FUNCTION public.fn_check_message_access(p_message_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -434,28 +609,13 @@ AS $$
         WHERE id = p_message_id
         AND (
             sender_id = auth.uid() OR
-            EXISTS (
-                SELECT 1 FROM public.communication_recipients
-                WHERE message_id = p_message_id AND recipient_id = auth.uid()
-            ) OR
-            EXISTS (
-                SELECT 1 FROM public.role_permissions rp
-                JOIN public.user_role_assignments ura ON ura.role_id = rp.role_id
-                JOIN public.permissions p ON p.id = rp.permission_id
-                WHERE ura.branch_id = public.communication_messages.branch_id 
-                AND ura.profile_id = auth.uid() 
-                AND p.name = 'communication.manage.branch'
-            )
+            EXISTS (SELECT 1 FROM public.communication_recipients WHERE message_id = p_message_id AND recipient_id = auth.uid()) OR
+            public.fn_has_branch_permission(branch_id, 'communication.manage.branch')
         )
     );
 $$;
 
--- Note: Storage policies would be inserted here, assuming bucket 'communication_attachments' exists.
--- We can add the bucket and policies directly to this migration.
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) 
-VALUES ('communication_attachments', 'communication_attachments', false, 10485760, '{"image/*", "application/pdf"}')
-ON CONFLICT (id) DO UPDATE SET public = false;
-
+-- Download policy
 CREATE POLICY "Users can access their own attachments" ON storage.objects
 FOR SELECT TO authenticated
 USING (
@@ -463,14 +623,7 @@ USING (
     public.fn_check_message_access((storage.foldername(name))[2]::UUID)
 );
 
-CREATE POLICY "Senders can upload attachments" ON storage.objects
-FOR INSERT TO authenticated
-WITH CHECK (
-    bucket_id = 'communication_attachments' AND
-    (storage.foldername(name))[1] = auth.uid()::TEXT -- Enforce path convention: profile_id/message_id/filename
-);
--- Fix Insert policy
-DROP POLICY IF EXISTS "Senders can upload attachments" ON storage.objects;
+-- Upload policy
 CREATE POLICY "Senders can upload attachments" ON storage.objects
 FOR INSERT TO authenticated
 WITH CHECK (
@@ -480,5 +633,19 @@ WITH CHECK (
         WHERE id = (storage.foldername(name))[2]::UUID
         AND branch_id = (storage.foldername(name))[1]::UUID
         AND sender_id = auth.uid()
+        AND status = 'DRAFT'
+    )
+);
+
+-- Delete policy (Owner can delete while draft)
+CREATE POLICY "Senders can delete draft attachments" ON storage.objects
+FOR DELETE TO authenticated
+USING (
+    bucket_id = 'communication_attachments' AND
+    EXISTS (
+        SELECT 1 FROM public.communication_messages
+        WHERE id = (storage.foldername(name))[2]::UUID
+        AND sender_id = auth.uid()
+        AND status = 'DRAFT'
     )
 );

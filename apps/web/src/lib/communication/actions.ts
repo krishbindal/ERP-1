@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 export async function createMessage(
-  organizationId: string,
   branchId: string,
   subject: string,
   body: string,
@@ -15,7 +14,6 @@ export async function createMessage(
 ) {
   const supabase = createClient();
   const { data, error } = await supabase.rpc('rpc_create_message', {
-    p_organization_id: organizationId,
     p_branch_id: branchId,
     p_subject: subject,
     p_body: body,
@@ -29,6 +27,18 @@ export async function createMessage(
   
   revalidatePath('/communication');
   return data;
+}
+
+export async function scheduleMessage(messageId: string, scheduledFor: Date) {
+  const supabase = createClient();
+  const { error } = await supabase.rpc('rpc_schedule_message', {
+    p_message_id: messageId,
+    p_scheduled_for: scheduledFor.toISOString()
+  });
+
+  if (error) throw new Error(`Failed to schedule message: ${error.message}`);
+  
+  revalidatePath('/communication');
 }
 
 export async function sendMessage(messageId: string) {
@@ -51,4 +61,16 @@ export async function markMessageRead(messageId: string) {
   if (error) throw new Error(`Failed to mark read: ${error.message}`);
   
   revalidatePath('/communication');
+}
+
+export async function resolveRecipients(branchId: string, targets: Array<{ target_type: string; target_id?: string }>) {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc('rpc_resolve_recipients', {
+    p_branch_id: branchId,
+    p_targets: targets
+  });
+
+  if (error) throw new Error(`Failed to resolve recipients: ${error.message}`);
+  
+  return data;
 }
