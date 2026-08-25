@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(21);
+SELECT plan(22);
 
 -- 1. Structural Checks
 SELECT has_table('public', 'communication_messages', 'communication_messages exists');
@@ -64,16 +64,13 @@ SELECT policies_are('public', 'branch_communication_settings', ARRAY[
     'Branch Admins can view settings'
 ], 'Branch settings restricted to admins');
 
-SELECT * FROM finish();
-ROLLBACK;
-
 -- 7. Resolution Logic Tests
--- Testing if fn_resolve_message_recipients ignores cross-branch targets
 SELECT results_eq(
     'SELECT unnest(public.fn_resolve_message_recipients(''00000000-0000-0000-0000-000000000000''))',
     ARRAY[]::UUID[],
     'Resolution function handles missing messages safely'
 );
 
--- Note: In a full integration run, we would seed the DRAFT message, targets, enrollments, and check the array.
--- Currently handled implicitly by authorization scope in rpc_create_message (targets validated on creation).
+SELECT * FROM finish();
+ROLLBACK;
+

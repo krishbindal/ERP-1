@@ -24,12 +24,11 @@ test.describe('Storage Runtime Authorization (Communication)', () => {
     expect(error).toBeNull();
     
     // 2. Create a Draft Message via Admin Client (bypass rpc_create_message checks)
-    const { data: staffProfiles } = await adminClient.from('staff_branch_profiles').select('branch_id').eq('staff_id', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee22').limit(1);
-    const branch_id = staffProfiles[0].branch_id;
-    const { data: orgs } = await adminClient.from('branches').select('organization_id').eq('id', branch_id).limit(1);
+    const branch_id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02';
+    const org_id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01';
     
     const { data: msg, error: msgErr } = await adminClient.from('communication_messages').insert({
-      organization_id: orgs[0].organization_id,
+      organization_id: org_id,
       branch_id: branch_id,
       sender_id: user.id,
       subject: 'Test Attachment',
