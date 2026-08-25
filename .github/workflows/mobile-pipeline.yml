@@ -1,0 +1,47 @@
+name: SchoolOS Mobile Pipeline
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/mobile/**'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'apps/mobile/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: schoolos-mobile-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Mobile Validation
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v5
+        with:
+          clean: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
