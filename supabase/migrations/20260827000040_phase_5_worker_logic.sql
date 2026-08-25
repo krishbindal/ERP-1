@@ -16,7 +16,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
     UPDATE public.platform_events pe
-    SET status = 'PROCESSING', updated_at = now()
+    SET status = 'PROCESSING'
     WHERE pe.id IN (
         SELECT inner_pe.id FROM public.platform_events inner_pe
         WHERE inner_pe.status IN ('PENDING') AND inner_pe.next_retry_at <= now()
