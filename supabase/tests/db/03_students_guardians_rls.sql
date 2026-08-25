@@ -138,7 +138,7 @@ SELECT throws_ok(
 -- Placement ownership modification
 SELECT throws_ok(
     'UPDATE enrollments SET branch_id = ''55555555-5555-5555-5555-555555555555'' WHERE id = ''aaaaaaaa-1111-0000-0000-000000000000''',
-    'P0001', 'enrollment branch_id contradicts the profile branch_id', '16. Cannot modify placement branch to unauthorized branch'
+    'P0001', 'branch_id cannot be modified after creation', '16. Cannot modify placement branch to unauthorized branch'
 );
 
 -- Structural RLS Checks
