@@ -1,4 +1,4 @@
-﻿import { getAppContext } from '@/lib/branch-context';
+import { getAppContext } from '@/lib/branch-context';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -30,7 +30,7 @@ export default async function CommunicationDashboard() {
     .order('created_at', { referencedTable: 'communication_messages', ascending: false });
 
   // Fetch Sent Messages (If Admin or Teacher)
-  let sentMessages = [];
+  let sentMessages: any[] = [];
   if (isAdmin || isTeacher) {
     const { data } = await supabase
       .from('communication_messages')

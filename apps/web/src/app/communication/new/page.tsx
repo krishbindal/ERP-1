@@ -1,4 +1,4 @@
-﻿import { getAppContext } from '@/lib/branch-context';
+import { getAppContext } from '@/lib/branch-context';
 import { createAndSendAnnouncement } from '../actions';
 import { redirect } from 'next/navigation';
 
@@ -22,8 +22,8 @@ export default async function NewAnnouncementPage() {
 
       <form action={createAndSendAnnouncement} className="space-y-6 bg-white p-6 rounded-lg shadow-sm border">
         
-        <input type="hidden" name="organization_id" value={context.organizationId} />
-        <input type="hidden" name="branch_id" value={context.branchId} />
+        <input type="hidden" name="organization_id" value={(context as any).organizationId || ''} />
+        <input type="hidden" name="branch_id" value={(context as any).branchId || ''} />
 
         <div className="space-y-2">
           <label className="block text-sm font-medium">To</label>
