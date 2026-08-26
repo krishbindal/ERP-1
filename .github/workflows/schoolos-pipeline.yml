@@ -47,8 +47,6 @@ jobs:
       - name: Unit Tests
         run: npm run test --workspaces --if-present
 
-      - name: Build Web
-        run: npm run build:web
 
       - name: Run Full Audit (Artifact)
         run: npm audit --json > audit-full.json || true
@@ -214,10 +212,18 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:+PRESENT}"
           echo "SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_KEY:+PRESENT}"
           
+          if ! [[ "$API_URL" =~ ^https?:// ]]; then
+            echo "::error::NEXT_PUBLIC_SUPABASE_URL is not a valid HTTP/HTTPS URL!"
+            exit 1
+          fi
+          
           if [[ -z "$API_URL" || -z "$ANON_KEY" ]]; then
             echo "::error::Missing required Supabase environment variables for Playwright!"
             exit 1
           fi
+
+      - name: Build Web
+        run: npm run build:web
 
       - name: Run Playwright Tests
         env:

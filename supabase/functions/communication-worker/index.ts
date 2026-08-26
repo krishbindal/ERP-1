@@ -1,4 +1,4 @@
-﻿import "@supabase/functions-js/edge-runtime.d.ts";
+import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 // --- ADAPTER INTERFACES ---
@@ -55,12 +55,14 @@ class ProductionPushAdapter implements PushAdapter {
 
 // --- FACTORY ---
 function getEmailAdapter(): EmailAdapter {
-  const useMock = Deno.env.get("USE_MOCK_PROVIDERS") !== "false"; // default true
+  // Fail closed. Production never silently falls back to mocks.
+  const useMock = Deno.env.get("USE_MOCK_PROVIDERS") === "true";
   return useMock ? new MockEmailAdapter() : new ProductionEmailAdapter();
 }
 
 function getPushAdapter(): PushAdapter {
-  const useMock = Deno.env.get("USE_MOCK_PROVIDERS") !== "false";
+  // Fail closed. Production never silently falls back to mocks.
+  const useMock = Deno.env.get("USE_MOCK_PROVIDERS") === "true";
   return useMock ? new MockPushAdapter() : new ProductionPushAdapter();
 }
 
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
   const BATCH_SIZE = 10;
   
   try {
-    // 1. Claim Events
+    // 1. Claim Events (SQL now handles PROCESSING timeout/recovery)
     const { data: events, error: claimError } = await supabase.rpc("rpc_claim_platform_events", {
       p_batch_size: BATCH_SIZE
     });
@@ -123,6 +125,11 @@ Deno.serve(async (req) => {
 
         let allSuccess = true;
 
+        if (!recipients || recipients.length === 0) {
+          // Empty recipient semantics: Do not silently convert 0 recipients to success.
+          allSuccess = false;
+        }
+
         // Fetch message subject/body
         const { data: messageData, error: msgError } = await supabase
           .from('communication_messages')
@@ -142,33 +149,58 @@ Deno.serve(async (req) => {
                 let recipientSuccess = true;
                 
                 // For now, V1 always sends email if available.
-                // It would check user_notification_preferences, but we assume default Email & Push
                 if (recipient.email) {
-                    const emailResult = await emailAdapter.send(recipient.email, subject, body);
-                    const { error: recordError } = await supabase.rpc("rpc_record_delivery_attempt", {
-                        p_event_id: event.id,
-                        p_recipient_id: recipient.recipient_id,
-                        p_channel: "EMAIL",
-                        p_provider: emailResult.provider_message_id?.startsWith('mock-') ? 'MOCK_EMAIL' : 'PROD_EMAIL',
-                        p_success: emailResult.success,
-                        p_provider_message_id: emailResult.provider_message_id,
-                        p_error_details: emailResult.error_details
-                    });
-                    if (!emailResult.success || recordError) recipientSuccess = false;
+                    try {
+                        const emailResult = await emailAdapter.send(recipient.email, subject, body);
+                        const { error: recordError } = await supabase.rpc("rpc_record_delivery_attempt", {
+                            p_event_id: event.id,
+                            p_recipient_id: recipient.recipient_id,
+                            p_channel: "EMAIL",
+                            p_provider: emailResult.provider_message_id?.startsWith('mock-') ? 'MOCK_EMAIL' : 'PROD_EMAIL',
+                            p_success: emailResult.success,
+                            p_provider_message_id: emailResult.provider_message_id,
+                            p_error_details: emailResult.error_details
+                        });
+                        if (!emailResult.success || recordError) recipientSuccess = false;
+                    } catch (e: any) {
+                        recipientSuccess = false;
+                        await supabase.rpc("rpc_record_delivery_attempt", {
+                            p_event_id: event.id,
+                            p_recipient_id: recipient.recipient_id,
+                            p_channel: "EMAIL",
+                            p_provider: "UNKNOWN",
+                            p_success: false,
+                            p_provider_message_id: null,
+                            p_error_details: { error: e.message }
+                        });
+                    }
                 }
 
                 if (recipient.push_token) {
-                    const pushResult = await pushAdapter.send(recipient.push_token, subject, body);
-                    const { error: recordError2 } = await supabase.rpc("rpc_record_delivery_attempt", {
-                        p_event_id: event.id,
-                        p_recipient_id: recipient.recipient_id,
-                        p_channel: "PUSH",
-                        p_provider: pushResult.provider_message_id?.startsWith('mock-') ? 'MOCK_PUSH' : 'PROD_PUSH',
-                        p_success: pushResult.success,
-                        p_provider_message_id: pushResult.provider_message_id,
-                        p_error_details: pushResult.error_details
-                    });
-                    if (!pushResult.success || recordError2) recipientSuccess = false;
+                    try {
+                        const pushResult = await pushAdapter.send(recipient.push_token, subject, body);
+                        const { error: recordError2 } = await supabase.rpc("rpc_record_delivery_attempt", {
+                            p_event_id: event.id,
+                            p_recipient_id: recipient.recipient_id,
+                            p_channel: "PUSH",
+                            p_provider: pushResult.provider_message_id?.startsWith('mock-') ? 'MOCK_PUSH' : 'PROD_PUSH',
+                            p_success: pushResult.success,
+                            p_provider_message_id: pushResult.provider_message_id,
+                            p_error_details: pushResult.error_details
+                        });
+                        if (!pushResult.success || recordError2) recipientSuccess = false;
+                    } catch (e: any) {
+                        recipientSuccess = false;
+                        await supabase.rpc("rpc_record_delivery_attempt", {
+                            p_event_id: event.id,
+                            p_recipient_id: recipient.recipient_id,
+                            p_channel: "PUSH",
+                            p_provider: "UNKNOWN",
+                            p_success: false,
+                            p_provider_message_id: null,
+                            p_error_details: { error: e.message }
+                        });
+                    }
                 }
 
                 if (!recipientSuccess) {
