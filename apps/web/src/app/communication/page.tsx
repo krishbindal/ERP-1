@@ -69,7 +69,7 @@ export default async function CommunicationDashboard() {
                     </div>
                     <div className="mt-2 text-xs text-gray-400 flex justify-between">
                       <span>
-                        {Array.isArray(msg.sender) ? (msg.sender[0] as any)?.first_name : (msg.sender as any)?.first_name} {Array.isArray(msg.sender) ? (msg.sender[0] as any)?.last_name : (msg.sender as any)?.last_name}
+                        {Array.isArray(msg.sender) ? (msg.sender[0] as Record<string, string>)?.first_name : (msg.sender as Record<string, string>)?.first_name} {Array.isArray(msg.sender) ? (msg.sender[0] as Record<string, string>)?.last_name : (msg.sender as Record<string, string>)?.last_name}
                       </span>
                       <span>{new Date(msg.created_at).toLocaleDateString()}</span>
                     </div>

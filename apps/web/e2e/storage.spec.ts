@@ -35,10 +35,10 @@ test.describe('Storage Runtime Authorization (Communication)', () => {
       body: 'This is a test',
       status: 'DRAFT',
       type: 'ANNOUNCEMENT'
-    } as any).select('id').single();
+    } as never).select('id').single();
     
     expect(msgErr).toBeNull();
-    messageId = (msg as any).id;
+    messageId = (msg as unknown as { id: string }).id;
 
     // 3. Upload file to {messageId}/test.txt
     const fileName = `${messageId}/test.txt`;
