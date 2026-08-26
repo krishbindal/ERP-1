@@ -20,13 +20,12 @@ export async function createAndSendAnnouncement(formData: FormData) {
   // 1. Insert message via RPC
   const { data: msgId, error: msgError } = await supabase.rpc('rpc_create_message', {
     p_branch_id: branch_id,
-    p_type: 'ANNOUNCEMENT',
     p_subject: subject,
     p_body: body,
-    p_category: 'GENERAL',
-    p_priority: 'NORMAL',
+    p_type: 'ANNOUNCEMENT',
     p_targets: [{ target_type, target_id: target_type === 'BRANCH' ? null : target_id }],
-    p_scheduled_for: null
+    p_scheduled_for: null,
+    p_expires_at: null
   });
 
   if (msgError) throw new Error(msgError.message);
