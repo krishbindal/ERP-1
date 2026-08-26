@@ -180,3 +180,33 @@ BEGIN
         ON CONFLICT DO NOTHING;
     END IF;
 END $$;
+
+
+INSERT INTO public.class_subjects (branch_id, class_id, subject_id, is_optional)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-2222-2222-2222-222222222222', 'aaaaaaaa-4444-4444-4444-444444444444', false)
+ON CONFLICT DO NOTHING;
+
+-- Phase 5: Assign Teacher A to a Class and Section for E2E Tests
+INSERT INTO public.teacher_subject_assignments (
+  branch_id,
+  academic_year_id,
+  class_id,
+  section_id,
+  subject_id,
+  staff_branch_profile_id,
+  is_primary
+)
+SELECT 
+  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 
+  'aaaaaaaa-1111-1111-1111-111111111111', 
+  'aaaaaaaa-2222-2222-2222-222222222222',
+  'aaaaaaaa-3333-3333-3333-333333333333',
+  'aaaaaaaa-4444-4444-4444-444444444444',
+  sbp.id,
+  true
+FROM public.staff_branch_profiles sbp
+WHERE sbp.staff_id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee22'
+ON CONFLICT DO NOTHING;
+
+
+

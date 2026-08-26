@@ -37,6 +37,7 @@ test.describe('Timetable Management', () => {
           await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).first().click();
           page.once('dialog', d => d.accept());
           await page.getByRole('button', { name: 'Archive Entry' }).click();
+          await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
           await page.reload();
           count = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
         }
@@ -90,6 +91,7 @@ test.describe('Timetable Management', () => {
       await expect(page.getByRole('heading', { name: 'Edit Timetable Entry' })).toBeVisible();
       page.once('dialog', dialog => dialog.accept());
       await page.getByRole('button', { name: 'Archive Entry' }).click();
+      await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
       await page.reload();
 
       // Verify: Monday entry gone, Tuesday entry remains
@@ -148,6 +150,7 @@ test.describe('Timetable Management', () => {
       await page.locator('[data-testid="timetable-entry"][data-day="2"]').click();
       page.once('dialog', d => d.accept());
       await page.getByRole('button', { name: 'Archive Entry' }).click();
+      await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
       await page.reload();
 
       // Verify cleanup: 0 entries on our owned days
