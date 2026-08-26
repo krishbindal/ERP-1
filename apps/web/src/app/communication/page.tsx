@@ -1,21 +1,22 @@
-﻿import { createClient } from '@/lib/supabase/server';
+﻿import { getAppContext } from '@/lib/branch-context';
+import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { getAppContext } from '@/lib/branch-context';
+import { redirect } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function CommunicationDashboard() {
   const context = await getAppContext();
-
-  if (!context) {
-    return <div>Please log in</div>;
-  }
+  if (!context) redirect('/login');
 
   const supabase = await createClient();
 
   const isAdmin = context.roles.includes('branchadmin') || context.roles.includes('superadmin');
   const isTeacher = context.roles.includes('teacher');
 
-  // Fetch Inbox (Messages where user is a recipient)
-  const { data: inbox } = await supabase
+  // Fetch Inbox
+  const { data: inboxData } = await supabase
     .from('communication_recipients')
     .select(`
       id,
@@ -54,27 +55,32 @@ export default async function CommunicationDashboard() {
         {/* Inbox Section */}
         <div className="border rounded-lg p-6 bg-white shadow-sm">
           <h2 className="text-2xl font-semibold mb-4">Inbox</h2>
-          {inbox && inbox.length > 0 ? (
+          {inboxData && inboxData.length > 0 ? (
             <ul className="space-y-4">
-              {inbox.map((item: any) => (
-                <li key={item.id} className="p-4 border rounded-md hover:bg-gray-50">
-                  <div className="flex justify-between">
-                    <h3 className="font-bold">{item.message?.subject}</h3>
-                    <span className="text-sm text-gray-500">{new Date(item.message?.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 truncate">{item.message?.body}</p>
-                  <div className="mt-2 text-xs text-gray-400">
-                    From: {item.message?.sender?.first_name} {item.message?.sender?.last_name}
-                  </div>
-                </li>
-              ))}
+              {inboxData.map((item: any) => {
+                const msg = Array.isArray(item.message) ? item.message[0] : item.message;
+                if (!msg) return null;
+                const isUnread = item.status === 'UNREAD';
+                return (
+                  <li key={item.id} className={`p-4 border rounded-md hover:bg-gray-50 ${isUnread ? 'bg-blue-50 border-blue-200' : ''}`}>
+                    <div className="flex justify-between">
+                      <h3 className={`font-bold ${isUnread ? 'text-blue-900' : ''}`}>{msg.subject}</h3>
+                      {isUnread && <span className="w-2 h-2 rounded-full bg-blue-600 mt-2"></span>}
+                    </div>
+                    <div className="mt-2 text-xs text-gray-400 flex justify-between">
+                      <span>{msg.sender?.first_name} {msg.sender?.last_name}</span>
+                      <span>{new Date(msg.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
-            <p className="text-gray-500">No messages in your inbox.</p>
+            <p className="text-gray-500">Your inbox is empty.</p>
           )}
         </div>
 
-        {/* Sent Messages Section (Admins & Teachers Only) */}
+        {/* Sent Messages Section */}
         {(isAdmin || isTeacher) && (
           <div className="border rounded-lg p-6 bg-white shadow-sm">
             <h2 className="text-2xl font-semibold mb-4">Sent Messages</h2>
