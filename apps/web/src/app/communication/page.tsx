@@ -34,7 +34,7 @@ export default async function CommunicationDashboard() {
   if (isAdmin || isTeacher) {
     const { data } = await supabase
       .from('communication_messages')
-      .select(`id, subject, status, created_at, category`)
+      .select(`id, subject, status, created_at`)
       .eq('sender_id', context.userId)
       .order('created_at', { ascending: false });
     sentMessages = data || [];
@@ -96,7 +96,7 @@ export default async function CommunicationDashboard() {
                     </div>
                     <div className="mt-2 text-xs text-gray-400 flex justify-between">
                       <span>{new Date(msg.created_at).toLocaleDateString()}</span>
-                      <span>{msg.category}</span>
+                      
                     </div>
                   </li>
                 ))}
