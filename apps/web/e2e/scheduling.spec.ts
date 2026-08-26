@@ -5,6 +5,11 @@ test.describe('Scheduling Management', () => {
   // Use the admin auth state created by auth.setup.ts
   test.use({ storageState: 'playwright/.auth/branchadmin.json' });
 
+  test.beforeEach(async ({}, testInfo) => {
+    // To avoid parallel DB collisions on shared seeds, restrict mutations strictly to ONE project.
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Runs strictly on chromium-branchadmin to prevent DB conflicts');
+  });
+
   test('Branch Admin can manage rooms, bell schedules, and periods', async ({ page }) => {
     // 1. Branch Admin opens Scheduling.
     await page.goto('/scheduling');
@@ -17,7 +22,7 @@ test.describe('Scheduling Management', () => {
 
     // 2. Creates a room
     const uniqueRoomName = `Test Room ${randomUUID()}`;
-    await page.getByRole('link', { name: 'Rooms' }).click();
+    // Rooms is the default tab, no need to click the link
     await page.getByRole('button', { name: 'Create Room' }).click();
     await expect(page.getByRole('heading', { name: 'New Room' })).toBeVisible();
     
@@ -45,6 +50,7 @@ test.describe('Scheduling Management', () => {
     // 5. Creates a bell schedule
     const uniqueScheduleName = `Test Schedule ${randomUUID()}`;
     await page.getByRole('link', { name: 'Bell Schedules' }).click();
+    await page.waitForTimeout(1000); // Wait for Next.js server navigation to complete
     await page.getByRole('button', { name: 'Create Bell Schedule' }).click();
     await expect(page.getByRole('heading', { name: 'New Bell Schedule' })).toBeVisible();
     
@@ -55,6 +61,7 @@ test.describe('Scheduling Management', () => {
 
     // 6. Creates periods
     await page.getByRole('link', { name: 'Periods' }).click();
+    await page.waitForTimeout(1000); // Wait for Next.js server navigation to complete
     await page.getByRole('button', { name: 'Create Period' }).click();
     await expect(page.getByRole('heading', { name: 'New Period' })).toBeVisible();
     
@@ -85,6 +92,10 @@ test.describe('Scheduling Management', () => {
 test.describe('Scheduling Security - Teacher Role', () => {
   test.use({ storageState: 'playwright/.auth/teacher.json' });
 
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'Runs strictly on chromium-teacher to prevent DB conflicts');
+  });
+
   test('Teacher cannot perform administrative mutations', async ({ page }) => {
     await page.goto('/scheduling');
     await expect(page.getByRole('heading', { name: 'Scheduling' })).toBeVisible();
@@ -100,6 +111,10 @@ test.describe('Scheduling Security - Teacher Role', () => {
 
 test.describe('Scheduling Security - Cross Branch', () => {
   test.use({ storageState: 'playwright/.auth/branchadmin.json' });
+
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Runs strictly on chromium-branchadmin to prevent DB conflicts');
+  });
 
   test('Cross-branch manipulation is rejected', async ({ page }) => {
     // This assumes explicitBranchId behavior prevents non-authorized access

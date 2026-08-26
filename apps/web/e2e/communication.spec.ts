@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Communication End-to-End Workflows', () => {
   test('Branch Admin can create an announcement and view it in Sent', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name.includes('teacher'), 'Teachers run their own specific test');
+    test.skip(testInfo.project.name.includes('teacher') || testInfo.project.name.includes('superadmin'), 'Specific to branch admin');
     
     // Go to communication dashboard
     await page.goto('/communication');
@@ -26,7 +26,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await page.click('button[type="submit"]');
 
     // Should redirect back to dashboard
-    await expect(page).toHaveURL(/.*\/communication/);
+    await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
 
     // Sent messages should now contain the announcement
     await expect(page.locator(`text=${subject}`).first()).toBeVisible();
@@ -45,8 +45,8 @@ test.describe('Communication End-to-End Workflows', () => {
 
     // Ensure BRANCH option is not available for teachers (it shouldn't be in the DOM)
     const targetTypeSelect = page.locator('select[name="target_type"]');
-    await expect(targetTypeSelect.locator('option[value="BRANCH"]')).not.toBeVisible();
-    await expect(targetTypeSelect.locator('option[value="CLASS"]')).toBeVisible();
+    await expect(targetTypeSelect.locator('option[value="BRANCH"]')).not.toBeAttached();
+    await expect(targetTypeSelect.locator('option[value="CLASS"]')).toBeAttached();
 
     // Select CLASS
     await targetTypeSelect.selectOption('CLASS');
@@ -56,7 +56,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await expect(targetIdSelect).toBeVisible();
 
     // The select should have at least one option besides the placeholder
-    await expect(targetIdSelect.locator('option').nth(1)).toBeVisible();
+    await expect(targetIdSelect.locator('option').nth(1)).toBeAttached();
 
     // Select the first available authorized class
     const classId = await targetIdSelect.locator('option').nth(1).getAttribute('value');
@@ -70,7 +70,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await page.click('button[type="submit"]');
 
     // Should redirect back to dashboard
-    await expect(page).toHaveURL(/.*\/communication/);
+    await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
 
     // Sent messages should now contain the announcement
     await expect(page.locator(`text=${subject}`).first()).toBeVisible();

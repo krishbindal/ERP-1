@@ -9,7 +9,7 @@ const CreateMessageSchema = z.object({
   subject: z.string().min(1, "Subject is required").max(255, "Subject is too long"),
   content: z.string().min(1, "Message content is required").max(10000, "Message is too long"),
   target_type: z.enum(['BRANCH', 'CLASS', 'SECTION']),
-  target_id: z.string().uuid("Invalid target ID format").optional().or(z.literal('')),
+  target_id: z.string().regex(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i, "Invalid target ID format").optional().nullable().or(z.literal('')),
 }).refine(data => {
   if (data.target_type !== 'BRANCH') {
     return !!data.target_id && data.target_id !== '';

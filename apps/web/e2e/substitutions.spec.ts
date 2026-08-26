@@ -25,7 +25,12 @@ test.describe('Substitutions Management', () => {
         'EXPECTED_ROLE_SCOPE');
     });
 
-    test('should manage substitutions and handle conflicts', async ({ page }) => {
+    test.beforeEach(async ({}, testInfo) => {
+    // To avoid parallel DB collisions on shared seeds, restrict mutations strictly to ONE project.
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Runs strictly on chromium-branchadmin to prevent DB conflicts');
+  });
+
+  test('should manage substitutions and handle conflicts', async ({ page }) => {
 
             // 🛠️ FIXTURE CLEANUP (retry resilience) 🛠️
       // Cancel any leftover substitutions from previous failed runs
@@ -115,7 +120,7 @@ test.describe('Substitutions Management', () => {
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Teacher A' });
       await page.locator('select[name="room_id"]').selectOption('aaaaaaaa-5555-5555-5555-555555555555');
       await page.locator('select[name="period_id"]').selectOption('aaaaaaaa-6666-6666-6666-666666666666');
-      await page.locator('select[name="day_of_week"]').selectOption('4'); // Thursday
+      await page.locator('select[name="day_of_week"]').selectOption('5'); // Friday
       await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.locator('text=New Timetable Entry')).not.toBeVisible();
 
@@ -123,7 +128,7 @@ test.describe('Substitutions Management', () => {
       
       await page.reload();
       await expect(page.locator('[data-testid="timetable-entry"][data-day="3"]')).toHaveCount(1);
-      await expect(page.locator('[data-testid="timetable-entry"][data-day="4"]')).toHaveCount(1);
+      await expect(page.locator('[data-testid="timetable-entry"][data-day="5"]')).toHaveCount(1);
 
       // --- CALENDAR INTEGRATION: CREATE HOLIDAY ---
       await page.goto('/academic-structure/calendar');
@@ -169,9 +174,9 @@ test.describe('Substitutions Management', () => {
       // Verify: drawer closes (success)
       await expect(page.locator('text=Create Substitution')).not.toBeVisible();
 
-      // ─── 2. CREATE a second substitution for Thursday ───
+      // ─── 2. CREATE a second substitution for Friday ───
       await page.getByRole('button', { name: 'New Substitution' }).click();
-      await page.locator('input[name="substitution_date"]').fill('2026-08-20'); // Thursday
+      await page.locator('input[name="substitution_date"]').fill('2026-08-21'); // Friday
       await page.locator('select[name="timetable_entry_id"]').selectOption({ label: 'Class 10 Section A - Mathematics (Period 1)' });
       await page.locator('select[name="substitute_staff_id"]').selectOption({ label: 'Branch Admin' });
       await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -212,12 +217,13 @@ test.describe('Substitutions Management', () => {
 
       // Verify: no substitution entries on 2026-08-19
       await expect(page.locator('.bg-orange-50')).toHaveCount(0);
+      
+      // Wait for server action navigation to settle before manual goto
+      await page.waitForTimeout(1000);
 
       // ─── FIXTURE CLEANUP: archive prerequisite timetable entries ───
-      await page.goto('/scheduling/timetable');
-
-      // Cancel remaining Thursday substitution first (if still active)
-      await page.goto('/scheduling/substitutions?date=2026-08-20');
+      // Cancel remaining Friday substitution first (if still active)
+      await page.goto('/scheduling/substitutions?date=2026-08-21');
       let attempts = 0;
       while (attempts < 5) {
         const remainingSubs = page.locator('.bg-orange-50');
@@ -236,9 +242,9 @@ test.describe('Substitutions Management', () => {
         attempts++;
       }
 
-      // Archive timetable entries on our owned days (3, 4)
+      // Archive timetable entries on our owned days (3, 5)
       await page.goto('/scheduling/timetable');
-      for (const day of ['3', '4']) {
+      for (const day of ['3', '5']) {
         let archAttempts = 0;
         while (archAttempts < 5) {
           const entryLocator = page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`);
@@ -262,7 +268,7 @@ test.describe('Substitutions Management', () => {
 
       // Verify cleanup: 0 entries on our owned days
       await expect(page.locator('[data-testid="timetable-entry"][data-day="3"]')).toHaveCount(0);
-      await expect(page.locator('[data-testid="timetable-entry"][data-day="4"]')).toHaveCount(0);
+      await expect(page.locator('[data-testid="timetable-entry"][data-day="5"]')).toHaveCount(0);
     });
   });
 
