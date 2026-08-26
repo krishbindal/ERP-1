@@ -30,7 +30,7 @@ export default async function CommunicationDashboard() {
     .order('created_at', { referencedTable: 'communication_messages', ascending: false });
 
   // Fetch Sent Messages (If Admin or Teacher)
-  let sentMessages: any[] = [];
+  let sentMessages: { id: string, subject: string, status: string, created_at: string }[] = [];
   if (isAdmin || isTeacher) {
     const { data } = await supabase
       .from('communication_messages')
@@ -57,7 +57,7 @@ export default async function CommunicationDashboard() {
           <h2 className="text-2xl font-semibold mb-4">Inbox</h2>
           {inboxData && inboxData.length > 0 ? (
             <ul className="space-y-4">
-              {inboxData.map((item: any) => {
+              {inboxData.map((item) => {
                 const msg = Array.isArray(item.message) ? item.message[0] : item.message;
                 if (!msg) return null;
                 const isUnread = item.status === 'UNREAD';
@@ -68,7 +68,9 @@ export default async function CommunicationDashboard() {
                       {isUnread && <span className="w-2 h-2 rounded-full bg-blue-600 mt-2"></span>}
                     </div>
                     <div className="mt-2 text-xs text-gray-400 flex justify-between">
-                      <span>{msg.sender?.first_name} {msg.sender?.last_name}</span>
+                      <span>
+                        {Array.isArray(msg.sender) ? (msg.sender[0] as any)?.first_name : (msg.sender as any)?.first_name} {Array.isArray(msg.sender) ? (msg.sender[0] as any)?.last_name : (msg.sender as any)?.last_name}
+                      </span>
                       <span>{new Date(msg.created_at).toLocaleDateString()}</span>
                     </div>
                   </li>
@@ -86,7 +88,7 @@ export default async function CommunicationDashboard() {
             <h2 className="text-2xl font-semibold mb-4">Sent Messages</h2>
             {sentMessages && sentMessages.length > 0 ? (
               <ul className="space-y-4">
-                {sentMessages.map((msg: any) => (
+                {sentMessages.map((msg) => (
                   <li key={msg.id} className="p-4 border rounded-md hover:bg-gray-50">
                     <div className="flex justify-between">
                       <h3 className="font-bold">{msg.subject}</h3>
@@ -102,7 +104,7 @@ export default async function CommunicationDashboard() {
                 ))}
               </ul>
             ) : (
-              <p className="text-gray-500">You haven't sent any messages.</p>
+              <p className="text-gray-500">You haven&apos;t sent any messages.</p>
             )}
           </div>
         )}

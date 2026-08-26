@@ -1,17 +1,18 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { getAppContext } from '@/lib/branch-context';
 
 export async function createAndSendAnnouncement(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const context = await getAppContext();
 
-  if (!user) throw new Error("Not logged in");
+  if (!user || !context) throw new Error("Not logged in");
 
-  const org_id = formData.get('organization_id') as string;
-  const branch_id = formData.get('branch_id') as string;
+  const branch_id = ('branchId' in context) ? context.branchId : null;
   const subject = formData.get('subject') as string;
   const body = formData.get('content') as string;
   const target_type = formData.get('target_type') as string;

@@ -22,9 +22,6 @@ export default async function NewAnnouncementPage() {
 
       <form action={createAndSendAnnouncement} className="space-y-6 bg-white p-6 rounded-lg shadow-sm border">
         
-        <input type="hidden" name="organization_id" value={(context as any).organizationId || ''} />
-        <input type="hidden" name="branch_id" value={(context as any).branchId || ''} />
-
         <div className="space-y-2">
           <label className="block text-sm font-medium">To</label>
           <select name="target_type" className="w-full border rounded-md p-2">
