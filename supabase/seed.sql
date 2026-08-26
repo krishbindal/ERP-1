@@ -164,3 +164,19 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.periods (id, bell_schedule_id, branch_id, name, start_time, end_time, status)
 VALUES ('aaaaaaaa-6666-6666-6666-666666666666', 'aaaaaaaa-7777-7777-7777-777777777777', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'Period 1', '08:00', '10:00', 'ACTIVE')
 ON CONFLICT DO NOTHING;
+
+-- Phase 5: Communication permissions for Branch Admin
+DO $$
+DECLARE
+    v_perm_id UUID;
+    v_role_id UUID;
+BEGIN
+    SELECT id INTO v_perm_id FROM public.permissions WHERE name = 'communication.manage.branch';
+    SELECT id INTO v_role_id FROM public.roles WHERE name = 'Branch Admin';
+    
+    IF v_perm_id IS NOT NULL AND v_role_id IS NOT NULL THEN
+        INSERT INTO public.role_permissions (role_id, permission_id) 
+        VALUES (v_role_id, v_perm_id) 
+        ON CONFLICT DO NOTHING;
+    END IF;
+END $$;
