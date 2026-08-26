@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Communication End-to-End Workflows', () => {
   test('Branch Admin can create an announcement and view it in Sent', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name.includes('teacher') || testInfo.project.name.includes('superadmin'), 'Specific to branch admin');
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Specific to branch admin and run only on chromium to avoid DB collisions');
     
     // Go to communication dashboard
     await page.goto('/communication');
@@ -25,6 +25,9 @@ test.describe('Communication End-to-End Workflows', () => {
     // Submit
     await page.click('button[type="submit"]');
 
+    // Wait for Next.js Server Action to settle before navigation
+    await page.waitForTimeout(1000);
+
     // Should redirect back to dashboard
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
 
@@ -33,7 +36,7 @@ test.describe('Communication End-to-End Workflows', () => {
   });
 
   test('Teacher can create class announcement and branch-wide targeting is denied', async ({ page }, testInfo) => {
-    test.skip(!testInfo.project.name.includes('teacher'), 'Only applies to teachers');
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'Only applies to teachers and run only on chromium to avoid DB collisions');
 
     await page.goto('/communication');
     
@@ -68,6 +71,9 @@ test.describe('Communication End-to-End Workflows', () => {
 
     // Submit
     await page.click('button[type="submit"]');
+
+    // Wait for Next.js Server Action to settle before navigation
+    await page.waitForTimeout(1000);
 
     // Should redirect back to dashboard
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
