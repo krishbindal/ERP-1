@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           clean: true
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -198,6 +199,26 @@ jobs:
           
           echo "Database tests and pgTAP cleanup completed successfully."
 
+      - name: Export Supabase Environment Variables
+        run: |
+          API_URL=$(npx supabase status -o env | grep API_URL | cut -d '=' -f2-)
+          ANON_KEY=$(npx supabase status -o env | grep ANON_KEY | cut -d '=' -f2-)
+          SERVICE_KEY=$(npx supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2-)
+          
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
+          
+          echo "Playwright Preflight Environment Check:"
+          echo "NEXT_PUBLIC_SUPABASE_URL: ${API_URL:+PRESENT}"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:+PRESENT}"
+          echo "SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_KEY:+PRESENT}"
+          
+          if [[ -z "$API_URL" || -z "$ANON_KEY" ]]; then
+            echo "::error::Missing required Supabase environment variables for Playwright!"
+            exit 1
+          fi
+
       - name: Run Playwright Tests
         env:
           PLAYWRIGHT_GIT_COMMIT_INFO: 0
@@ -209,6 +230,18 @@ jobs:
       - name: Verify JSON Certification Artifact
         run: |
           node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: SonarQube Quality Gate check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Stop Local Supabase
         if: always()
