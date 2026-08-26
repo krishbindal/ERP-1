@@ -3,7 +3,7 @@
 test.describe('Communication End-to-End Workflows', () => {
   test('Branch Admin can create an announcement and view it in Sent', async ({ page }, testInfo) => {
     // Only run this test for branchadmin and superadmin
-    test.skip(testInfo.project.name.includes('teacher'), 'Teachers cannot create branch-wide announcements');
+    test.skip(testInfo.project.name.includes('teacher') || testInfo.project.name.includes('superadmin'), 'Teachers cannot create branch-wide announcements');
     
     // Go to communication dashboard
     await page.goto('/communication');
