@@ -28,7 +28,7 @@ const CreateMessageSchema = z.object({
   path: ["target_id"]
 });
 
-export async function createAndSendAnnouncement(formData: FormData) {
+export async function createAndSendAnnouncement(formData: FormData): Promise<{ error: string } | { success: true }> {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -51,7 +51,7 @@ export async function createAndSendAnnouncement(formData: FormData) {
     });
 
     if (!validatedData.success) {
-      return { error: validatedData.error.errors[0].message };
+      return { error: validatedData.error.issues[0].message };
     }
 
     const { subject, content: body, target_type, target_id } = validatedData.data;
