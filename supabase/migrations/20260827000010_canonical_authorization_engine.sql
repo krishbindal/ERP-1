@@ -78,7 +78,14 @@ SECURITY DEFINER
 SET search_path = ''
 STABLE
 AS $$
-    SELECT EXISTS (
+    SELECT 
+      (public.auth_is_super_admin() AND EXISTS (
+          SELECT 1 FROM public.organization_memberships om
+          JOIN public.branches b ON b.organization_id = om.organization_id
+          WHERE om.user_id = auth.uid() AND b.id = p_branch_id AND om.status = 'ACTIVE'
+      ))
+      OR 
+      EXISTS (
         SELECT 1 FROM public.branch_memberships bm
         JOIN public.branches b ON b.id = bm.branch_id
         JOIN public.organization_memberships om ON om.organization_id = b.organization_id AND om.user_id = auth.uid()
@@ -101,7 +108,14 @@ SECURITY DEFINER
 SET search_path = ''
 STABLE
 AS $$
-    SELECT EXISTS (
+    SELECT 
+      (public.auth_is_super_admin() AND EXISTS (
+          SELECT 1 FROM public.organization_memberships om
+          JOIN public.branches b ON b.organization_id = om.organization_id
+          WHERE om.user_id = auth.uid() AND b.id = p_branch_id AND om.status = 'ACTIVE'
+      ))
+      OR 
+      EXISTS (
         SELECT 1 FROM public.branch_memberships bm
         JOIN public.branches b ON b.id = bm.branch_id
         JOIN public.organization_memberships om ON om.organization_id = b.organization_id AND om.user_id = auth.uid()

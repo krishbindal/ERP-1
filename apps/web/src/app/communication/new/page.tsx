@@ -1,6 +1,6 @@
 ﻿import { createClient } from '@/lib/supabase/server';
 import { createAndSendAnnouncement } from '../actions';
-import { getAppContext } from '@/lib/auth/context';
+import { getAppContext } from '@/lib/branch-context';
 
 export default async function NewAnnouncementPage() {
   const supabase = await createClient();
