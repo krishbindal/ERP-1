@@ -8,7 +8,7 @@ let SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SERVICE_ROLE) {
   try {
-    const output = execSync('npx supabase status -o json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+    const output = execSync('npx --no-install supabase status -o json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
     const jsonMatch = output.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const statusJson = JSON.parse(jsonMatch[0]);

@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    fileParallelism: false,
+    pool: 'threads',
     exclude: ['e2e/**', 'node_modules/**', '.next/**', '*.config.*'],
     coverage: {
       provider: 'v8',

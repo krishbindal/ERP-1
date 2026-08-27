@@ -1,4 +1,4 @@
-﻿const { execSync } = require('child_process');
+const { execSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
 const assert = require('assert');
 
