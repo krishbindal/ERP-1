@@ -229,7 +229,7 @@ jobs:
       - name: Worker Runtime Certification
         run: |
           echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
-          npx supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
+          npx --no-install supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
           echo "Waiting for communication-worker..."
           for i in {1..15}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:54321/functions/v1/communication-worker || echo "000")

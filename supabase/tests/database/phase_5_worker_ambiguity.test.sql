@@ -11,12 +11,15 @@ SELECT plan(1);
 INSERT INTO auth.users (id, email) VALUES ('00000000-0000-0000-0000-000000000000', 'test@test.com') ON CONFLICT DO NOTHING;
 INSERT INTO public.profiles (id, status) VALUES ('00000000-0000-0000-0000-000000000000', 'ACTIVE') ON CONFLICT DO NOTHING;
 
-INSERT INTO public.communication_messages (id, sender_id, subject, body, type, targets, status)
-VALUES ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'Subj', 'Body', 'ANNOUNCEMENT', '[]'::jsonb, 'QUEUED')
+INSERT INTO public.organizations (id, name) VALUES ('00000000-0000-0000-0000-000000000000', 'Test') ON CONFLICT DO NOTHING;
+INSERT INTO public.branches (id, organization_id, name) VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', 'Test') ON CONFLICT DO NOTHING;
+
+INSERT INTO public.communication_messages (id, organization_id, branch_id, sender_id, subject, body, type, status)
+VALUES ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', 'Subj', 'Body', 'ANNOUNCEMENT', 'QUEUED')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO public.platform_events (id, event_type, payload, status)
-VALUES ('22222222-2222-2222-2222-222222222222', 'message.queued', '{"message_id": "11111111-1111-1111-1111-111111111111"}', 'PENDING')
+INSERT INTO public.platform_events (id, organization_id, branch_id, aggregate_type, aggregate_id, event_type, payload, status, idempotency_key)
+VALUES ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', 'communication_message', '11111111-1111-1111-1111-111111111111', 'message.queued', '{"message_id": "11111111-1111-1111-1111-111111111111"}', 'PENDING', 'idempotency-key')
 ON CONFLICT DO NOTHING;
 
 -- 2. Verify it executes without throwing an ambiguity error.
