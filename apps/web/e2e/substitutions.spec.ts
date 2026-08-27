@@ -27,7 +27,7 @@ test.describe('Substitutions Management', () => {
 
     test.beforeEach(async ({}, testInfo) => {
     // To avoid parallel DB collisions on shared seeds, restrict mutations strictly to ONE project.
-    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Runs strictly on chromium-branchadmin to prevent DB conflicts');
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'EXPECTED_ROLE_SCOPE');
   });
 
   test('should manage substitutions and handle conflicts', async ({ page }) => {

@@ -7,7 +7,7 @@ test.describe('Scheduling Management', () => {
 
   test.beforeEach(async ({}, testInfo) => {
     // To avoid parallel DB collisions on shared seeds, restrict mutations strictly to ONE project.
-    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Runs strictly on chromium-branchadmin to prevent DB conflicts');
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'EXPECTED_ROLE_SCOPE');
   });
 
   test('Branch Admin can manage rooms, bell schedules, and periods', async ({ page }) => {
@@ -93,7 +93,7 @@ test.describe('Scheduling Security - Teacher Role', () => {
   test.use({ storageState: 'playwright/.auth/teacher.json' });
 
   test.beforeEach(async ({}, testInfo) => {
-    test.skip(testInfo.project.name !== 'chromium-teacher', 'Runs strictly on chromium-teacher to prevent DB conflicts');
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
   });
 
   test('Teacher cannot perform administrative mutations', async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe('Scheduling Security - Cross Branch', () => {
   test.use({ storageState: 'playwright/.auth/branchadmin.json' });
 
   test.beforeEach(async ({}, testInfo) => {
-    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Runs strictly on chromium-branchadmin to prevent DB conflicts');
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'EXPECTED_ROLE_SCOPE');
   });
 
   test('Cross-branch manipulation is rejected', async ({ page }) => {

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Communication End-to-End Workflows', () => {
   test('Branch Admin can create an announcement and view it in Sent', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'Specific to branch admin and run only on chromium to avoid DB collisions');
+    test.skip(testInfo.project.name !== 'chromium-branchadmin', 'EXPECTED_ROLE_SCOPE');
     
     // Go to communication dashboard
     await page.goto('/communication');
@@ -36,7 +36,7 @@ test.describe('Communication End-to-End Workflows', () => {
   });
 
   test('Teacher can create class announcement and branch-wide targeting is denied', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== 'chromium-teacher', 'Only applies to teachers and run only on chromium to avoid DB collisions');
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
 
     await page.goto('/communication');
     
@@ -85,6 +85,6 @@ test.describe('Communication End-to-End Workflows', () => {
   test('Recipient can view message in inbox', async () => {
     // Implement recipient inbox test if we had a guardian or student project
     // Skipping for now as we don't have a direct recipient project setup yet
-    test.skip(true, 'Requires recipient auth state');
+    test.skip(true, 'EXPECTED_ROLE_SCOPE');
   });
 });
