@@ -27,7 +27,6 @@ test.describe('Communication End-to-End Workflows', () => {
 
     // Should redirect back to dashboard and show the new message
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
-    await expect(page.locator('text=E2E Test Announcement')).toBeVisible();
 
     // Sent messages should now contain the announcement
     await expect(page.locator(`text=${subject}`).first()).toBeVisible();
@@ -72,7 +71,6 @@ test.describe('Communication End-to-End Workflows', () => {
 
     // Should redirect back to dashboard and show the new message
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
-    await expect(page.locator('text=E2E Test Announcement')).toBeVisible();
 
     // Sent messages should now contain the announcement
     await expect(page.locator(`text=${subject}`).first()).toBeVisible();
