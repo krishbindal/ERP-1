@@ -232,7 +232,16 @@ jobs:
         run: |
           echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
           npx supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
-          sleep 5
+          echo "Waiting for communication-worker..."
+          for i in {1..15}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:54321/functions/v1/communication-worker || echo "000")
+            if [ "$STATUS" = "405" ] || [ "$STATUS" = "401" ]; then
+              echo "Worker is ready!"
+              break
+            fi
+            echo "Waiting... (Status: $STATUS)"
+            sleep 2
+          done
           node scripts/test-worker.js
           pkill -f "supabase functions serve" || true
 

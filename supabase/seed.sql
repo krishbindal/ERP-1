@@ -16,7 +16,8 @@ INSERT INTO auth.users (
 ) VALUES 
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeea001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'superadmin.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"], "is_super_admin": true}', '{}', '', '', '', '', true, false),
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeea002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin.a.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'teacher.a1.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false)
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'teacher.a1.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeea004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'guardian.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO auth.identities (
@@ -31,7 +32,8 @@ INSERT INTO auth.identities (
 ) VALUES
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeea001', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea001', 'superadmin.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea001', 'superadmin.e2e@test.com')::jsonb, 'email', now(), now(), now()),
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeea002', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea002', 'admin.a.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea002', 'admin.a.e2e@test.com')::jsonb, 'email', now(), now(), now()),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', 'teacher.a1.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', 'teacher.a1.e2e@test.com')::jsonb, 'email', now(), now(), now())
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', 'teacher.a1.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea003', 'teacher.a1.e2e@test.com')::jsonb, 'email', now(), now(), now()),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeea004', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea004', 'guardian.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea004', 'guardian.e2e@test.com')::jsonb, 'email', now(), now(), now())
 ON CONFLICT (provider_id, provider) DO NOTHING;
 
 -- Seed Data for SchoolOS E2E Tests
@@ -210,3 +212,28 @@ ON CONFLICT DO NOTHING;
 
 
 
+
+﻿-- E2E Student and Guardian setup
+INSERT INTO public.profiles (id, first_name, last_name)
+SELECT id, 'Guardian', 'E2E' FROM auth.users WHERE email = 'guardian.e2e@test.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.guardians (id, organization_id, profile_id, first_name, last_name)
+SELECT 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee50', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', id, 'Guardian', 'E2E' FROM auth.users WHERE email = 'guardian.e2e@test.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.students (id, organization_id, first_name, last_name)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', 'Student', 'E2E')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.student_guardians (student_id, guardian_id, relationship)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee50', 'PARENT')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.student_branch_profiles (id, student_id, branch_id)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee53', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.enrollments (id, organization_id, branch_id, student_id, student_branch_profile_id, academic_year_id, class_id, section_id, status)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee52', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee53', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222222', 'aaaaaaaa-3333-3333-3333-333333333333', 'ACTIVE')
+ON CONFLICT DO NOTHING;

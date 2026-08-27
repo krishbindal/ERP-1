@@ -31,6 +31,7 @@ async function main() {
     { email: 'superadmin.e2e@test.com', password: 'password123', meta: { is_super_admin: true } },
     { email: 'admin.a.e2e@test.com', password: 'password123', meta: {} },
     { email: 'teacher.a1.e2e@test.com', password: 'password123', meta: {} },
+    { email: 'guardian.e2e@test.com', password: 'password123', meta: {} },
   ];
 
   for (const u of users) {

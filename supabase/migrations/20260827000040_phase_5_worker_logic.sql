@@ -1,4 +1,4 @@
-﻿-- Phase 5 Worker Logic
+-- Phase 5 Worker Logic
 
 -- 1. Add platform_event_id to communication_delivery_attempts
 ALTER TABLE public.communication_delivery_attempts
@@ -41,6 +41,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+#variable_conflict use_column
 DECLARE
     v_event RECORD;
     v_msg_id UUID;
@@ -96,6 +97,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+#variable_conflict use_column
 DECLARE
     v_event RECORD;
     v_attempt_number INT;
@@ -152,6 +154,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+#variable_conflict use_column
 DECLARE
     v_event RECORD;
     v_msg_id UUID;
@@ -165,7 +168,7 @@ BEGIN
 
     IF p_all_recipients_success THEN
         UPDATE public.platform_events
-        SET status = 'PROCESSED', attempts = v_new_attempts, updated_at = now()
+        SET status = 'COMPLETED', attempts = v_new_attempts, processed_at = now()
         WHERE id = p_event_id;
 
         UPDATE public.communication_messages
@@ -174,7 +177,7 @@ BEGIN
     ELSE
         IF v_new_attempts >= v_event.max_attempts THEN
             UPDATE public.platform_events
-            SET status = 'DLQ', attempts = v_new_attempts, updated_at = now()
+            SET status = 'DLQ', attempts = v_new_attempts, processed_at = now()
             WHERE id = p_event_id;
             
             UPDATE public.communication_messages
@@ -185,8 +188,7 @@ BEGIN
             SET status = 'PENDING', 
                 attempts = v_new_attempts, 
                 next_retry_at = now() + (POWER(2, v_new_attempts) || ' minutes')::INTERVAL,
-                updated_at = now()
-            WHERE id = p_event_id;
+                processed_at = now() WHERE id = p_event_id;
         END IF;
     END IF;
 END;

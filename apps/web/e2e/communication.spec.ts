@@ -4,81 +4,107 @@ test.describe('Communication End-to-End Workflows', () => {
   test('Branch Admin can create an announcement and view it in Sent', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium-branchadmin', 'EXPECTED_ROLE_SCOPE');
     
-    // Go to communication dashboard
     await page.goto('/communication');
-
-    // Ensure "New Message" button exists
     const newBtn = page.getByRole('link', { name: 'New Message' });
     await expect(newBtn).toBeVisible();
-
     await newBtn.click();
     await expect(page).toHaveURL(/.*\/communication\/new/);
 
-    const subject = `Test Branch Announcement ${Date.now()}`;
+    const subject = 'Test Branch Announcement ' + Date.now();
     await page.fill('input[name="subject"]', subject);
     await page.fill('textarea[name="content"]', 'This is an end-to-end test announcement body.');
     await page.selectOption('select[name="target_type"]', 'BRANCH');
 
-    // Ensure target_id is NOT visible since it's BRANCH
     await expect(page.locator('select[name="target_id"]')).not.toBeVisible();
-
-    // Submit
     await page.click('button[type="submit"]');
 
-    // Should redirect back to dashboard and show the new message
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
-
-    // Sent messages should now contain the announcement
-    await expect(page.locator(`text=${subject}`).first()).toBeVisible();
+    await expect(page.locator('text=' + subject).first()).toBeVisible();
   });
 
   test('Teacher can create class announcement and branch-wide targeting is denied', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
 
     await page.goto('/communication');
-    
     const newBtn = page.getByRole('link', { name: 'New Message' });
     await expect(newBtn).toBeVisible();
-
     await newBtn.click();
     await expect(page).toHaveURL(/.*\/communication\/new/);
 
-    // Ensure BRANCH option is not available for teachers (it shouldn't be in the DOM)
     const targetTypeSelect = page.locator('select[name="target_type"]');
     await expect(targetTypeSelect.locator('option[value="BRANCH"]')).not.toBeAttached();
     await expect(targetTypeSelect.locator('option[value="CLASS"]')).toBeAttached();
 
-    // Select CLASS
     await targetTypeSelect.selectOption('CLASS');
     
-    // Target ID select should appear
     const targetIdSelect = page.locator('select[name="target_id"]');
     await expect(targetIdSelect).toBeVisible();
-
-    // The select should have at least one option besides the placeholder
     await expect(targetIdSelect.locator('option').nth(1)).toBeAttached();
 
-    // Select the first available authorized class
     const classId = await targetIdSelect.locator('option').nth(1).getAttribute('value');
     await targetIdSelect.selectOption(classId || '');
 
-    const subject = `Test Class Announcement ${Date.now()}`;
+    const subject = 'Test Class Announcement ' + Date.now();
     await page.fill('input[name="subject"]', subject);
     await page.fill('textarea[name="content"]', 'Teacher class announcement.');
 
-    // Submit
     await page.click('button[type="submit"]');
-
-    // Should redirect back to dashboard and show the new message
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
-
-    // Sent messages should now contain the announcement
-    await expect(page.locator(`text=${subject}`).first()).toBeVisible();
+    await expect(page.locator('text=' + subject).first()).toBeVisible();
   });
 
-  test('Recipient can view message in inbox', async () => {
-    // Implement recipient inbox test if we had a guardian or student project
-    // Skipping for now as we don't have a direct recipient project setup yet
-    test.skip(true, 'EXPECTED_ROLE_SCOPE');
+  test('Recipient can view message in inbox', async ({ page, browser }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
+
+    await page.goto('/communication');
+    const newBtn = page.getByRole('link', { name: 'New Message' });
+    await expect(newBtn).toBeVisible();
+    await newBtn.click();
+    await expect(page).toHaveURL(/.*\/communication\/new/);
+
+    const targetTypeSelect = page.locator('select[name="target_type"]');
+    await targetTypeSelect.selectOption('CLASS');
+    
+    const targetIdSelect = page.locator('select[name="target_id"]');
+    await expect(targetIdSelect).toBeVisible();
+
+    const classId = await targetIdSelect.locator('option').nth(1).getAttribute('value');
+    await targetIdSelect.selectOption(classId || '');
+
+    const subject = 'Test Inbox Message ' + Date.now();
+    await page.fill('input[name="subject"]', subject);
+    await page.fill('textarea[name="content"]', 'Please check your inbox.');
+
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
+    await expect(page.locator('text=' + subject).first()).toBeVisible();
+
+    // Give the worker time to process the event
+    await page.waitForTimeout(4000);
+
+    const guardianContext = await browser.newContext();
+    const guardianPage = await guardianContext.newPage();
+    
+    await guardianPage.goto('/login');
+    await guardianPage.fill('input[type="email"]', 'guardian.e2e@test.com');
+    await guardianPage.fill('input[type="password"]', 'password123');
+    await guardianPage.click('button[type="submit"]');
+
+    // Wait until URL changes away from login
+    await guardianPage.waitForURL(url => !url.href.includes('/login'));
+
+    await guardianPage.goto('/communication/inbox');
+    
+    const messageLocator = guardianPage.locator('text=' + subject).first();
+    await expect(messageLocator).toBeVisible();
+    
+    await messageLocator.click();
+
+    await expect(guardianPage.locator('text=Please check your inbox.')).toBeVisible();
+
+    await guardianPage.reload();
+    await expect(guardianPage.locator('text=' + subject).first()).toBeVisible();
+
+    await guardianContext.close();
   });
 });
