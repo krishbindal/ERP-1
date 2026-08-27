@@ -6,6 +6,7 @@ let statusJson;
 try {
   const output = execSync('npx --no-install supabase status -o json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
   const jsonMatch = output.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found");
   statusJson = JSON.parse(jsonMatch[0]);
 } catch (error) {
   console.error("Failed to run supabase status.");
