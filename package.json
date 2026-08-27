@@ -23,12 +23,17 @@
     "supabase:stop": "npx supabase stop",
     "supabase:reset": "npx supabase db reset",
     "supabase:test": "npx supabase test db",
-    "validate": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "validate": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "postinstall": "node scripts/patch-vitest-timeout.js"
   },
   "devDependencies": {
     "supabase": "^2.115.0"
   },
   "dependencies": {
-    "pg": "^8.23.0"
-  }
+    "pg": "^8.23.0",
+    "expo": "~57.0.14",
+    "react": "19.2.3",
+    "react-native": "0.86.2"
+  },
+  "version": "1.0.0"
 }
