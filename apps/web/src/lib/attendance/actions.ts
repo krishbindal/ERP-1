@@ -62,8 +62,24 @@ export async function publishAttendance(branchId: string | undefined, sessionId:
       
     if (error) return { error };
     
-    // Notification creation is decoupled from the transaction
-    console.log(`[EventBus] emit attendance.published for session ${sessionId}`);
+    const { data: session } = await supabase
+      .from('attendance_sessions')
+      .select('organization_id, branch_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (session) {
+      const { error: eventError } = await supabase.from('platform_events').insert({
+        organization_id: session.organization_id,
+        branch_id: session.branch_id,
+        aggregate_type: 'attendance_session',
+        aggregate_id: sessionId,
+        event_type: 'attendance.published',
+        payload: { session_id: sessionId },
+        idempotency_key: `attendance.published.${sessionId}`
+      });
+      if (eventError) console.error('[EventBus] Failed to enqueue attendance platform event', eventError);
+    }
     
     return { error: null, data: { success: true } };
   });

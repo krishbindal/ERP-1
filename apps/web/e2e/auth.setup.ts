@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { test as setup } from '@playwright/test';
 import * as path from 'path';
 
@@ -29,8 +30,8 @@ for (const role of roles) {
     }
     
     // Check that we are logged in by seeing "Academic Structure" link or something similar,
-    // Actually, dashboard has something? Let's just wait for 1000ms.
-    await page.waitForTimeout(1000);
+    // Wait for dashboard to render so cookies are fully set
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
     await page.context().storageState({ path: authFile });
   });

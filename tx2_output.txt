@@ -1,4 +1,0 @@
-BEGIN
-ERROR:  Physical conflict: Substitute resource is double-booked on this date via another substitution
-CONTEXT:  PL/pgSQL function check_substitution_conflict() line 63 at RAISE
-ROLLBACK

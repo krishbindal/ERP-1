@@ -37,7 +37,7 @@ test.describe('Timetable Management', () => {
           await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).first().click();
           page.once('dialog', d => d.accept());
           await page.getByRole('button', { name: 'Archive Entry' }).click();
-          await page.waitForTimeout(500);
+          await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
           await page.reload();
           count = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
         }
@@ -46,7 +46,6 @@ test.describe('Timetable Management', () => {
       // ─── 1. CREATE a timetable entry (Monday) ───
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption('aaaaaaaa-2222-2222-2222-222222222222');
-      await page.waitForTimeout(1000);
       await page.locator('select[name="section_id"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
       await page.locator('select[name="subject_id"]').selectOption('aaaaaaaa-4444-4444-4444-444444444444');
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Teacher A' });
@@ -57,7 +56,6 @@ test.describe('Timetable Management', () => {
 
       // Verify: drawer closes (success)
       await expect(page.locator('text=New Timetable Entry')).not.toBeVisible();
-      await page.waitForTimeout(500);
       await page.reload();
 
       // Verify: exactly 1 entry on Monday
@@ -73,7 +71,6 @@ test.describe('Timetable Management', () => {
       // ─── 3. CREATE a second entry (Tuesday) — sets up conflict tests ───
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption('aaaaaaaa-2222-2222-2222-222222222222');
-      await page.waitForTimeout(1000);
       await page.locator('select[name="section_id"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
       await page.locator('select[name="subject_id"]').selectOption('aaaaaaaa-4444-4444-4444-444444444444');
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Teacher A' });
@@ -82,7 +79,6 @@ test.describe('Timetable Management', () => {
       await page.locator('select[name="day_of_week"]').selectOption('2'); // Tuesday
       await page.getByRole('button', { name: 'Save' }).click();
       await expect(page.locator('text=New Timetable Entry')).not.toBeVisible();
-      await page.waitForTimeout(500);
       await page.reload();
 
       // Verify: 2 entries total (Monday + Tuesday)
@@ -95,7 +91,7 @@ test.describe('Timetable Management', () => {
       await expect(page.getByRole('heading', { name: 'Edit Timetable Entry' })).toBeVisible();
       page.once('dialog', dialog => dialog.accept());
       await page.getByRole('button', { name: 'Archive Entry' }).click();
-      await page.waitForTimeout(500);
+      await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
       await page.reload();
 
       // Verify: Monday entry gone, Tuesday entry remains
@@ -105,7 +101,6 @@ test.describe('Timetable Management', () => {
       // ─── 5. CONFLICT: Section double-booking (Tuesday) ───
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption('aaaaaaaa-2222-2222-2222-222222222222');
-      await page.waitForTimeout(1000);
       await page.locator('select[name="section_id"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333'); // Same section
       await page.locator('select[name="subject_id"]').selectOption('aaaaaaaa-4444-4444-4444-444444444445');
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Branch Admin' });
@@ -121,7 +116,6 @@ test.describe('Timetable Management', () => {
       // ─── 6. CONFLICT: Teacher double-booking (Tuesday) ───
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption('aaaaaaaa-2222-2222-2222-222222222223');
-      await page.waitForTimeout(1000);
       await page.locator('select[name="section_id"]').selectOption('aaaaaaaa-3333-3333-3333-333333333334');
       await page.locator('select[name="subject_id"]').selectOption('aaaaaaaa-4444-4444-4444-444444444445');
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Teacher A' }); // Same teacher
@@ -136,7 +130,6 @@ test.describe('Timetable Management', () => {
       // ─── 7. CONFLICT: Room double-booking (Tuesday) ───
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
       await page.locator('select[name="class_id"]').selectOption('aaaaaaaa-2222-2222-2222-222222222223');
-      await page.waitForTimeout(1000);
       await page.locator('select[name="section_id"]').selectOption('aaaaaaaa-3333-3333-3333-333333333334');
       await page.locator('select[name="subject_id"]').selectOption('aaaaaaaa-4444-4444-4444-444444444445');
       await page.locator('select[name="staff_branch_profile_id"]').selectOption({ label: 'Branch Admin' });
@@ -157,7 +150,7 @@ test.describe('Timetable Management', () => {
       await page.locator('[data-testid="timetable-entry"][data-day="2"]').click();
       page.once('dialog', d => d.accept());
       await page.getByRole('button', { name: 'Archive Entry' }).click();
-      await page.waitForTimeout(500);
+      await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
       await page.reload();
 
       // Verify cleanup: 0 entries on our owned days

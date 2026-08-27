@@ -5,6 +5,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,25 +18,28 @@ jobs:
   validate:
     name: Core Validation & E2E
     runs-on: [self-hosted, linux, x64, schoolos-ci]
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     
     steps:
       - name: Checkout commit
         uses: actions/checkout@v5
         with:
           clean: true
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
           node-version: '22'
 
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
       - name: Verify Playwright Browsers
         run: |
           chmod +x scripts/ci-runner-preflight.sh
           ./scripts/ci-runner-preflight.sh
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
 
       - name: Lint
         run: npm run lint --workspaces --if-present
@@ -46,8 +50,6 @@ jobs:
       - name: Unit Tests
         run: npm run test --workspaces --if-present
 
-      - name: Build Web
-        run: npm run build:web
 
       - name: Run Full Audit (Artifact)
         run: npm audit --json > audit-full.json || true
@@ -79,7 +81,7 @@ jobs:
 
       - name: Start Local Supabase
         run: |
-          if ! timeout 300s npx --no-install supabase start -x realtime -x storage-api -x edge-runtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
+          if ! timeout 300s npx --no-install supabase start -x realtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
             echo "::error::Supabase start failed or timed out!"
             echo "--- Diagnostic Trap ---"
             docker ps -a
@@ -198,6 +200,42 @@ jobs:
           
           echo "Database tests and pgTAP cleanup completed successfully."
 
+      - name: Export Supabase Environment Variables
+        run: |
+          API_URL=$(npx supabase status -o env | grep API_URL | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+          ANON_KEY=$(npx supabase status -o env | grep ANON_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+          SERVICE_KEY=$(npx supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+          
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
+          
+          echo "Playwright Preflight Environment Check:"
+          echo "NEXT_PUBLIC_SUPABASE_URL: ${API_URL:+PRESENT}"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:+PRESENT}"
+          echo "SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_KEY:+PRESENT}"
+          
+          if ! [[ "$API_URL" =~ ^https?:// ]]; then
+            echo "::error::NEXT_PUBLIC_SUPABASE_URL is not a valid HTTP/HTTPS URL! Found: '$API_URL'"
+            exit 1
+          fi
+          
+          if [[ -z "$API_URL" || -z "$ANON_KEY" ]]; then
+            echo "::error::Missing required Supabase environment variables for Playwright!"
+            exit 1
+          fi
+
+      - name: Build Web
+        run: npm run build:web
+
+      - name: Worker Runtime Certification
+        run: |
+          echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
+          npx supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
+          sleep 5
+          node scripts/test-worker.js
+          pkill -f "supabase functions serve" || true
+
       - name: Run Playwright Tests
         env:
           PLAYWRIGHT_GIT_COMMIT_INFO: 0
@@ -210,6 +248,19 @@ jobs:
         run: |
           node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
 
+      - name: Upload Certification Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: schoolos-certification-artifacts
+          path: |
+            apps/web/playwright-report/results.json
+            audit-full.json
+            audit-prod.json
+          retention-days: 14
+
+
+
       - name: Stop Local Supabase
         if: always()
         run: |
@@ -218,4 +269,10 @@ jobs:
 
       - name: Cleanup Workspace
         if: always()
-        run: git clean -ffdx && git reset --hard HEAD
+        run: |
+          pkill -f "playwright" || true
+          pkill -f "chrome" || true
+          pkill -f "webkit" || true
+          pkill -f "next" || true
+          pkill -f "supabase functions serve" || true
+          git clean -ffdx && git reset --hard HEAD

@@ -69,7 +69,8 @@ SELECT is(
 -- Give the super admin membership to Test Org 1
 SELECT set_config('role', 'postgres', true);
 INSERT INTO auth.users (id) VALUES ('00000000-0000-0000-0000-000000000000') ON CONFLICT DO NOTHING;
-INSERT INTO organization_memberships (user_id, organization_id) VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000001') ON CONFLICT DO NOTHING;
+INSERT INTO public.profiles (id, status) VALUES ('00000000-0000-0000-0000-000000000000', 'ACTIVE') ON CONFLICT DO NOTHING;
+INSERT INTO organization_memberships (user_id, organization_id, status) VALUES ('00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000001', 'ACTIVE') ON CONFLICT DO NOTHING;
 SELECT set_config('role', 'authenticated', true);
 
 SELECT is(

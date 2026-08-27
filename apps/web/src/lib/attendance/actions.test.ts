@@ -30,6 +30,7 @@ vi.mock('@/lib/server-actions', () => ({
         eq: vi.fn().mockReturnThis(),
         not: vi.fn().mockReturnThis(),
         is: vi.fn().mockResolvedValue({ error: null }),
+        insert: vi.fn().mockResolvedValue({ error: null }),
         update: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: { operating_days: [1,2,3,4,5], start_date: '2026-08-01', end_date: '2027-06-30' } }),
         auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test' } } }) }
