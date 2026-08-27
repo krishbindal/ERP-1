@@ -2,11 +2,14 @@ const fs = require('fs');
 const path = require('path');
 
 try {
-  // Resolve vitest package location
-  const vitestPath = path.dirname(require.resolve('vitest/package.json'));
-  const chunksDir = path.join(vitestPath, 'dist', 'chunks');
-  
-  if (!fs.existsSync(chunksDir)) {
+  // Manually check common paths instead of require.resolve because vitest might not export package.json
+  const possiblePaths = [
+    path.join(__dirname, '../node_modules/vitest/dist/chunks'),
+    path.join(__dirname, '../apps/web/node_modules/vitest/dist/chunks')
+  ];
+  const chunksDir = possiblePaths.find(p => fs.existsSync(p));
+
+  if (!chunksDir) {
     console.log('Vitest chunks directory not found, skipping patch.');
     process.exit(0);
   }
