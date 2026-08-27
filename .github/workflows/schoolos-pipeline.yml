@@ -228,6 +228,14 @@ jobs:
       - name: Build Web
         run: npm run build:web
 
+      - name: Worker Runtime Certification
+        run: |
+          echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
+          npx supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
+          sleep 5
+          node scripts/test-worker.js
+          pkill -f "supabase functions serve" || true
+
       - name: Run Playwright Tests
         env:
           PLAYWRIGHT_GIT_COMMIT_INFO: 0
@@ -240,15 +248,24 @@ jobs:
         run: |
           node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
 
+      - name: Upload Certification Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: schoolos-certification-artifacts
+          path: |
+            apps/web/playwright-report/results.json
+            audit-full.json
+            audit-prod.json
+          retention-days: 14
+
       - name: SonarQube Scan
-        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: SonarQube Quality Gate check
-        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-quality-gate-action@v1
         timeout-minutes: 5
         env:
@@ -266,4 +283,6 @@ jobs:
           pkill -f "playwright" || true
           pkill -f "chrome" || true
           pkill -f "webkit" || true
+          pkill -f "next" || true
+          pkill -f "supabase functions serve" || true
           git clean -ffdx && git reset --hard HEAD
