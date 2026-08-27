@@ -39,12 +39,12 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Lint
         run: npm run lint
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npx --no-install tsc --noEmit
       - name: Validate Native Configuration (Prebuild)
-        run: npx expo prebuild --no-install
+        run: npx --no-install expo prebuild --no-install

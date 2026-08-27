@@ -1,9 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
+import { execSync } from 'child_process';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+let SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+let SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+let SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SERVICE_ROLE) {
+  try {
+    const output = execSync('npx supabase status -o json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+    const jsonMatch = output.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const statusJson = JSON.parse(jsonMatch[0]);
+      SUPABASE_URL = SUPABASE_URL || statusJson.API_URL;
+      SUPABASE_ANON_KEY = SUPABASE_ANON_KEY || statusJson.ANON_KEY;
+      SERVICE_ROLE = SERVICE_ROLE || statusJson.SERVICE_ROLE_KEY;
+    }
+  } catch (e) {
+    console.warn("Could not derive Supabase keys from CLI. E2E tests may fail if env vars are missing.");
+  }
+}
 
 test.describe('Storage Runtime Authorization (Communication)', () => {
   let supabase: ReturnType<typeof createClient>;
@@ -11,8 +27,8 @@ test.describe('Storage Runtime Authorization (Communication)', () => {
   let messageId: string;
 
   test.beforeAll(async () => {
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    adminClient = createClient(SUPABASE_URL, SERVICE_ROLE);
+    supabase = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!);
+    adminClient = createClient(SUPABASE_URL!, SERVICE_ROLE!);
   });
 
   test('Teacher can upload attachment to their own draft and unauthorized users cannot read', async () => {

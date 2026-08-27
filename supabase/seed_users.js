@@ -1,7 +1,23 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+const { execSync } = require('child_process');
+
+let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+let serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  try {
+    const output = execSync('npx supabase status -o json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+    const jsonMatch = output.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const statusJson = JSON.parse(jsonMatch[0]);
+      supabaseUrl = supabaseUrl || statusJson.API_URL;
+      serviceRoleKey = serviceRoleKey || statusJson.SERVICE_ROLE_KEY;
+    }
+  } catch (e) {
+    console.warn("Could not derive Supabase keys from CLI.");
+  }
+}
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
