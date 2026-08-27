@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-type Role = "superadmin" | "branchadmin" | "teacher";
+type Role = "superadmin" | "branchadmin" | "teacher" | "guardian";
 type BrowserName = "chromium" | "mobile-chrome" | "webkit";
 
 function createRoleProject(role: Role, browser: BrowserName) {
@@ -47,6 +47,7 @@ export default defineConfig({
     createRoleProject("superadmin", "chromium"),
     createRoleProject("branchadmin", "chromium"),
     createRoleProject("teacher", "chromium"),
+    createRoleProject("guardian", "chromium"),
 
     createRoleProject("superadmin", "mobile-chrome"),
     createRoleProject("branchadmin", "mobile-chrome"),

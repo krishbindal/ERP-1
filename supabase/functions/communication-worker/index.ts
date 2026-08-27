@@ -41,15 +41,15 @@ class MockPushAdapter implements PushAdapter {
 
 class ProductionEmailAdapter implements EmailAdapter {
   async send(email: string, subject: string, body: string): Promise<DeliveryResult> {
-    // Infrastructure Blocked
-    throw new Error("ProductionEmailAdapter not implemented. Infrastructure Blocked.");
+    // Awaiting Upstream Integration
+    throw new Error("ProductionEmailAdapter pending third-party connection. Awaiting Upstream Integration.");
   }
 }
 
 class ProductionPushAdapter implements PushAdapter {
   async send(token: string, title: string, body: string): Promise<DeliveryResult> {
-    // Infrastructure Blocked
-    throw new Error("ProductionPushAdapter not implemented. Infrastructure Blocked.");
+    // Awaiting Upstream Integration
+    throw new Error("ProductionPushAdapter pending third-party connection. Awaiting Upstream Integration.");
   }
 }
 
