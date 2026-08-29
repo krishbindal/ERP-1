@@ -241,7 +241,6 @@ jobs:
             sleep 2
           done
           node scripts/test-worker.js
-          pkill -f "supabase functions serve" || true
 
       - name: Run Playwright Tests
         env:

@@ -83,6 +83,15 @@ test.describe('Communication End-to-End Workflows', () => {
     await expect(teacherPage.locator('text=' + subject).first()).toBeVisible();
     await teacherContext.close();
 
+    // Invoke the worker manually in E2E since there is no cron trigger
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (serviceKey) {
+      await teacherPage.request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
+        headers: { 'Authorization': `Bearer ${serviceKey}` }
+      });
+    }
+
     // Now guardian views the message
     const guardianContext = await browser.newContext({ storageState: 'playwright/.auth/guardian.json' });
     const guardianPage = await guardianContext.newPage();

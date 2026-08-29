@@ -31,7 +31,8 @@ test.describe('Storage Runtime Authorization (Communication)', () => {
     adminClient = createClient(SUPABASE_URL!, SERVICE_ROLE!);
   });
 
-  test('Teacher can upload attachment to their own draft and unauthorized users cannot read', async () => {
+  test('Teacher can upload attachment to their own draft and unauthorized users cannot read', async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
     // 1. Login as Teacher A
     const { data: { user }, error } = await supabase.auth.signInWithPassword({
       email: 'teacher.a1.e2e@test.com',
