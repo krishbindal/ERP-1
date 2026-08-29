@@ -108,24 +108,33 @@ async function runTests() {
   const { data: failStudent, error: studentErr } = await supabase.from('students').upsert({
     id: fId, profile_id: fId,
     organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
-    branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02',
-    admission_number: 'FAIL-001', status: 'ACTIVE'
+    first_name: 'Fail', last_name: 'Fail', status: 'ACTIVE'
   }, { onConflict: 'id' }).select('id').single();
-  if (studentErr) throw studentErr;
+  if (studentErr) throw new Error("Section F: failed to create students: " + JSON.stringify(studentErr));
   const failStudentId = failStudent?.id || fId;
   
+  const { data: failSbp, error: sbpErr } = await supabase.from('student_branch_profiles').upsert({
+    id: fId, student_id: failStudentId,
+    branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02'
+  }, { onConflict: 'id' }).select('id').single();
+  if (sbpErr) throw new Error("Section F: failed to create student_branch_profiles: " + JSON.stringify(sbpErr));
+  const failSbpId = failSbp?.id || fId;
+
   // Enroll in the same class used in Section B (from seed data)
   const activeAYId = 'aaaaaaaa-1111-1111-1111-111111111111';
   
   const { error: enrollErr } = await supabase.from('enrollments').upsert({
+    id: fId,
     student_id: failStudentId,
+    student_branch_profile_id: failSbpId,
     academic_year_id: activeAYId,
     class_id: 'aaaaaaaa-2222-2222-2222-222222222222',
+    section_id: 'aaaaaaaa-3333-3333-3333-333333333333',
     branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02',
     organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
     status: 'ACTIVE'
-  }, { onConflict: 'student_id,academic_year_id' });
-  if (enrollErr) throw enrollErr;
+  }, { onConflict: 'id' });
+  if (enrollErr) throw new Error("Section F: failed to create enrollments: " + JSON.stringify(enrollErr));
 
   const { data: msgFail } = await supabase.from('communication_messages').insert({
       organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
