@@ -67,6 +67,23 @@ async function runTests() {
   
   await invokeWorker('Bearer ' + supabaseKey);
   const { data: ev1 } = await supabase.from('platform_events').select('*').eq('id', ev1Data.id).single();
+  // Diagnostic output before assertion
+  console.log("=== DIAGNOSTIC START ===");
+  console.log("event_id:", ev1.id);
+  console.log("platform_events.status:", ev1.status);
+  console.log("platform_events.attempts:", ev1.attempts);
+  console.log("platform_events.next_retry_at:", ev1.next_retry_at);
+  console.log("platform_events.last_error:", ev1.last_error);
+  console.log("message_id:", ev1.payload.message_id);
+  
+  const { data: recips } = await supabase.from('communication_recipients').select('*').eq('message_id', ev1.payload.message_id);
+  console.log("recipient count:", recips?.length);
+  
+  const { data: attemptsDiag } = await supabase.from('communication_delivery_attempts').select('id, recipient_id, channel, attempt_number, provider_message_id, error_details, success_delivery_timestamp').eq('platform_event_id', ev1.id);
+  console.log("delivery_attempt count:", attemptsDiag?.length);
+  console.log("delivery_attempt rows:", JSON.stringify(attemptsDiag, null, 2));
+  console.log("=== DIAGNOSTIC END ===");
+
   ok(ev1.status === 'COMPLETED', 'Status is COMPLETED');
 
   // Verify recipient resolution
