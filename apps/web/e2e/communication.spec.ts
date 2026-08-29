@@ -22,8 +22,11 @@ test.describe('Communication End-to-End Workflows', () => {
     await expect(page.locator('text=' + subject).first()).toBeVisible();
   });
 
-  test('Teacher can create class announcement and branch-wide targeting is denied', async ({ page }, testInfo) => {
+  test('Teacher can create class announcement and branch-wide targeting is denied', async ({ browser }, testInfo) => {
     test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
+
+    const teacher2Context = await browser.newContext({ storageState: 'playwright/.auth/teacher2.json' });
+    const page = await teacher2Context.newPage();
 
     await page.goto('/communication');
     const newBtn = page.getByRole('link', { name: 'New Message' });
@@ -51,9 +54,10 @@ test.describe('Communication End-to-End Workflows', () => {
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
     await expect(page.locator('text=' + subject).first()).toBeVisible();
+    await teacher2Context.close();
   });
 
-  test('Recipient can view message in inbox', async ({ browser }, testInfo) => {
+  test('Recipient can view message in inbox', async ({ browser, request }, testInfo) => {
     // Only run this specifically in guardian project, as the sender context is isolated
     test.skip(testInfo.project.name !== 'chromium-guardian', 'EXPECTED_ROLE_SCOPE');
     
@@ -86,11 +90,47 @@ test.describe('Communication End-to-End Workflows', () => {
     // Invoke the worker manually in E2E since there is no cron trigger
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (serviceKey) {
-      await teacherPage.request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
-        headers: { 'Authorization': `Bearer ${serviceKey}` }
-      });
+    if (!serviceKey) {
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for worker invocation');
     }
+    
+    const apiContext = await request.newContext();
+    const workerRes = await apiContext.post(`${supabaseUrl}/functions/v1/communication-worker`, {
+      headers: { 'Authorization': `Bearer ${serviceKey}` }
+    });
+    
+    expect(workerRes.status()).toBe(200);
+    const workerData = await workerRes.json();
+    expect(workerData).toBeDefined();
+
+    // Trace exact inbox flow with admin client
+    const { createClient } = require('@supabase/supabase-js');
+    const adminClient = createClient(supabaseUrl, serviceKey);
+
+    const { data: msgData, error: msgErr } = await adminClient.from('communication_messages').select('*').eq('subject', subject).single();
+    expect(msgErr).toBeNull();
+    expect(msgData).toBeDefined();
+
+    const { data: targetData, error: targetErr } = await adminClient.from('communication_message_targets').select('*').eq('message_id', msgData.id);
+    expect(targetErr).toBeNull();
+    expect(targetData.length).toBeGreaterThan(0);
+
+    const { data: eventData, error: eventErr } = await adminClient.from('platform_events').select('*').eq('aggregate_id', msgData.id).single();
+    expect(eventErr).toBeNull();
+    expect(eventData).toBeDefined();
+    expect(eventData.status).toBe('COMPLETED');
+    
+    const { data: recipientData, error: recipientErr } = await adminClient.from('communication_recipients').select('*').eq('message_id', msgData.id);
+    expect(recipientErr).toBeNull();
+    expect(recipientData.length).toBeGreaterThan(0);
+    // Verify guardian identity
+    const guardianRecipient = recipientData.find(r => r.profile_id === 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea004');
+    expect(guardianRecipient).toBeDefined();
+
+    const { data: attemptData, error: attemptErr } = await adminClient.from('communication_delivery_attempts').select('*').eq('message_id', msgData.id);
+    expect(attemptErr).toBeNull();
+    expect(attemptData.length).toBeGreaterThan(0);
+    expect(attemptData[0].success_delivery_timestamp).not.toBeNull();
 
     // Now guardian views the message
     const guardianContext = await browser.newContext({ storageState: 'playwright/.auth/guardian.json' });
