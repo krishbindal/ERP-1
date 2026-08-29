@@ -161,6 +161,7 @@ Deno.serve(async (req) => {
                             p_provider_message_id: emailResult.provider_message_id,
                             p_error_details: emailResult.error_details
                         });
+                        if (recordError) console.error("rpc_record_delivery_attempt EMAIL error:", JSON.stringify(recordError));
                         if (!emailResult.success || recordError) recipientSuccess = false;
                     } catch (e: any) {
                         recipientSuccess = false;
@@ -188,6 +189,7 @@ Deno.serve(async (req) => {
                             p_provider_message_id: pushResult.provider_message_id,
                             p_error_details: pushResult.error_details
                         });
+                        if (recordError2) console.error("rpc_record_delivery_attempt PUSH error:", JSON.stringify(recordError2));
                         if (!pushResult.success || recordError2) recipientSuccess = false;
                     } catch (e: any) {
                         recipientSuccess = false;

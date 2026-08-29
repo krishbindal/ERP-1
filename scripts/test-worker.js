@@ -1,5 +1,7 @@
 const { execSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
+const { WebSocket } = require('ws');
+global.WebSocket = WebSocket;
 const assert = require('assert');
 
 let statusJson;
