@@ -88,27 +88,35 @@ test.describe('Communication End-to-End Workflows', () => {
     await expect(teacherPage.locator('text=' + subject).first()).toBeVisible();
     await teacherContext.close();
 
-    // Invoke the worker manually in E2E since there is no cron trigger
+    // Trace exact inbox flow with admin client
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceKey) {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for worker invocation');
     }
     
-    const workerRes = await request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
-      headers: { 'Authorization': `Bearer ${serviceKey}` }
-    });
-    
-    expect(workerRes.status()).toBe(200);
-    const workerData = await workerRes.json();
-    expect(workerData).toBeDefined();
-
-    // Trace exact inbox flow with admin client
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     const { data: msgData, error: msgErr } = await adminClient.from('communication_messages').select('*').eq('subject', subject).single();
     expect(msgErr).toBeNull();
     expect(msgData).toBeDefined();
+
+    // Invoke the worker manually in E2E since there is no cron trigger.
+    // The worker processes batches (limit 10). We must poll until our specific event is processed.
+    let isCompleted = false;
+    let workerAttempts = 0;
+    while (!isCompleted && workerAttempts < 10) {
+      const workerRes = await request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
+        headers: { 'Authorization': `Bearer ${serviceKey}` }
+      });
+      expect(workerRes.status()).toBe(200);
+      
+      const { data: evt } = await adminClient.from('platform_events').select('status').eq('aggregate_id', msgData.id).single();
+      if (evt?.status === 'COMPLETED') {
+        isCompleted = true;
+      }
+      workerAttempts++;
+    }
 
     const { data: targetData, error: targetErr } = await adminClient.from('communication_message_targets').select('*').eq('message_id', msgData.id);
     expect(targetErr).toBeNull();
