@@ -1,7 +1,5 @@
 const { execSync } = require('child_process');
 const { createClient } = require('@supabase/supabase-js');
-const { WebSocket } = require('ws');
-global.WebSocket = WebSocket;
 const assert = require('assert');
 
 let statusJson;
@@ -17,7 +15,10 @@ try {
 
 const supabaseUrl = statusJson.API_URL;
 const supabaseKey = statusJson.SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: { persistSession: false },
+  realtime: { transport: class NoopWS { constructor() {} close() {} send() {} addEventListener() {} removeEventListener() {} } }
+});
 const workerUrl = supabaseUrl + '/functions/v1/communication-worker';
 
 async function invokeWorker(authHeader) {
