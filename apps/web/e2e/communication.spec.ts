@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createClient } from '@supabase/supabase-js';
 
 test.describe('Communication End-to-End Workflows', () => {
   test('Branch Admin can create an announcement and view it in Sent', async ({ page }, testInfo) => {
@@ -104,7 +105,6 @@ test.describe('Communication End-to-End Workflows', () => {
     expect(workerData).toBeDefined();
 
     // Trace exact inbox flow with admin client
-    const { createClient } = require('@supabase/supabase-js');
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     const { data: msgData, error: msgErr } = await adminClient.from('communication_messages').select('*').eq('subject', subject).single();
