@@ -29,7 +29,7 @@ test.describe('Students Page Authorization', () => {
 
     // The table should render (even if empty)
     await expect(page.locator('table')).toBeVisible();
-    await expect(page.locator('text=No students found')).toBeVisible();
+    await expect(page.locator('text=Student E2E')).toBeVisible();
   });
 
   test('Teacher can access /students in read-only mode', async ({ page }) => {

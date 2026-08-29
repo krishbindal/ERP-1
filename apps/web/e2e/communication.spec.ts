@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('Communication End-to-End Workflows', () => {
   test('Branch Admin can create an announcement and view it in Sent', async ({ page }, testInfo) => {
@@ -58,7 +58,8 @@ test.describe('Communication End-to-End Workflows', () => {
     test.skip(testInfo.project.name !== 'chromium-guardian', 'EXPECTED_ROLE_SCOPE');
     
     // We need to login as Teacher first to send the message
-    const teacherContext = await browser.newContext({ storageState: 'playwright/.auth/teacher.json' });
+    // ISOLATION: Use dedicated teacher2 for this test to avoid rate limit overlap
+    const teacherContext = await browser.newContext({ storageState: 'playwright/.auth/teacher2.json' });
     const teacherPage = await teacherContext.newPage();
     
     await teacherPage.goto('/communication');
@@ -113,5 +114,42 @@ test.describe('Communication End-to-End Workflows', () => {
     
     await expect(unrelatedPage.locator('text=' + subject)).not.toBeVisible({ timeout: 5000 });
     await unrelatedContext.close();
+  });
+
+  test('Teacher rate limit enforces exactly 5 messages per day', async ({ browser }, testInfo) => {
+    // Only run this once to prevent massive time usage and avoid multiple OS retries overlapping
+    // We isolate this to a dedicated teacher_limit user
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
+
+    const limitContext = await browser.newContext({ storageState: 'playwright/.auth/teacher_limit.json' });
+    const limitPage = await limitContext.newPage();
+
+    for (let i = 1; i <= 6; i++) {
+      await limitPage.goto('/communication/new');
+      
+      const targetTypeSelect = limitPage.locator('select[name="target_type"]');
+      await targetTypeSelect.selectOption('CLASS');
+      
+      const targetIdSelect = limitPage.locator('select[name="target_id"]');
+      const classId = await targetIdSelect.locator('option').nth(1).getAttribute('value');
+      await targetIdSelect.selectOption(classId || '');
+
+      const subject = `Rate Limit Test Message ${i} - ${Date.now()}`;
+      await limitPage.fill('input[name="subject"]', subject);
+      await limitPage.fill('textarea[name="content"]', `Test message body ${i}`);
+
+      await limitPage.click('button[type="submit"]');
+
+      if (i <= 5) {
+        // First 5 should succeed and redirect
+        await expect(limitPage).toHaveURL(/.*\/communication(?:\?.*)?$/);
+        await expect(limitPage.locator('text=' + subject).first()).toBeVisible();
+      } else {
+        // 6th message should fail and remain on the form with an error toast
+        await expect(limitPage).toHaveURL(/.*\/communication\/new/);
+        await expect(limitPage.locator('text=Rate limit exceeded')).toBeVisible();
+      }
+    }
+    await limitContext.close();
   });
 });
