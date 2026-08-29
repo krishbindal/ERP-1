@@ -101,27 +101,31 @@ async function runTests() {
   console.log('--- F. Transient Failure, Retry & H. DLQ ---');
   const { data: failUser } = await supabase.auth.admin.createUser({ email: 'fail@test.com', password: 'password123', email_confirm: true });
   const fId = failUser?.user?.id || 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea999';
-  await supabase.from('profiles').upsert({ id: fId, first_name: 'Fail', last_name: 'Fail' });
+  const { error: profileErr } = await supabase.from('profiles').upsert({ id: fId, first_name: 'Fail', last_name: 'Fail' });
+  if (profileErr) throw profileErr;
   
   // Enroll the fail user so fn_resolve_message_recipients finds them
-  const { data: failStudent } = await supabase.from('students').upsert({
+  const { data: failStudent, error: studentErr } = await supabase.from('students').upsert({
     id: fId, profile_id: fId,
     organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
     branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02',
     admission_number: 'FAIL-001', status: 'ACTIVE'
   }, { onConflict: 'id' }).select('id').single();
+  if (studentErr) throw studentErr;
   const failStudentId = failStudent?.id || fId;
   
   // Enroll in the same class used in Section B (from seed data)
   const activeAYId = 'aaaaaaaa-1111-1111-1111-111111111111';
   
-  await supabase.from('enrollments').upsert({
+  const { error: enrollErr } = await supabase.from('enrollments').upsert({
     student_id: failStudentId,
     academic_year_id: activeAYId,
     class_id: 'aaaaaaaa-2222-2222-2222-222222222222',
     branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02',
+    organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
     status: 'ACTIVE'
   }, { onConflict: 'student_id,academic_year_id' });
+  if (enrollErr) throw enrollErr;
 
   const { data: msgFail } = await supabase.from('communication_messages').insert({
       organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
@@ -160,10 +164,20 @@ async function runTests() {
   strictEqual(ev2.status, 'PENDING', 'Event is PENDING after 1 failure');
   ok(ev2.attempts >= 1, 'Attempts incremented');
   
-  // Verify attempt recorded but NOT successful
-  const { data: failAttempts1 } = await supabase.from('communication_delivery_attempts').select('*').eq('platform_event_id', eventId2);
+  // Find the specific communication_recipients row for the failUser
+  const { data: failRecipRow } = await supabase.from('communication_recipients').select('id, status').eq('message_id', msgFail.id).eq('recipient_id', fId).single();
+  strictEqual(failRecipRow.status, 'FAILED', 'Fail user recipient status should be FAILED');
+  
+  // Verify attempt recorded but NOT successful for the failUser specifically
+  const { data: failAttempts1 } = await supabase.from('communication_delivery_attempts').select('*').eq('platform_event_id', eventId2).eq('recipient_id', failRecipRow.id);
   ok(failAttempts1 && failAttempts1.length > 0, 'Failed delivery attempt recorded');
   ok(failAttempts1[0].success_delivery_timestamp === null, 'Delivery was not successful');
+
+  // Verify the OTHER recipient (guardian) succeeded (Partial failure test)
+  const { data: successRecips } = await supabase.from('communication_recipients').select('id, status').eq('message_id', msgFail.id).neq('recipient_id', fId);
+  if (successRecips && successRecips.length > 0) {
+      strictEqual(successRecips[0].status, 'SENT', 'Other recipient should have succeeded');
+  }
 
   // Fast forward to max attempts for DLQ
   await supabase.from('platform_events').update({
@@ -182,6 +196,10 @@ async function runTests() {
       subject: 'Lease', body: 'Lease', status: 'QUEUED'
   }).select('id').single();
   
+  await supabase.from('communication_message_targets').insert({
+    message_id: msgLease.id, target_type: 'CLASS', target_id: 'aaaaaaaa-2222-2222-2222-222222222222'
+  });
+  
   const { data: evLeaseData } = await supabase.from('platform_events').insert({
     organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
     aggregate_type: 'communication_message', aggregate_id: msgLease.id,
@@ -195,6 +213,8 @@ async function runTests() {
   ok(evLease.status === 'COMPLETED' || evLease.status === 'PENDING', 'Leased event was recovered and processed');
 
   console.log('--- K. Partial Failure ---');
+  // Section F already thoroughly tested partial failure implicitly because of the seed guardian.
+  // We will run this explicit one too by just using the same target.
   const { data: msgPart } = await supabase.from('communication_messages').insert({
       organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
       branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02',
@@ -202,13 +222,9 @@ async function runTests() {
       subject: 'Part', body: 'Part', status: 'QUEUED'
   }).select('id').single();
   
-  const { data: successUser } = await supabase.auth.admin.createUser({ email: 'success.part@test.com', password: 'password123', email_confirm: true });
-  await supabase.from('profiles').insert({ id: successUser.user.id, first_name: 'Success', last_name: 'Part' });
-  
-  await supabase.from('communication_recipients').insert([
-    { message_id: msgPart.id, recipient_id: fId, status: 'QUEUED' }, // Fail user
-    { message_id: msgPart.id, recipient_id: successUser.user.id, status: 'QUEUED' } // Success user
-  ]);
+  await supabase.from('communication_message_targets').insert({
+    message_id: msgPart.id, target_type: 'CLASS', target_id: 'aaaaaaaa-2222-2222-2222-222222222222'
+  });
   
   const { data: evPartData } = await supabase.from('platform_events').insert({
     organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
@@ -221,9 +237,12 @@ async function runTests() {
   const { data: evPart } = await supabase.from('platform_events').select('*').eq('id', evPartData.id).single();
   strictEqual(evPart.status, 'PENDING', 'Partial failure results in PENDING for retry');
   
-  const { data: partAttempts } = await supabase.from('communication_delivery_attempts').select('*').eq('platform_event_id', evPartData.id);
-  const successAttempt = partAttempts.find(a => a.recipient_id === successUser.user.id);
-  const failAttempt = partAttempts.find(a => a.recipient_id === fId);
+  const { data: partAttempts } = await supabase.from('communication_delivery_attempts')
+    .select('*, communication_recipients!inner(recipient_id)')
+    .eq('platform_event_id', evPartData.id);
+  
+  const successAttempt = partAttempts.find(a => a.communication_recipients.recipient_id !== fId);
+  const failAttempt = partAttempts.find(a => a.communication_recipients.recipient_id === fId);
   ok(successAttempt && successAttempt.success_delivery_timestamp !== null, 'Success recipient delivered');
   ok(failAttempt && failAttempt.success_delivery_timestamp === null, 'Fail recipient failed');
 
@@ -234,6 +253,10 @@ async function runTests() {
       sender_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea003',
       subject: 'Idemp', body: 'Idemp', status: 'QUEUED'
   }).select('id').single();
+  
+  await supabase.from('communication_message_targets').insert({
+    message_id: msgIdemp.id, target_type: 'CLASS', target_id: 'aaaaaaaa-2222-2222-2222-222222222222'
+  });
   
   const { data: ev3Data } = await supabase.from('platform_events').insert({
     organization_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01',
