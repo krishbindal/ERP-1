@@ -123,7 +123,25 @@ async function runTests() {
   const eventId2 = evFailData.id;
   
   await invokeWorker('Bearer ' + supabaseKey);
+  // Give the worker a moment to fully process
+  await new Promise(r => setTimeout(r, 2000));
   const { data: ev2 } = await supabase.from('platform_events').select('*').eq('id', eventId2).single();
+  
+  // Section F diagnostics
+  console.log("=== SECTION F DIAGNOSTIC ===");
+  console.log("fId:", fId);
+  console.log("msgFail.id:", msgFail.id);
+  console.log("eventId2:", eventId2);
+  console.log("ev2.status:", ev2.status);
+  console.log("ev2.attempts:", ev2.attempts);
+  const { data: fRecips, error: fRecipErr } = await supabase.from('communication_recipients').select('*').eq('message_id', msgFail.id);
+  console.log("fail recipients:", JSON.stringify(fRecips));
+  console.log("fail recip error:", fRecipErr);
+  const { data: fAttemptsDiag, error: fAttErr } = await supabase.from('communication_delivery_attempts').select('*').eq('platform_event_id', eventId2);
+  console.log("fail attempts:", JSON.stringify(fAttemptsDiag));
+  console.log("fail attempts error:", fAttErr);
+  console.log("=== END SECTION F DIAGNOSTIC ===");
+  
   strictEqual(ev2.status, 'PENDING', 'Event is PENDING after 1 failure');
   strictEqual(ev2.attempts, 1, 'Attempts incremented to 1');
   
