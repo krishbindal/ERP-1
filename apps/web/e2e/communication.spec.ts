@@ -133,10 +133,10 @@ test.describe('Communication End-to-End Workflows', () => {
     expect(recipientData).not.toBeNull();
     expect(recipientData!.length).toBeGreaterThan(0);
     // Verify guardian identity
-    const guardianRecipient = recipientData!.find(r => r.profile_id === 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea004');
+    const guardianRecipient = recipientData!.find(r => r.recipient_id === 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea004');
     expect(guardianRecipient).toBeDefined();
 
-    const { data: attemptData, error: attemptErr } = await adminClient.from('communication_delivery_attempts').select('*').eq('message_id', msgData.id);
+    const { data: attemptData, error: attemptErr } = await adminClient.from('communication_delivery_attempts').select('*').eq('platform_event_id', eventData!.id);
     expect(attemptErr).toBeNull();
     expect(attemptData).not.toBeNull();
     expect(attemptData!.length).toBeGreaterThan(0);

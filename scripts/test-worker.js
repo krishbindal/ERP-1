@@ -282,7 +282,16 @@ async function runTests() {
   const { data: ev3 } = await supabase.from('platform_events').select('*').eq('id', ev3Data.id).single();
   ok(ev3.attempts <= 1, 'Event processed concurrently exactly once');
 
+
+  console.log('--- L. Cleanup ---');
+  await supabase.from('enrollments').delete().eq('id', fId);
+  await supabase.from('student_branch_profiles').delete().eq('id', fId);
+  await supabase.from('students').delete().eq('id', fId);
+  await supabase.from('profiles').delete().eq('id', fId);
+  await supabase.auth.admin.deleteUser(fId);
+
   console.log('Worker Runtime Certification completed successfully.');
+
   console.log('Total assertions passed: ' + assertionsCount);
 }
 
