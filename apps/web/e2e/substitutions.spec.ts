@@ -219,7 +219,7 @@ test.describe('Substitutions Management', () => {
       await expect(page.locator('.bg-orange-50')).toHaveCount(0);
       
       // Wait for server action navigation to settle before manual goto
-      await page.waitForTimeout(1000);
+      await page.waitForLoadState("networkidle");
 
       // ─── FIXTURE CLEANUP: archive prerequisite timetable entries ───
       // Cancel remaining Friday substitution first (if still active)

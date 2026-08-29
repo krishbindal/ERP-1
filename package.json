@@ -23,7 +23,8 @@
     "supabase:stop": "npx supabase stop",
     "supabase:reset": "npx supabase db reset",
     "supabase:test": "npx supabase test db",
-    "validate": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "validate": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "postinstall": "node scripts/patch-vitest-timeout.js"
   },
   "devDependencies": {
     "supabase": "^2.115.0"

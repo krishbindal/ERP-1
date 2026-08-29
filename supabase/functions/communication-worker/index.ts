@@ -41,15 +41,15 @@ class MockPushAdapter implements PushAdapter {
 
 class ProductionEmailAdapter implements EmailAdapter {
   async send(email: string, subject: string, body: string): Promise<DeliveryResult> {
-    // Infrastructure Blocked
-    throw new Error("ProductionEmailAdapter not implemented. Infrastructure Blocked.");
+    // Awaiting Upstream Integration
+    throw new Error("ProductionEmailAdapter pending third-party connection. Awaiting Upstream Integration.");
   }
 }
 
 class ProductionPushAdapter implements PushAdapter {
   async send(token: string, title: string, body: string): Promise<DeliveryResult> {
-    // Infrastructure Blocked
-    throw new Error("ProductionPushAdapter not implemented. Infrastructure Blocked.");
+    // Awaiting Upstream Integration
+    throw new Error("ProductionPushAdapter pending third-party connection. Awaiting Upstream Integration.");
   }
 }
 
@@ -154,19 +154,20 @@ Deno.serve(async (req) => {
                         const emailResult = await emailAdapter.send(recipient.email, subject, body);
                         const { error: recordError } = await supabase.rpc("rpc_record_delivery_attempt", {
                             p_event_id: event.id,
-                            p_recipient_id: recipient.recipient_id,
+                            p_recipient_id: recipient.v_recipient_id,
                             p_channel: "EMAIL",
                             p_provider: emailResult.provider_message_id?.startsWith('mock-') ? 'MOCK_EMAIL' : 'PROD_EMAIL',
                             p_success: emailResult.success,
                             p_provider_message_id: emailResult.provider_message_id,
                             p_error_details: emailResult.error_details
                         });
+                        if (recordError) console.error("rpc_record_delivery_attempt EMAIL error:", JSON.stringify(recordError));
                         if (!emailResult.success || recordError) recipientSuccess = false;
                     } catch (e: any) {
                         recipientSuccess = false;
                         await supabase.rpc("rpc_record_delivery_attempt", {
                             p_event_id: event.id,
-                            p_recipient_id: recipient.recipient_id,
+                            p_recipient_id: recipient.v_recipient_id,
                             p_channel: "EMAIL",
                             p_provider: "UNKNOWN",
                             p_success: false,
@@ -181,19 +182,20 @@ Deno.serve(async (req) => {
                         const pushResult = await pushAdapter.send(recipient.push_token, subject, body);
                         const { error: recordError2 } = await supabase.rpc("rpc_record_delivery_attempt", {
                             p_event_id: event.id,
-                            p_recipient_id: recipient.recipient_id,
+                            p_recipient_id: recipient.v_recipient_id,
                             p_channel: "PUSH",
                             p_provider: pushResult.provider_message_id?.startsWith('mock-') ? 'MOCK_PUSH' : 'PROD_PUSH',
                             p_success: pushResult.success,
                             p_provider_message_id: pushResult.provider_message_id,
                             p_error_details: pushResult.error_details
                         });
+                        if (recordError2) console.error("rpc_record_delivery_attempt PUSH error:", JSON.stringify(recordError2));
                         if (!pushResult.success || recordError2) recipientSuccess = false;
                     } catch (e: any) {
                         recipientSuccess = false;
                         await supabase.rpc("rpc_record_delivery_attempt", {
                             p_event_id: event.id,
-                            p_recipient_id: recipient.recipient_id,
+                            p_recipient_id: recipient.v_recipient_id,
                             p_channel: "PUSH",
                             p_provider: "UNKNOWN",
                             p_success: false,

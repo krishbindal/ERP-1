@@ -18,8 +18,6 @@ jobs:
   validate:
     name: Core Validation & E2E
     runs-on: [self-hosted, linux, x64, schoolos-ci]
-    env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     
     steps:
       - name: Checkout commit
@@ -202,9 +200,9 @@ jobs:
 
       - name: Export Supabase Environment Variables
         run: |
-          API_URL=$(npx supabase status -o env | grep API_URL | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
-          ANON_KEY=$(npx supabase status -o env | grep ANON_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
-          SERVICE_KEY=$(npx supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+          API_URL=$(npx --no-install supabase status -o env | grep API_URL | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+          ANON_KEY=$(npx --no-install supabase status -o env | grep ANON_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+          SERVICE_KEY=$(npx --no-install supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
           
           echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
@@ -231,10 +229,18 @@ jobs:
       - name: Worker Runtime Certification
         run: |
           echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
-          npx supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
-          sleep 5
+          npx --no-install supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
+          echo "Waiting for communication-worker..."
+          for i in {1..15}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:54321/functions/v1/communication-worker || echo "000")
+            if [ "$STATUS" = "405" ] || [ "$STATUS" = "401" ]; then
+              echo "Worker is ready!"
+              break
+            fi
+            echo "Waiting... (Status: $STATUS)"
+            sleep 2
+          done
           node scripts/test-worker.js
-          pkill -f "supabase functions serve" || true
 
       - name: Run Playwright Tests
         env:

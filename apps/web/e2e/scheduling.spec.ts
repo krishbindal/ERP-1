@@ -50,7 +50,7 @@ test.describe('Scheduling Management', () => {
     // 5. Creates a bell schedule
     const uniqueScheduleName = `Test Schedule ${randomUUID()}`;
     await page.getByRole('link', { name: 'Bell Schedules' }).click();
-    await page.waitForTimeout(1000); // Wait for Next.js server navigation to complete
+    await page.waitForLoadState("networkidle"); // Wait for Next.js server navigation to complete
     await page.getByRole('button', { name: 'Create Bell Schedule' }).click();
     await expect(page.getByRole('heading', { name: 'New Bell Schedule' })).toBeVisible();
     
@@ -61,7 +61,7 @@ test.describe('Scheduling Management', () => {
 
     // 6. Creates periods
     await page.getByRole('link', { name: 'Periods' }).click();
-    await page.waitForTimeout(1000); // Wait for Next.js server navigation to complete
+    await page.waitForLoadState("networkidle"); // Wait for Next.js server navigation to complete
     await page.getByRole('button', { name: 'Create Period' }).click();
     await expect(page.getByRole('heading', { name: 'New Period' })).toBeVisible();
     

@@ -8,7 +8,7 @@ let SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SERVICE_ROLE) {
   try {
-    const output = execSync('npx supabase status -o json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
+    const output = execSync('npx --no-install supabase status -o json', { stdio: ['pipe', 'pipe', 'ignore'] }).toString();
     const jsonMatch = output.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const statusJson = JSON.parse(jsonMatch[0]);
@@ -31,7 +31,8 @@ test.describe('Storage Runtime Authorization (Communication)', () => {
     adminClient = createClient(SUPABASE_URL!, SERVICE_ROLE!);
   });
 
-  test('Teacher can upload attachment to their own draft and unauthorized users cannot read', async () => {
+  test('Teacher can upload attachment to their own draft and unauthorized users cannot read', async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
     // 1. Login as Teacher A
     const { data: { user }, error } = await supabase.auth.signInWithPassword({
       email: 'teacher.a1.e2e@test.com',
