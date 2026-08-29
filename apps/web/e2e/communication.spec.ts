@@ -95,8 +95,7 @@ test.describe('Communication End-to-End Workflows', () => {
       throw new Error('SUPABASE_SERVICE_ROLE_KEY is required for worker invocation');
     }
     
-    const apiContext = await request.newContext();
-    const workerRes = await apiContext.post(`${supabaseUrl}/functions/v1/communication-worker`, {
+    const workerRes = await request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
       headers: { 'Authorization': `Bearer ${serviceKey}` }
     });
     
@@ -113,24 +112,27 @@ test.describe('Communication End-to-End Workflows', () => {
 
     const { data: targetData, error: targetErr } = await adminClient.from('communication_message_targets').select('*').eq('message_id', msgData.id);
     expect(targetErr).toBeNull();
-    expect(targetData.length).toBeGreaterThan(0);
+    expect(targetData).not.toBeNull();
+    expect(targetData!.length).toBeGreaterThan(0);
 
     const { data: eventData, error: eventErr } = await adminClient.from('platform_events').select('*').eq('aggregate_id', msgData.id).single();
     expect(eventErr).toBeNull();
     expect(eventData).toBeDefined();
-    expect(eventData.status).toBe('COMPLETED');
+    expect(eventData!.status).toBe('COMPLETED');
     
     const { data: recipientData, error: recipientErr } = await adminClient.from('communication_recipients').select('*').eq('message_id', msgData.id);
     expect(recipientErr).toBeNull();
-    expect(recipientData.length).toBeGreaterThan(0);
+    expect(recipientData).not.toBeNull();
+    expect(recipientData!.length).toBeGreaterThan(0);
     // Verify guardian identity
-    const guardianRecipient = recipientData.find(r => r.profile_id === 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea004');
+    const guardianRecipient = recipientData!.find(r => r.profile_id === 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea004');
     expect(guardianRecipient).toBeDefined();
 
     const { data: attemptData, error: attemptErr } = await adminClient.from('communication_delivery_attempts').select('*').eq('message_id', msgData.id);
     expect(attemptErr).toBeNull();
-    expect(attemptData.length).toBeGreaterThan(0);
-    expect(attemptData[0].success_delivery_timestamp).not.toBeNull();
+    expect(attemptData).not.toBeNull();
+    expect(attemptData!.length).toBeGreaterThan(0);
+    expect(attemptData![0].success_delivery_timestamp).not.toBeNull();
 
     // Now guardian views the message
     const guardianContext = await browser.newContext({ storageState: 'playwright/.auth/guardian.json' });
