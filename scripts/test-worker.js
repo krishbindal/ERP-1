@@ -112,13 +112,12 @@ async function runTests() {
   }, { onConflict: 'id' }).select('id').single();
   const failStudentId = failStudent?.id || fId;
   
-  // Get the active academic year  
-  const { data: activeAY } = await supabase.from('academic_years').select('id').eq('status', 'ACTIVE').limit(1).single();
+  // Enroll in the same class used in Section B (from seed data)
+  const activeAYId = 'aaaaaaaa-1111-1111-1111-111111111111';
   
-  // Enroll in the same class used in Section B
   await supabase.from('enrollments').upsert({
     student_id: failStudentId,
-    academic_year_id: activeAY.id,
+    academic_year_id: activeAYId,
     class_id: 'aaaaaaaa-2222-2222-2222-222222222222',
     branch_id: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02',
     status: 'ACTIVE'
