@@ -246,14 +246,16 @@ INSERT INTO auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, confirmation_token, recovery_token, email_change_token_new, email_change, is_super_admin, is_sso_user
 ) VALUES 
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'teacher2.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'teacher.limit.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false)
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'teacher.limit.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'reset.user@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO auth.identities (
   id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
 ) VALUES
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', 'teacher2.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', 'teacher2.e2e@test.com')::jsonb, 'email', now(), now(), now()),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'teacher.limit.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'teacher.limit.e2e@test.com')::jsonb, 'email', now(), now(), now())
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'teacher.limit.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'teacher.limit.e2e@test.com')::jsonb, 'email', now(), now(), now()),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'reset.user@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'reset.user@test.com')::jsonb, 'email', now(), now(), now())
 ON CONFLICT (provider_id, provider) DO NOTHING;
 
 INSERT INTO public.profiles (id, first_name, last_name)
@@ -262,6 +264,8 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO public.profiles (id, first_name, last_name)
 SELECT id, 'Teacher', 'Limit' FROM auth.users WHERE email = 'teacher.limit.e2e@test.com'
+UNION ALL
+SELECT id, 'Reset', 'User' FROM auth.users WHERE email = 'reset.user@test.com'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.staff (id, organization_id, profile_id, first_name, last_name)
@@ -301,3 +305,9 @@ FROM public.staff_branch_profiles sbp
 WHERE sbp.staff_id IN ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb22', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec22')
 ON CONFLICT DO NOTHING;
 COMMIT;
+
+
+-- Add user_credentials for reset user
+INSERT INTO public.user_credentials (id, username, profile_id, role_id, branch_id, force_password_reset) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'resetuser', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', true) ON CONFLICT DO NOTHING;
+INSERT INTO public.branch_memberships (id, branch_id, user_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04') ON CONFLICT DO NOTHING;
+INSERT INTO public.user_role_assignments (id, branch_membership_id, role_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31') ON CONFLICT DO NOTHING;
