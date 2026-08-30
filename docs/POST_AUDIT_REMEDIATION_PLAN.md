@@ -7,14 +7,18 @@
 - **Dependencies:** None.
 - **Fix:** Add server action and middleware checks to redirect to /auth/update-password if flag is true.
 - **Test Strategy:** E2E auth test for first login flow.
+- **Migration Strategy:** None.
+- **Rollback Considerations:** None.
 
 ## P1 (Foundational Architecture / Prerequisite / Certification Gap)
-**2. Identifier Engine**
+**2. Identifier Engine / Business Identifier Generation**
 - **Problem:** Missing central, safe, sequence-based ID generation for business IDs.
-- **Impact:** Phase 6 (Exams) and 7 (Finance) require robust business ID generation.
+- **Impact:** Phase 6 (Exams) and 7 (Finance) require robust business ID generation. UUIDs alone are insufficient.
 - **Dependencies:** None.
 - **Fix:** Create identifier_engine schema and RPCs for transaction-safe ID generation.
 - **Test Strategy:** Concurrent load testing of sequence generator.
+- **Migration Strategy:** Migrate dmission_number.
+- **Rollback Considerations:** Back up DB.
 
 **3. Attendance & Homework E2E Coverage**
 - **Problem:** ttendance.spec.ts and homework.spec.ts do not exist.
@@ -22,6 +26,8 @@
 - **Dependencies:** None.
 - **Fix:** Implement Playwright tests mirroring existing specs.
 - **Test Strategy:** CI run.
+- **Migration Strategy:** None.
+- **Rollback Considerations:** None.
 
 ## P2 & P3 (Quality / Capabilities)
 - Audit Logging UI, Bulk Import, Duplicate Detection, Bulk Operations, Action Center, Universal Search, Onboarding, Backup/DR, Observability, Branch App Factory.
