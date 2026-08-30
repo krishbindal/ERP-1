@@ -1,4 +1,4 @@
-\set ON_ERROR_STOP on
+BEGIN;
 -- E2E Auth Users
 INSERT INTO auth.users (
   id,
@@ -300,3 +300,4 @@ SELECT 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-11111111
 FROM public.staff_branch_profiles sbp 
 WHERE sbp.staff_id IN ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb22', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec22')
 ON CONFLICT DO NOTHING;
+COMMIT;
