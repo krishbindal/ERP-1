@@ -14,24 +14,43 @@ export default function LoginPage() {
       <form
         onSubmit={async (e) => {
           e.preventDefault();
+          console.log("Submitting form...");
           const email = (e.currentTarget.elements.namedItem("email") as HTMLInputElement).value;
           const password = (e.currentTarget.elements.namedItem("password") as HTMLInputElement).value;
           const supabase = createClient();
-          const { error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) {
-            setError(error.message);
+          
+          let authError = null;
+          for (let i = 0; i < 3; i++) {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (!error) {
+              authError = null;
+              break;
+            }
+            authError = error;
+            if (error.message === 'Failed to fetch') {
+              console.warn(`signInWithPassword failed to fetch, retrying ${i + 1}/3...`);
+              await new Promise(r => setTimeout(r, 1000));
+            } else {
+              break;
+            }
+          }
+
+          if (authError) {
+            setError(authError.message);
           } else {
-            router.push("/");
+            console.log("LOGIN SUCCESS! Navigating...");
+            router.refresh();
+            router.replace("/");
           }
         }}
       >
         <div className="mb-4">
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" id="email" aria-label="Email" className="mt-1 p-2 w-full border rounded" />
+          <input type="email" id="email" name="email" aria-label="Email" className="mt-1 p-2 w-full border rounded" />
         </div>
         <div className="mb-4">
           <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-          <input type="password" id="password" aria-label="Password" className="mt-1 p-2 w-full border rounded" />
+          <input type="password" id="password" name="password" aria-label="Password" className="mt-1 p-2 w-full border rounded" />
         </div>
         <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">Sign in</button>
       </form>

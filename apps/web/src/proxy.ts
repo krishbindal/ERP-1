@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+  console.log("PROXY CALLED:", request.nextUrl.pathname);
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -54,11 +55,13 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
 
   const isLoginRoute = request.nextUrl.pathname.startsWith('/login');
   const isAuthUpdateRoute = request.nextUrl.pathname.startsWith('/auth/update-password');
   const isAuthActionRoute = request.nextUrl.pathname.startsWith('/auth');
+
+  console.log("PROXY CHECK USER:", { user: !!user, error, path: request.nextUrl.pathname, cookies: request.cookies.getAll().map(c => c.name) });
 
   if (!user && !isLoginRoute && !isAuthActionRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
