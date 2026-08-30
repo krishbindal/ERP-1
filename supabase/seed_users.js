@@ -43,10 +43,14 @@ async function main() {
     });
     if (error) {
       console.error('Error creating user', u.email, error.message);
+      process.exit(1);
     } else {
       console.log('Created user', u.email, data.user.id);
     }
   }
 }
 
-main().catch(console.error);
+main().catch(err => {
+  console.error("Failed to seed users:", err);
+  process.exit(1);
+});

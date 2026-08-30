@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP on
 -- E2E Auth Users
 INSERT INTO auth.users (
   id,
