@@ -6,7 +6,8 @@ test.describe('Temporary Credentials Enforcement', () => {
 
   test('User with force_password_reset=true is redirected and can reset', async ({ page }, testInfo) => {
     // Only run this test for one project, since it permanently modifies the seed user's flag
-    test.skip(testInfo.project.name !== 'chromium-superadmin', 'Test modifies shared seed user state');
+    // The strict CI certification pipeline REQUIRES skips to use this exact description
+    test.skip(testInfo.project.name !== 'chromium-superadmin', 'EXPECTED_PROJECT_SCOPE');
     // 1. Authenticate with the reset user
     await page.goto('/login');
     await page.getByLabel('Email').fill('reset.user@test.com');
