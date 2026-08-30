@@ -4,7 +4,9 @@ test.describe('Temporary Credentials Enforcement', () => {
   // Use a clean context for authentication tests to avoid state bleed
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('User with force_password_reset=true is redirected and can reset', async ({ page }) => {
+  test('User with force_password_reset=true is redirected and can reset', async ({ page }, testInfo) => {
+    // Only run this test for one project, since it permanently modifies the seed user's flag
+    test.skip(testInfo.project.name !== 'chromium-superadmin', 'Test modifies shared seed user state');
     // 1. Authenticate with the reset user
     await page.goto('/login');
     await page.getByLabel('Email').fill('reset.user@test.com');
