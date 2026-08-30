@@ -1,36 +1,31 @@
 # Post-Audit Remediation Plan
 
-## P0 (Security / Data Loss)
+## P0 (Critical Security / Immediate Risk)
 **1. Temporary Credentials Enforcement**
 - **Problem:** DB flag orce_password_reset exists, but backend/middleware does not enforce password change on first login.
-- **Impact:** Temporary passwords might remain in use, violating the security specification.
+- **Impact:** Immediate risk to user credentials.
 - **Dependencies:** None.
 - **Fix:** Add server action and middleware checks to redirect to /auth/update-password if flag is true.
 - **Test Strategy:** E2E auth test for first login flow.
 
-## P1 (Foundational Architecture / Missing Certification)
+## P1 (Foundational Architecture / Prerequisite / Certification Gap)
 **2. Identifier Engine**
-- **Problem:** Missing central, safe, sequence-based ID generation for business IDs. Currently dmission_number is manual/client-provided.
-- **Impact:** Phase 6 (Exams) and 7 (Finance) require robust ID generation.
+- **Problem:** Missing central, safe, sequence-based ID generation for business IDs.
+- **Impact:** Phase 6 (Exams) and 7 (Finance) require robust business ID generation.
 - **Dependencies:** None.
-- **Fix:** Create identifier_engine schema and RPCs for transaction-safe ID generation. Migrate dmission_number to use it.
+- **Fix:** Create identifier_engine schema and RPCs for transaction-safe ID generation.
 - **Test Strategy:** Concurrent load testing of sequence generator.
 
 **3. Attendance & Homework E2E Coverage**
 - **Problem:** ttendance.spec.ts and homework.spec.ts do not exist.
-- **Impact:** Regressions in core Phase 5 features cannot be detected by CI.
+- **Impact:** Missing critical certification coverage as required by Definition of Done.
 - **Dependencies:** None.
-- **Fix:** Implement Playwright tests mirroring existing communication.spec.ts.
+- **Fix:** Implement Playwright tests mirroring existing specs.
 - **Test Strategy:** CI run.
 
-## P2 (Quality / Maintainability)
-**4. Audit Logging UI**
-- **Problem:** History tables exist, but no centralized UI component for viewing business history.
-- **Fix:** Implement a generic HistoryTimeline component.
-
-## P3 (Enhancements)
-**5. Action Center & Onboarding Framework**
-- Deferred for now.
+## P2 & P3 (Quality / Capabilities)
+- Audit Logging UI, Bulk Import, Duplicate Detection, Bulk Operations, Action Center, Universal Search, Onboarding, Backup/DR, Observability, Branch App Factory.
+- Action: Deferred to later phases.
 
 ---
 
