@@ -69,7 +69,8 @@ export async function proxy(request: NextRequest) {
 
   if (user) {
     // If logged in, check if password reset is required
-    const { data: requiresReset } = await supabase.rpc('requires_password_reset');
+    const { data: requiresReset, error: rpcError } = await supabase.rpc('requires_password_reset');
+    console.log("PROXY RPC requires_password_reset:", { requiresReset, rpcError, userId: user.id, path: request.nextUrl.pathname });
     
     if (requiresReset) {
       if (!isAuthUpdateRoute && !request.nextUrl.pathname.startsWith('/auth/logout')) {
