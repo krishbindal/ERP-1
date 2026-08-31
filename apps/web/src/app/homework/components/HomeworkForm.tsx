@@ -58,7 +58,8 @@ export function HomeworkForm({
 
     setLoading(false);
     if (result.success) {
-      router.push(`/homework/${initialData?.id || result.data?.id}?branchId=${branchId}`);
+      const assignmentId = initialData?.id || (result.data as any)?.id;
+      router.push(`/homework/${assignmentId}?branchId=${branchId}`);
     } else {
       setError(result.error || 'Failed to save assignment');
     }

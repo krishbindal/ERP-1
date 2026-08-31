@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
-import { HomeworkForm } from '../components/HomeworkForm';
+import { HomeworkForm } from '../../components/HomeworkForm';
 
 export default async function EditHomeworkPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ branchId?: string }> }) {
   const params = await props.params;
