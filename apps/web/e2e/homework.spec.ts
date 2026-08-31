@@ -79,15 +79,16 @@ test.describe('Homework E2E - Phase 5', () => {
       await page.goto('/homework/bbbbbbbb-5555-5555-5555-555555555555');
       
       // Wait for it to load
-      await expect(page.locator('text=Status:')).toBeVisible();
+      await expect(page.locator('text=Due Date:')).toBeVisible();
       
       // Fill out comment and submit
       const commentBox = page.locator('textarea');
-      if (await commentBox.isVisible()) {
-        await commentBox.fill('Here is my submission comment.');
-        await page.click('button:has-text("Submit Homework")');
-        await expect(page.locator('text=SUBMITTED').first()).toBeVisible();
-      }
+      // In playwright tests running repeatedly without dropping the DB properly per test, it might already be submitted. So check if the submit button exists instead of just the textarea.
+      // But actually, we do wipe the DB. So it will be unsubmitted.
+      await expect(commentBox).toBeVisible();
+      await commentBox.fill('Here is my submission comment.');
+      await page.click('button:has-text("Submit Homework")');
+      await expect(page.locator('text=SUBMITTED').first()).toBeVisible();
     }
   });
 });
