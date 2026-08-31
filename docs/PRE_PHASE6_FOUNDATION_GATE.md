@@ -8,8 +8,8 @@
 - **Guardians**: IMPLEMENTED (Evidence: Guardian linking and relationships built)
 - **Staff**: IMPLEMENTED (Evidence: Teacher subject assignments built)
 - **Scheduling**: IMPLEMENTED (Evidence: Timetable, substitution UI, and backend built)
-- **Attendance**: PARTIAL (Evidence: DB and UI built, but Playwright E2E is missing as required by DoD)
-- **Homework**: PARTIAL (Evidence: DB and UI built, but Playwright E2E is missing as required by DoD)
+- **Attendance**: BROKEN (Evidence: DB/Backend built, but Web UI and Playwright E2E are missing)
+- **Homework**: BROKEN (Evidence: DB/Backend built, but Web UI and Playwright E2E are missing)
 - **Communication**: IMPLEMENTED (Evidence: Worker and E2E built)
 
 ## Pre-Phase-6 Cross-Cutting Capabilities Gate

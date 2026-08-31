@@ -70,7 +70,7 @@
 | REQ-066 | BUSINESS_RULES | Student | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
 | REQ-067 | BUSINESS_RULES | Academic year | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-068 | BUSINESS_RULES | Scheduling | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-069 | BUSINESS_RULES | Attendance | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
+| REQ-069 | BUSINESS_RULES | Attendance | 05_BUSINESS_RULES.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
 | REQ-070 | BUSINESS_RULES | Exams | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-071 | BUSINESS_RULES | Finance | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-072 | BUSINESS_RULES | Notifications | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
@@ -372,48 +372,48 @@
 | REQ-368 | STUDENTS_GUARDI... | Critical acceptance | 02_STUDENTS_GUARDIANS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
 | REQ-369 | ACADEMICS | Critical acceptance | 03_ACADEMICS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-370 | SCHEDULING | Critical acceptance | 04_SCHEDULING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-371 | ATTENDANCE | 1. Module | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-372 | ATTENDANCE | 2. Actors | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-373 | ATTENDANCE | 3. Scope | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-374 | ATTENDANCE | 4. Entities | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-375 | ATTENDANCE | 5. Business rules | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-376 | ATTENDANCE | 6. Database | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-377 | ATTENDANCE | Tables & Fields | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-378 | ATTENDANCE | Constraints | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-379 | ATTENDANCE | Indexes | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-380 | ATTENDANCE | Migration / Archive | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-381 | ATTENDANCE | 7. Security | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-382 | ATTENDANCE | 8. APIs | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-383 | ATTENDANCE | Lifecycle / State Machine | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-384 | ATTENDANCE | Concurrency and Transactions | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-385 | ATTENDANCE | Operations | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-386 | ATTENDANCE | 9. Screens | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-387 | ATTENDANCE | 10. Notifications | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-388 | ATTENDANCE | 11. Files | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-389 | ATTENDANCE | 12. Reports | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-390 | ATTENDANCE | 13. Imports/exports | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-391 | ATTENDANCE | 14. Tests | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-392 | ATTENDANCE | 15. Definition of done | 05_ATTENDANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-393 | HOMEWORK_LEARNI... | 1. Domain Model | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-394 | HOMEWORK_LEARNI... | Core Entities | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-395 | HOMEWORK_LEARNI... | Dependency Relationships | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-396 | HOMEWORK_LEARNI... | 2. Database Schema | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-397 | HOMEWORK_LEARNI... | `homework_assignments` | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-398 | HOMEWORK_LEARNI... | `homework_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-399 | HOMEWORK_LEARNI... | `homework_submissions` | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-400 | HOMEWORK_LEARNI... | `submission_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-401 | HOMEWORK_LEARNI... | `homework_audit_logs` | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-402 | HOMEWORK_LEARNI... | 3. Assignment Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-403 | HOMEWORK_LEARNI... | 4. Submission Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-404 | HOMEWORK_LEARNI... | 5. Authorization/RLS | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-405 | HOMEWORK_LEARNI... | 6. Teacher Authorization | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-406 | HOMEWORK_LEARNI... | 7. Storage Security Design | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-407 | HOMEWORK_LEARNI... | 8. API/RPC Contract | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-408 | HOMEWORK_LEARNI... | 9. Notifications (EventBus) | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-409 | HOMEWORK_LEARNI... | 10. Concurrency (Deterministic OCC) | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-410 | HOMEWORK_LEARNI... | 11. Performance | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-411 | HOMEWORK_LEARNI... | 12. Test Matrix | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
-| REQ-412 | HOMEWORK_LEARNI... | Consistency Audit | 06_HOMEWORK_LEARNING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD | P1 | Implement E2E test |
+| REQ-371 | ATTENDANCE | 1. Module | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-372 | ATTENDANCE | 2. Actors | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-373 | ATTENDANCE | 3. Scope | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-374 | ATTENDANCE | 4. Entities | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-375 | ATTENDANCE | 5. Business rules | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-376 | ATTENDANCE | 6. Database | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-377 | ATTENDANCE | Tables & Fields | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-378 | ATTENDANCE | Constraints | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-379 | ATTENDANCE | Indexes | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-380 | ATTENDANCE | Migration / Archive | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-381 | ATTENDANCE | 7. Security | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-382 | ATTENDANCE | 8. APIs | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-383 | ATTENDANCE | Lifecycle / State Machine | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-384 | ATTENDANCE | Concurrency and Transactions | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-385 | ATTENDANCE | Operations | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-386 | ATTENDANCE | 9. Screens | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-387 | ATTENDANCE | 10. Notifications | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-388 | ATTENDANCE | 11. Files | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-389 | ATTENDANCE | 12. Reports | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-390 | ATTENDANCE | 13. Imports/exports | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-391 | ATTENDANCE | 14. Tests | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-392 | ATTENDANCE | 15. Definition of done | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-393 | HOMEWORK_LEARNI... | 1. Domain Model | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-394 | HOMEWORK_LEARNI... | Core Entities | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-395 | HOMEWORK_LEARNI... | Dependency Relationships | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-396 | HOMEWORK_LEARNI... | 2. Database Schema | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-397 | HOMEWORK_LEARNI... | `homework_assignments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-398 | HOMEWORK_LEARNI... | `homework_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-399 | HOMEWORK_LEARNI... | `homework_submissions` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-400 | HOMEWORK_LEARNI... | `submission_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-401 | HOMEWORK_LEARNI... | `homework_audit_logs` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-402 | HOMEWORK_LEARNI... | 3. Assignment Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-403 | HOMEWORK_LEARNI... | 4. Submission Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-404 | HOMEWORK_LEARNI... | 5. Authorization/RLS | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-405 | HOMEWORK_LEARNI... | 6. Teacher Authorization | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-406 | HOMEWORK_LEARNI... | 7. Storage Security Design | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-407 | HOMEWORK_LEARNI... | 8. API/RPC Contract | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-408 | HOMEWORK_LEARNI... | 9. Notifications (EventBus) | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-409 | HOMEWORK_LEARNI... | 10. Concurrency (Deterministic OCC) | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-410 | HOMEWORK_LEARNI... | 11. Performance | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-411 | HOMEWORK_LEARNI... | 12. Test Matrix | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
+| REQ-412 | HOMEWORK_LEARNI... | Consistency Audit | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | BROKEN | Missing Web UI and E2E | P1 | Implement Web UI and E2E test |
 | REQ-413 | ADMISSIONS | Critical acceptance | 07_ADMISSIONS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-414 | EXAMS_RESULTS | Critical acceptance | 08_EXAMS_RESULTS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-415 | FEES_FINANCE | Critical acceptance | 09_FEES_FINANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |

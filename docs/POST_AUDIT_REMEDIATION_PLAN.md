@@ -20,11 +20,11 @@
 - **Migration Strategy:** Migrate dmission_number.
 - **Rollback Considerations:** Back up DB.
 
-**3. Attendance & Homework E2E Coverage**
+**3. Attendance & Homework Web UI + E2E Coverage**
 - **Problem:** ttendance.spec.ts and homework.spec.ts do not exist.
-- **Impact:** Missing critical certification coverage as required by Definition of Done.
+- **Impact:** Missing critical UI functionality required for Phase 5, and missing certification coverage as required by Definition of Done.
 - **Dependencies:** None.
-- **Fix:** Implement Playwright tests mirroring existing specs.
+- **Fix:** Implement the missing Web UI screens (Dashboard, Roster, forms) for Attendance and Homework, and then implement Playwright tests mirroring existing specs.
 - **Test Strategy:** CI run.
 - **Migration Strategy:** None.
 - **Rollback Considerations:** None.
@@ -40,7 +40,7 @@ Phase 6 (Assessments & Grading)
 
 ### NEXT 10 TASKS (EXPECTED ORDER)
 1. Add ttendance.spec.ts to achieve 100% Phase 5 E2E coverage.
-2. Add homework.spec.ts to achieve 100% Phase 5 E2E coverage.
+2. Implement the Homework Web UI and add homework.spec.ts to achieve 100% Phase 5 coverage.
 3. Implement orce_password_reset middleware enforcement (P0).
 4. Create /auth/update-password UI and backend action (P0).
 5. Design and implement identifier_engine schema/functions (P1).
