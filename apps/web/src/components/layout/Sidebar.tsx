@@ -51,6 +51,12 @@ export function Sidebar() {
               Attendance
             </Link>
           </li>
+          <li>
+            <Link href="/homework" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-800 text-sm font-medium">
+              <BookOpen size={18} />
+              Homework
+            </Link>
+          </li>
         </ul>
       </nav>
       <div className="p-4 border-t border-gray-800 flex items-center justify-between">

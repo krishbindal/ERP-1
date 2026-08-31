@@ -361,3 +361,9 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.attendance_records (session_id, student_id, status, notes)
 VALUES ('aaaaaaaa-4444-4444-4444-444444444444', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51', 'ABSENT', 'Sick')
 ON CONFLICT DO NOTHING;
+
+-- Seed homework assignment for Student test
+INSERT INTO public.homework_assignments (id, branch_id, academic_year_id, class_id, section_id, subject_id, author_profile_id, title, description, issue_at, due_at, max_marks, status, created_by, updated_by)
+VALUES ('bbbbbbbb-5555-5555-5555-555555555555', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-2222-2222-2222-222222222222', 'aaaaaaaa-3333-3333-3333-333333333333', 'aaaaaaaa-6666-6666-6666-666666666666', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea002', 'E2E Seeded Homework', 'Please complete the assignment.', '2026-08-01', '2026-08-30', 100, 'PUBLISHED', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea002', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea002')
+ON CONFLICT DO NOTHING;
+
