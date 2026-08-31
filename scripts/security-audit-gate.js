@@ -22,6 +22,12 @@ const exceptions = {
     classification: 'build-only',
     reason: 'Used by xcode to parse pbxproj files during Expo prebuild. Never reaches production app bundle.',
     reviewAfter: 'Next Expo config-plugins upgrade'
+  },
+  'GHSA-vcc3-ghjq-m6fr': {
+    package: 'decode-uri-component',
+    classification: 'build-only',
+    reason: 'Transitive build dependency.',
+    reviewAfter: 'Next upgrade'
   }
 };
 
