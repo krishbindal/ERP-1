@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
@@ -21,7 +22,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     return <BranchAccessError errorState="ACCESS_DENIED" feature="attendance" />;
   }
 
-  const isAdmin = context.roles.includes('branchadmin') || context.roles.includes('superadmin');
+  const isAdmin = context.roles.includes('branchadmin') || context.roles.includes('superadmin'); const isTeacher = context.roles.includes('teacher'); if (!isAdmin && !isTeacher) return <BranchAccessError errorState="ACCESS_DENIED" feature="attendance entry" />;
   
   // 1. Fetch current academic year
   const { data: years, error: yrErr } = await supabase
@@ -56,7 +57,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     // 3a. Fetch Enrollments
     const { data: enrollments, error: enrErr } = await supabase
       .from('enrollments')
-      .select('roll_number, students(id, first_name, last_name)')
+      .select('roll_number, students!enrollments_student_id_fkey(id, first_name, last_name)')
       .eq('section_id', sectionId)
       .eq('status', 'ACTIVE')
       .order('roll_number', { ascending: true });
@@ -107,3 +108,4 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     </div>
   );
 }
+

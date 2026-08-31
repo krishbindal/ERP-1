@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
@@ -18,7 +19,8 @@ export default async function AttendanceHistoryPage(props: { searchParams: Promi
     return <BranchAccessError errorState="ACCESS_DENIED" feature="attendance history" />;
   }
 
-  const isParent = context.roles.includes('parent');
+
+    const isParent = context.roles.includes('parent') || context.roles.includes('guardian');
   const isStudent = context.roles.includes('student');
 
   if (!isParent && !isStudent) {
@@ -34,11 +36,11 @@ export default async function AttendanceHistoryPage(props: { searchParams: Promi
   let studentIds: string[] = [];
   if (isStudent) {
     // A student can only see themselves
-    const { data: profile } = await supabase.from('students').select('id').eq('user_id', context.userId).single();
+    const { data: profile } = await supabase.from('students').select('id').eq('profile_id', context.userId).single();
     if (profile) studentIds.push(profile.id);
   } else if (isParent) {
     // A parent can see their children
-    const { data: profile } = await supabase.from('guardians').select('id').eq('user_id', context.userId).single();
+    const { data: profile } = await supabase.from('guardians').select('id').eq('profile_id', context.userId).single();
     if (profile) {
       const { data: children } = await supabase.from('student_guardians').select('student_id').eq('guardian_id', profile.id);
       if (children) studentIds = children.map(c => c.student_id);
@@ -115,3 +117,6 @@ export default async function AttendanceHistoryPage(props: { searchParams: Promi
     </div>
   );
 }
+
+
+

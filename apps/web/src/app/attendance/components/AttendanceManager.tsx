@@ -146,6 +146,7 @@ export function AttendanceManager({
       setMessage({ text: res.error, type: 'error' });
     } else {
       setMessage({ text: 'Attendance corrected successfully.', type: 'success' });
+      setRecords(prev => ({ ...prev, [correctingStudentId]: correctionStatus }));
       setCorrectingStudentId(null);
       setCorrectionReason('');
       startTransition(() => router.refresh());
@@ -175,12 +176,13 @@ export function AttendanceManager({
         <div>
           <label className="block text-sm font-medium text-gray-700">Section</label>
           <select 
+            aria-label="Section"
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
             value={selectedSectionId || ''}
             onChange={handleSectionChange}
-            aria-label="Section"
+            disabled={isPending}
           >
-            <option value="">Select Section...</option>
+            <option value="">Select Section</option>
             {sections.map(s => (
               <option key={s.id} value={s.id}>{s.classes?.name} - {s.name}</option>
             ))}

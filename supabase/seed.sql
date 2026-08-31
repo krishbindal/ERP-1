@@ -311,3 +311,53 @@ COMMIT;
 INSERT INTO public.user_credentials (id, username, profile_id, role_id, branch_id, force_password_reset) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'resetuser', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', true) ON CONFLICT DO NOTHING;
 INSERT INTO public.branch_memberships (id, branch_id, user_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04') ON CONFLICT DO NOTHING;
 INSERT INTO public.user_role_assignments (id, branch_membership_id, role_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31') ON CONFLICT DO NOTHING;
+
+-- Fix missing role permissions for attendance
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31', id FROM public.permissions WHERE name IN ('attendance.session.read', 'attendance.session.manage')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.role_permissions (role_id, permission_id)
+SELECT 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee30', id FROM public.permissions WHERE name IN ('attendance.session.read', 'attendance.session.manage', 'attendance.session.publish', 'attendance.session.correct')
+ON CONFLICT DO NOTHING;
+
+-- Fix Teacher RLS locking bug
+ALTER POLICY "Staff can update attendance_sessions" ON public.attendance_sessions
+USING (
+    public.auth_user_has_branch_permission(branch_id, 'attendance.session.manage') AND
+    (locked_at IS NULL OR public.auth_user_has_branch_permission(branch_id, 'attendance.session.publish') OR public.auth_user_has_branch_permission(branch_id, 'attendance.session.correct'))
+)
+WITH CHECK (
+    public.auth_user_has_branch_permission(branch_id, 'attendance.session.manage')
+);
+
+
+
+-- Give guardian an organization membership (required for roles RLS)
+INSERT INTO public.organization_memberships (organization_id, user_id)
+SELECT 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', id FROM auth.users WHERE email = 'guardian.e2e@test.com'
+ON CONFLICT DO NOTHING;
+
+-- Give guardian a branch membership
+INSERT INTO public.branch_memberships (id, branch_id, user_id)
+SELECT 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee44', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', id FROM auth.users WHERE email = 'guardian.e2e@test.com'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.roles (id, organization_id, name) VALUES 
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee32', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', 'guardian') ON CONFLICT DO NOTHING;
+
+INSERT INTO public.user_role_assignments (branch_membership_id, role_id)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee44', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee32')
+ON CONFLICT DO NOTHING;
+
+
+
+
+-- Seed attendance session for Guardian test
+INSERT INTO public.attendance_sessions (id, branch_id, section_id, academic_year_id, date, locked_at, published_at, published_by)
+VALUES ('00000000-0000-0000-0000-000000000000', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-3333-3333-3333-333333333333', 'aaaaaaaa-1111-1111-1111-111111111111', '2026-08-10', now(), now(), 'eeeeeeee-eeee-eeee-eeee-eeeeeeeea002')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.attendance_records (session_id, student_id, status, notes)
+VALUES ('00000000-0000-0000-0000-000000000000', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51', 'ABSENT', 'Sick')
+ON CONFLICT DO NOTHING;

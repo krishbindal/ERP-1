@@ -1,6 +1,6 @@
 import { createClient } from './supabase/server';
 
-export type UserRole = 'superadmin' | 'branchadmin' | 'teacher' | 'parent' | 'student' | 'unknown';
+export type UserRole = 'superadmin' | 'branchadmin' | 'teacher' | 'parent' | 'guardian' | 'student' | 'unknown';
 
 export interface NormalUserContext {
   type: 'normal';
@@ -88,7 +88,7 @@ export async function getAppContext(): Promise<AppContext | null> {
       const rawName = Array.isArray(rolesRaw) ? rolesRaw[0]?.name : rolesRaw.name;
       if (!rawName) return null;
       const normalized = String(rawName).toLowerCase().replace(/\s/g, '');
-      if (['superadmin', 'branchadmin', 'teacher', 'parent', 'student'].includes(normalized)) {
+      if (['superadmin', 'branchadmin', 'teacher', 'parent', 'student', 'guardian'].includes(normalized)) {
         return normalized as UserRole;
       }
       return 'unknown' as UserRole;
@@ -222,3 +222,5 @@ export async function verifyPageBranchContext(explicitBranchId: string | undefin
 
   return { branchId: null, isAuthorized: false, isReadOnly: true, errorState: 'ACCESS_DENIED' };
 }
+
+

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { execSync } from 'child_process';
+
 
 test.describe('Attendance Management', () => {
 
@@ -8,21 +8,32 @@ test.describe('Attendance Management', () => {
       test.skip(testInfo.project.name !== 'chromium-teacher', 'EXPECTED_ROLE_SCOPE');
     });
 
-    test('Teacher can mark, save, and lock attendance', async ({ page }) => {
-      const targetDate = '2026-08-25';
+    test('Teacher can mark, save, and lock attendance', async ({ page }, testInfo) => {
+      const projectNames = ['chromium-superadmin', 'chromium-branchadmin', 'chromium-teacher', 'chromium-guardian', 'chromium-teacher2', 'chromium-limit', 'mobile-chrome-superadmin', 'mobile-chrome-branchadmin', 'mobile-chrome-teacher', 'webkit-superadmin', 'webkit-branchadmin', 'webkit-teacher', 'mobile-safari-superadmin'];
+      const pIdx = Math.max(0, projectNames.indexOf(testInfo.project.name));
+      const testIdx = testInfo.title.includes('Teacher') ? 0 : 1;
+      const offset = (pIdx * 2) + testIdx;
+      
+      const weekdays = [];
+      const curr = new Date('2026-08-11T00:00:00Z');
+      while(weekdays.length < 100) {
+        if (curr.getDay() !== 0 && curr.getDay() !== 6) weekdays.push(curr.toISOString().split('T')[0]);
+        curr.setDate(curr.getDate() + 1);
+      }
+      const targetDate = weekdays[offset];
 
       await page.goto('/attendance');
       await expect(page.getByRole('heading', { name: 'Attendance' })).toBeVisible();
       
       // Select Date
       await page.fill('input[type="date"]', targetDate);
+      await page.waitForTimeout(500); // Wait for Next.js soft navigation
       
       // Select Section
-      await page.locator('select').selectOption({ label: 'Class 10 - Section A' }); // Assume section name is Class 10 - Section A
-      // Actually the value can be matched by just clicking or selecting by text
-      await page.locator('select').selectOption({ index: 1 }); // Just select the first available section
+      await page.locator('select[aria-label="Section"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
+      await page.waitForTimeout(500); // Wait for Next.js soft navigation
 
-      await expect(page.locator('text=Status: Unmarked')).toBeVisible();
+      await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as ABSENT
       const absentRadio = page.locator('input[value="ABSENT"]').first();
@@ -33,14 +44,14 @@ test.describe('Attendance Management', () => {
       await expect(page.locator('text=Attendance saved successfully')).toBeVisible();
       
       // Status should update to Draft
-      await expect(page.locator('text=Status: Draft')).toBeVisible();
+      await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Draft' })).toBeVisible();
 
       // Lock
       await page.getByRole('button', { name: 'Lock' }).click();
       await expect(page.locator('text=Attendance locked successfully')).toBeVisible();
 
       // Status should update to Locked
-      await expect(page.locator('text=Status: Locked')).toBeVisible();
+      await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Locked' })).toBeVisible();
 
       // Verify cannot edit (radios disabled)
       await expect(absentRadio).toBeDisabled();
@@ -62,19 +73,32 @@ test.describe('Attendance Management', () => {
       test.skip(testInfo.project.name !== 'chromium-branchadmin', 'EXPECTED_ROLE_SCOPE');
     });
 
-    test('Admin can mark, save, lock, publish, and correct attendance', async ({ page }) => {
-      const targetDate = '2026-08-26';
+    test('Admin can mark, save, lock, publish, and correct attendance', async ({ page }, testInfo) => {
+      const projectNames = ['chromium-superadmin', 'chromium-branchadmin', 'chromium-teacher', 'chromium-guardian', 'chromium-teacher2', 'chromium-limit', 'mobile-chrome-superadmin', 'mobile-chrome-branchadmin', 'mobile-chrome-teacher', 'webkit-superadmin', 'webkit-branchadmin', 'webkit-teacher', 'mobile-safari-superadmin'];
+      const pIdx = Math.max(0, projectNames.indexOf(testInfo.project.name));
+      const testIdx = testInfo.title.includes('Teacher') ? 0 : 1;
+      const offset = (pIdx * 2) + testIdx;
+      
+      const weekdays = [];
+      const curr = new Date('2026-08-11T00:00:00Z');
+      while(weekdays.length < 100) {
+        if (curr.getDay() !== 0 && curr.getDay() !== 6) weekdays.push(curr.toISOString().split('T')[0]);
+        curr.setDate(curr.getDate() + 1);
+      }
+      const targetDate = weekdays[offset];
 
       await page.goto('/attendance');
       
       // Select Date
       await page.fill('input[type="date"]', targetDate);
+      await page.waitForTimeout(500); // Wait for Next.js soft navigation
       
       // Select Section
-      await page.locator('select').selectOption({ index: 1 });
+      await page.locator('select[aria-label="Section"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
+      await page.waitForTimeout(500); // Wait for Next.js soft navigation
 
       // Ensure it's unmarked
-      await expect(page.locator('text=Status: Unmarked')).toBeVisible();
+      await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as LATE
       const lateRadio = page.locator('input[value="LATE"]').first();
@@ -89,7 +113,7 @@ test.describe('Attendance Management', () => {
       // Admin CAN publish
       await page.getByRole('button', { name: 'Publish' }).click();
       await expect(page.locator('text=Attendance published successfully')).toBeVisible();
-      await expect(page.locator('text=Status: Published')).toBeVisible();
+      await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Published' })).toBeVisible();
 
       // Admin CAN correct
       await page.getByRole('button', { name: 'Correct' }).first().click();
@@ -115,27 +139,7 @@ test.describe('Attendance Management', () => {
   test.describe('Guardian History Flow (chromium-guardian)', () => {
     test.beforeEach(async ({}, testInfo) => {
       test.skip(testInfo.project.name !== 'chromium-guardian', 'EXPECTED_ROLE_SCOPE');
-      
-      // Seed a published record directly via psql to avoid race conditions.
-      // E2E student ID: eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51
-      // Branch: eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02
-      // Year: aaaaaaaa-1111-1111-1111-111111111111
-      // Section: aaaaaaaa-3333-3333-3333-333333333333
-      try {
-        execSync(`npx --no-install supabase db query "
-          WITH new_session AS (
-            INSERT INTO public.attendance_sessions (branch_id, academic_year_id, section_id, date, locked_at, published_at)
-            VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'aaaaaaaa-1111-1111-1111-111111111111', 'aaaaaaaa-3333-3333-3333-333333333333', '2026-08-10', now(), now())
-            ON CONFLICT DO NOTHING
-            RETURNING id
-          )
-          INSERT INTO public.attendance_records (session_id, student_id, status)
-          SELECT id, 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee51', 'ABSENT' FROM new_session
-          ON CONFLICT DO NOTHING;
-        " --db-url "postgresql://postgres:postgres@127.0.0.1:54322/postgres"`);
-      } catch (e) {
-        console.error('Failed to seed guardian attendance record', e);
-      }
+      // Seeded data is managed deterministically by seed.sql to avoid db query transaction errors and race conditions
     });
 
     test('Guardian can view published absences', async ({ page }) => {
@@ -154,3 +158,8 @@ test.describe('Attendance Management', () => {
     });
   });
 });
+
+
+
+
+
