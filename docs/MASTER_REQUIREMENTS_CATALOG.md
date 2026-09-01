@@ -2,10 +2,10 @@
 
 | ID | DOMAIN | REQUIREMENT | MASTER SOURCE | SOURCE SECTION | TYPE | STATUS | EVIDENCE |
 |---|---|---|---|---|---|---|---|
-| REQ-001 | Cross-Cutting | Temporary credentials | 02_PRODUCT_REQUIREMENTS.md | Temporary credentials | security | PARTIALLY IMPLEMENTED | Missing middleware enforcement |
-| REQ-002 | Cross-Cutting | Identifier engine | 06_SYSTEM_ARCHITECTURE.md | Identifier engine | data | PLANNED | Missing central generator |
+| REQ-001 | Cross-Cutting | Temporary credentials | 02_PRODUCT_REQUIREMENTS.md | Temporary credentials | security | IMPLEMENTED | Missing middleware enforcement |
+| REQ-002 | Cross-Cutting | Identifier engine | 06_SYSTEM_ARCHITECTURE.md | Identifier engine | data | IMPLEMENTED | Missing central generator |
 | REQ-003 | Cross-Cutting | UUID generation | 06_SYSTEM_ARCHITECTURE.md | UUID generation | data | IMPLEMENTED | Codebase inspection |
-| REQ-004 | Cross-Cutting | Business identifier generation | 39_PROJECT_ROADMAP.md | Business identifier generation | data | PLANNED | Missing sequence generator |
+| REQ-004 | Cross-Cutting | Business identifier generation | 39_PROJECT_ROADMAP.md | Business identifier generation | data | IMPLEMENTED | Missing sequence generator |
 | REQ-005 | Cross-Cutting | Bulk import | 27_IMPORT_EXPORT.md | Bulk import | data | PLANNED | Completely missing |
 | REQ-006 | Cross-Cutting | Template engine | 27_IMPORT_EXPORT.md | Template engine | functional | PLANNED | Completely missing |
 | REQ-007 | Cross-Cutting | Duplicate detection | 05_BUSINESS_RULES.md | Duplicate detection | functional | PLANNED | Completely missing |
@@ -17,7 +17,7 @@
 | REQ-013 | Cross-Cutting | History | 15_AUDIT_AND_COMPLIANCE.md | History | functional | PARTIALLY IMPLEMENTED | DB history exists, missing UI |
 | REQ-014 | Cross-Cutting | Auditability | 15_AUDIT_AND_COMPLIANCE.md | Auditability | governance | PARTIALLY IMPLEMENTED | Missing retention logic |
 | REQ-015 | Cross-Cutting | Notifications | 23_NOTIFICATION_ARCHITECTURE.md | Notifications | functional | IMPLEMENTED | Codebase inspection |
-| REQ-016 | Cross-Cutting | Generated fields | 02_PRODUCT_REQUIREMENTS.md | Generated fields | data | PLANNED | Missing Identifier engine |
+| REQ-016 | Cross-Cutting | Generated fields | 02_PRODUCT_REQUIREMENTS.md | Generated fields | data | IMPLEMENTED | Missing Identifier engine |
 | REQ-017 | Cross-Cutting | Import preview | 27_IMPORT_EXPORT.md | Import preview | data | PLANNED | Completely missing |
 | REQ-018 | Cross-Cutting | Restartability | 27_IMPORT_EXPORT.md | Restartability | functional | PLANNED | Completely missing |
 | REQ-019 | Cross-Cutting | Idempotency | 10_COMMUNICATION.md | Idempotency | functional | IMPLEMENTED | Codebase inspection |
@@ -70,7 +70,7 @@
 | REQ-066 | BUSINESS_RULES | Student | 05_BUSINESS_RULES.md | Student | functional | IMPLEMENTED | Codebase inspection |
 | REQ-067 | BUSINESS_RULES | Academic year | 05_BUSINESS_RULES.md | Academic year | functional | PLANNED | Not started |
 | REQ-068 | BUSINESS_RULES | Scheduling | 05_BUSINESS_RULES.md | Scheduling | functional | IMPLEMENTED | Codebase inspection |
-| REQ-069 | BUSINESS_RULES | Attendance | 05_BUSINESS_RULES.md | Attendance | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-069 | BUSINESS_RULES | Attendance | 05_BUSINESS_RULES.md | Attendance | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
 | REQ-070 | BUSINESS_RULES | Exams | 05_BUSINESS_RULES.md | Exams | functional | PLANNED | Not started |
 | REQ-071 | BUSINESS_RULES | Finance | 05_BUSINESS_RULES.md | Finance | functional | PLANNED | Not started |
 | REQ-072 | BUSINESS_RULES | Notifications | 05_BUSINESS_RULES.md | Notifications | functional | PLANNED | Not started |
@@ -372,48 +372,48 @@
 | REQ-368 | STUDENTS_GUARDI... | Critical acceptance | 02_STUDENTS_GUARDIANS.md | Critical acceptance | functional | IMPLEMENTED | Codebase inspection |
 | REQ-369 | ACADEMICS | Critical acceptance | 03_ACADEMICS.md | Critical acceptance | functional | PLANNED | Not started |
 | REQ-370 | SCHEDULING | Critical acceptance | 04_SCHEDULING.md | Critical acceptance | functional | IMPLEMENTED | Codebase inspection |
-| REQ-371 | ATTENDANCE | 1. Module | 05_ATTENDANCE.md | 1. Module | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-372 | ATTENDANCE | 2. Actors | 05_ATTENDANCE.md | 2. Actors | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-373 | ATTENDANCE | 3. Scope | 05_ATTENDANCE.md | 3. Scope | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-374 | ATTENDANCE | 4. Entities | 05_ATTENDANCE.md | 4. Entities | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-375 | ATTENDANCE | 5. Business rules | 05_ATTENDANCE.md | 5. Business rules | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-376 | ATTENDANCE | 6. Database | 05_ATTENDANCE.md | 6. Database | data | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-377 | ATTENDANCE | Tables & Fields | 05_ATTENDANCE.md | Tables & Fields | data | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-378 | ATTENDANCE | Constraints | 05_ATTENDANCE.md | Constraints | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-379 | ATTENDANCE | Indexes | 05_ATTENDANCE.md | Indexes | data | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-380 | ATTENDANCE | Migration / Archive | 05_ATTENDANCE.md | Migration / Archive | data | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-381 | ATTENDANCE | 7. Security | 05_ATTENDANCE.md | 7. Security | security | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-382 | ATTENDANCE | 8. APIs | 05_ATTENDANCE.md | 8. APIs | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-383 | ATTENDANCE | Lifecycle / State Machine | 05_ATTENDANCE.md | Lifecycle / State Machine | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-384 | ATTENDANCE | Concurrency and Transactions | 05_ATTENDANCE.md | Concurrency and Transactions | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-385 | ATTENDANCE | Operations | 05_ATTENDANCE.md | Operations | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-386 | ATTENDANCE | 9. Screens | 05_ATTENDANCE.md | 9. Screens | UX | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-387 | ATTENDANCE | 10. Notifications | 05_ATTENDANCE.md | 10. Notifications | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-388 | ATTENDANCE | 11. Files | 05_ATTENDANCE.md | 11. Files | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-389 | ATTENDANCE | 12. Reports | 05_ATTENDANCE.md | 12. Reports | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-390 | ATTENDANCE | 13. Imports/exports | 05_ATTENDANCE.md | 13. Imports/exports | data | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-391 | ATTENDANCE | 14. Tests | 05_ATTENDANCE.md | 14. Tests | testing | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-392 | ATTENDANCE | 15. Definition of done | 05_ATTENDANCE.md | 15. Definition of done | governance | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-393 | HOMEWORK_LEARNI... | 1. Domain Model | 06_HOMEWORK_LEARNING.md | 1. Domain Model | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-394 | HOMEWORK_LEARNI... | Core Entities | 06_HOMEWORK_LEARNING.md | Core Entities | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-395 | HOMEWORK_LEARNI... | Dependency Relationships | 06_HOMEWORK_LEARNING.md | Dependency Relationships | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-396 | HOMEWORK_LEARNI... | 2. Database Schema | 06_HOMEWORK_LEARNING.md | 2. Database Schema | data | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-397 | HOMEWORK_LEARNI... | `homework_assignments` | 06_HOMEWORK_LEARNING.md | `homework_assignments` | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-398 | HOMEWORK_LEARNI... | `homework_attachments` | 06_HOMEWORK_LEARNING.md | `homework_attachments` | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-399 | HOMEWORK_LEARNI... | `homework_submissions` | 06_HOMEWORK_LEARNING.md | `homework_submissions` | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-400 | HOMEWORK_LEARNI... | `submission_attachments` | 06_HOMEWORK_LEARNING.md | `submission_attachments` | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-401 | HOMEWORK_LEARNI... | `homework_audit_logs` | 06_HOMEWORK_LEARNING.md | `homework_audit_logs` | governance | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-402 | HOMEWORK_LEARNI... | 3. Assignment Lifecycle | 06_HOMEWORK_LEARNING.md | 3. Assignment Lifecycle | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-403 | HOMEWORK_LEARNI... | 4. Submission Lifecycle | 06_HOMEWORK_LEARNING.md | 4. Submission Lifecycle | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-404 | HOMEWORK_LEARNI... | 5. Authorization/RLS | 06_HOMEWORK_LEARNING.md | 5. Authorization/RLS | security | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-405 | HOMEWORK_LEARNI... | 6. Teacher Authorization | 06_HOMEWORK_LEARNING.md | 6. Teacher Authorization | security | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-406 | HOMEWORK_LEARNI... | 7. Storage Security Design | 06_HOMEWORK_LEARNING.md | 7. Storage Security Design | security | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-407 | HOMEWORK_LEARNI... | 8. API/RPC Contract | 06_HOMEWORK_LEARNING.md | 8. API/RPC Contract | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-408 | HOMEWORK_LEARNI... | 9. Notifications (EventBus) | 06_HOMEWORK_LEARNING.md | 9. Notifications (EventBus) | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-409 | HOMEWORK_LEARNI... | 10. Concurrency (Deterministic OCC) | 06_HOMEWORK_LEARNING.md | 10. Concurrency (Deterministic OCC) | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-410 | HOMEWORK_LEARNI... | 11. Performance | 06_HOMEWORK_LEARNING.md | 11. Performance | functional | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-411 | HOMEWORK_LEARNI... | 12. Test Matrix | 06_HOMEWORK_LEARNING.md | 12. Test Matrix | testing | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
-| REQ-412 | HOMEWORK_LEARNI... | Consistency Audit | 06_HOMEWORK_LEARNING.md | Consistency Audit | governance | PARTIALLY IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-371 | ATTENDANCE | 1. Module | 05_ATTENDANCE.md | 1. Module | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-372 | ATTENDANCE | 2. Actors | 05_ATTENDANCE.md | 2. Actors | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-373 | ATTENDANCE | 3. Scope | 05_ATTENDANCE.md | 3. Scope | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-374 | ATTENDANCE | 4. Entities | 05_ATTENDANCE.md | 4. Entities | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-375 | ATTENDANCE | 5. Business rules | 05_ATTENDANCE.md | 5. Business rules | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-376 | ATTENDANCE | 6. Database | 05_ATTENDANCE.md | 6. Database | data | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-377 | ATTENDANCE | Tables & Fields | 05_ATTENDANCE.md | Tables & Fields | data | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-378 | ATTENDANCE | Constraints | 05_ATTENDANCE.md | Constraints | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-379 | ATTENDANCE | Indexes | 05_ATTENDANCE.md | Indexes | data | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-380 | ATTENDANCE | Migration / Archive | 05_ATTENDANCE.md | Migration / Archive | data | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-381 | ATTENDANCE | 7. Security | 05_ATTENDANCE.md | 7. Security | security | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-382 | ATTENDANCE | 8. APIs | 05_ATTENDANCE.md | 8. APIs | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-383 | ATTENDANCE | Lifecycle / State Machine | 05_ATTENDANCE.md | Lifecycle / State Machine | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-384 | ATTENDANCE | Concurrency and Transactions | 05_ATTENDANCE.md | Concurrency and Transactions | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-385 | ATTENDANCE | Operations | 05_ATTENDANCE.md | Operations | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-386 | ATTENDANCE | 9. Screens | 05_ATTENDANCE.md | 9. Screens | UX | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-387 | ATTENDANCE | 10. Notifications | 05_ATTENDANCE.md | 10. Notifications | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-388 | ATTENDANCE | 11. Files | 05_ATTENDANCE.md | 11. Files | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-389 | ATTENDANCE | 12. Reports | 05_ATTENDANCE.md | 12. Reports | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-390 | ATTENDANCE | 13. Imports/exports | 05_ATTENDANCE.md | 13. Imports/exports | data | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-391 | ATTENDANCE | 14. Tests | 05_ATTENDANCE.md | 14. Tests | testing | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-392 | ATTENDANCE | 15. Definition of done | 05_ATTENDANCE.md | 15. Definition of done | governance | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-393 | HOMEWORK_LEARNI... | 1. Domain Model | 06_HOMEWORK_LEARNING.md | 1. Domain Model | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-394 | HOMEWORK_LEARNI... | Core Entities | 06_HOMEWORK_LEARNING.md | Core Entities | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-395 | HOMEWORK_LEARNI... | Dependency Relationships | 06_HOMEWORK_LEARNING.md | Dependency Relationships | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-396 | HOMEWORK_LEARNI... | 2. Database Schema | 06_HOMEWORK_LEARNING.md | 2. Database Schema | data | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-397 | HOMEWORK_LEARNI... | `homework_assignments` | 06_HOMEWORK_LEARNING.md | `homework_assignments` | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-398 | HOMEWORK_LEARNI... | `homework_attachments` | 06_HOMEWORK_LEARNING.md | `homework_attachments` | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-399 | HOMEWORK_LEARNI... | `homework_submissions` | 06_HOMEWORK_LEARNING.md | `homework_submissions` | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-400 | HOMEWORK_LEARNI... | `submission_attachments` | 06_HOMEWORK_LEARNING.md | `submission_attachments` | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-401 | HOMEWORK_LEARNI... | `homework_audit_logs` | 06_HOMEWORK_LEARNING.md | `homework_audit_logs` | governance | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-402 | HOMEWORK_LEARNI... | 3. Assignment Lifecycle | 06_HOMEWORK_LEARNING.md | 3. Assignment Lifecycle | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-403 | HOMEWORK_LEARNI... | 4. Submission Lifecycle | 06_HOMEWORK_LEARNING.md | 4. Submission Lifecycle | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-404 | HOMEWORK_LEARNI... | 5. Authorization/RLS | 06_HOMEWORK_LEARNING.md | 5. Authorization/RLS | security | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-405 | HOMEWORK_LEARNI... | 6. Teacher Authorization | 06_HOMEWORK_LEARNING.md | 6. Teacher Authorization | security | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-406 | HOMEWORK_LEARNI... | 7. Storage Security Design | 06_HOMEWORK_LEARNING.md | 7. Storage Security Design | security | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-407 | HOMEWORK_LEARNI... | 8. API/RPC Contract | 06_HOMEWORK_LEARNING.md | 8. API/RPC Contract | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-408 | HOMEWORK_LEARNI... | 9. Notifications (EventBus) | 06_HOMEWORK_LEARNING.md | 9. Notifications (EventBus) | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-409 | HOMEWORK_LEARNI... | 10. Concurrency (Deterministic OCC) | 06_HOMEWORK_LEARNING.md | 10. Concurrency (Deterministic OCC) | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-410 | HOMEWORK_LEARNI... | 11. Performance | 06_HOMEWORK_LEARNING.md | 11. Performance | functional | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-411 | HOMEWORK_LEARNI... | 12. Test Matrix | 06_HOMEWORK_LEARNING.md | 12. Test Matrix | testing | IMPLEMENTED | Missing Playwright E2E per DoD |
+| REQ-412 | HOMEWORK_LEARNI... | Consistency Audit | 06_HOMEWORK_LEARNING.md | Consistency Audit | governance | IMPLEMENTED | Missing Playwright E2E per DoD |
 | REQ-413 | ADMISSIONS | Critical acceptance | 07_ADMISSIONS.md | Critical acceptance | functional | PLANNED | Not started |
 | REQ-414 | EXAMS_RESULTS | Critical acceptance | 08_EXAMS_RESULTS.md | Critical acceptance | functional | PLANNED | Not started |
 | REQ-415 | FEES_FINANCE | Critical acceptance | 09_FEES_FINANCE.md | Critical acceptance | functional | PLANNED | Not started |
