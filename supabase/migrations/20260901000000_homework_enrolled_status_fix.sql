@@ -91,7 +91,7 @@ BEGIN
 
     RETURN FALSE;
 END;
-$function;
+$function$;
 
 -- 2. Fix the homework_assignments RLS Policy
 DROP POLICY "Select homework_assignments" ON public.homework_assignments;
