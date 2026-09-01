@@ -1,5 +1,4 @@
 
-
 -- Fix the ENROLLED status which should be ACTIVE
 -- 1. Fix the storage RLS helper function
 CREATE OR REPLACE FUNCTION public.auth_can_access_homework_file(p_bucket_id text, p_object_name text)
@@ -152,8 +151,6 @@ FOR SELECT USING (
 );
 
 
-
-
 -- 4. Fix submit_homework RPC
 CREATE OR REPLACE FUNCTION public.submit_homework(
     p_assignment_id UUID,
@@ -229,5 +226,4 @@ BEGIN
     RETURN v_submission.id;
 END;
 $function;
-
 
