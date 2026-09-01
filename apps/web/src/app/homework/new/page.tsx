@@ -52,8 +52,8 @@ export default async function NewHomeworkPage(props: { searchParams: Promise<{ b
     // Teacher: only fetch sections/subjects they are assigned to
     const { data: profile } = await supabase
       .from('staff_branch_profiles')
-      .select('id')
-      .eq('user_id', context.userId)
+      .select('id, staff!inner(profile_id)')
+      .eq('staff.profile_id', context.userId)
       .eq('branch_id', branchId)
       .single();
 
