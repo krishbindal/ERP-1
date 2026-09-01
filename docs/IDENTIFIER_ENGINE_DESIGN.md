@@ -90,8 +90,8 @@ $$ LANGUAGE plpgsql;
 The `UPDATE ... RETURNING` clause takes a row-exclusive lock on the specific sequence row. If multiple transactions call this function concurrently, Postgres queues the updates serially on that specific row. This guarantees no two transactions receive the same sequence number.
 
 **Rollbacks & Gap-Free Semantics:**
-Unlike standard PostgreSQL sequences (`CREATE SEQUENCE`) which increment outside transaction scope and leave gaps on rollback, our engine uses a standard table update. Because `UPDATE` is strictly transactional, the lock on the sequence row is held until the surrounding transaction commits or rolls back. If the transaction rolls back, the sequence increment rolls back with it. 
-This provides **true gap-free numbering** (assuming no manual deletions occur later) because a failed transaction refunds the number. The trade-off is lock contention: concurrent transactions inserting into the same sequence must wait for the lock to release. For a school ERP where identifier generation (e.g. 100 students) is low-throughput, this serialization is perfectly acceptable and provides the gap-free guarantee often required for compliance (e.g. invoices).
+Unlike standard PostgreSQL sequences (`CREATE SEQUENCE`) which increment outside transaction scope and leave gaps on rollback, our engine uses a standard table update. However, because the `UPDATE` executes inside a `SECURITY DEFINER` function, its transaction boundary behavior depends on how it is invoked.
+This provides **monotonic and unique numbering under concurrency**. However, if the outer transaction that consumes the generated identifier rolls back, the incremented `last_value` remains consumed. Therefore, this implementation is **NOT strictly gap-free**. For a school ERP where identifier generation (e.g. 100 students) is low-throughput, this serialization is perfectly acceptable, but users should be aware that abandoned flows can leave gaps.
 
 ## 4. Authorization & Security
 - **RLS**: The `identifier_sequences` table will have RLS policies ensuring users can only read/configure sequences for their assigned organization/branch.
