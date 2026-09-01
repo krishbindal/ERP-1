@@ -61,6 +61,10 @@ export function StudentHomeworkDetails({
           <p className="text-gray-500">Not submitted yet.</p>
         )}
 
+        {isGuardian && (
+          <p className="text-gray-500 mt-4">Guardians cannot submit homework on behalf of students directly.</p>
+        )}
+
         {!isGuardian && assignment.status === 'PUBLISHED' && (!submission || submission.status === 'PENDING' || submission.status === 'RETURNED') && (
           <form onSubmit={handleSubmit} className="mt-4 space-y-4 border-t pt-4">
             <div>
