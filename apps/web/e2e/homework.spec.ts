@@ -18,10 +18,10 @@ test.describe('Homework E2E - Phase 5', () => {
 
     if (role === 'chromium-teacher' || role === 'chromium-superadmin' || role === 'chromium-branchadmin') {
       await page.goto('/homework');
-      await expect(page.locator('text=Homework')).toBeVisible();
+      await expect(page.locator('h1', { hasText: 'Homework' }).first()).toBeVisible();
 
       await page.goto('/homework/new');
-      await expect(page.locator('text=Create Homework Assignment')).toBeVisible();
+      await expect(page.locator('h1', { hasText: 'Create Homework Assignment' }).first()).toBeVisible();
 
       const uniqueTitle = `E2E Homework ${Date.now()}-${projectIndex}`;
       await page.fill('input[name="title"]', uniqueTitle);
@@ -50,21 +50,22 @@ test.describe('Homework E2E - Phase 5', () => {
 
       // Should redirect to details
       await expect(page).toHaveURL(/\/homework\/[a-f0-9-]{36}/);
-      await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible();
-      await expect(page.locator('text=DRAFT')).toBeVisible();
+      await expect(page.locator(`text=${uniqueTitle}`).first()).toBeVisible();
+      await expect(page.locator('text=DRAFT').first()).toBeVisible();
 
-      // Publish
+      // Publish it
       await page.click('button:has-text("Publish")');
-      await expect(page.locator('text=PUBLISHED')).toBeVisible();
+      await expect(page.locator('text=PUBLISHED').first()).toBeVisible();
+      
     } else if (role === 'chromium-student') {
       await page.goto('/homework');
-      await expect(page.locator('text=Homework')).toBeVisible();
+      await expect(page.locator('h1', { hasText: 'Homework' }).first()).toBeVisible();
+      // Student cannot see the create button
+      await expect(page.locator('text=Create Homework Assignment')).not.toBeVisible();
       
-      // Find a published homework (we assume the teacher test runs or there's seeded data. Actually, the tests run in parallel, so we should rely on seeded data for the student).
-      // Let's ensure the student sees a seeded published homework in the list.
     } else if (role === 'chromium-guardian') {
       await page.goto('/homework');
-      await expect(page.locator('text=Homework')).toBeVisible();
+      await expect(page.locator('h1', { hasText: 'Homework' }).first()).toBeVisible();
       // Guardian is read-only
       await expect(page.locator('button:has-text("Submit")')).not.toBeVisible();
     }
