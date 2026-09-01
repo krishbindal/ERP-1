@@ -79,7 +79,7 @@ jobs:
 
       - name: Start Local Supabase
         run: |
-          if ! timeout 300s npx --no-install supabase start -x realtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
+          if ! timeout 600s npx --no-install supabase start -x realtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
             echo "::error::Supabase start failed or timed out!"
             echo "--- Diagnostic Trap ---"
             docker ps -a
@@ -122,7 +122,7 @@ jobs:
 
       - name: Reset Database
         run: |
-          if ! timeout 300s npx --no-install supabase db reset --yes > reset_output.log 2>&1; then
+          if ! timeout 900s npx --no-install supabase db reset --yes > reset_output.log 2>&1; then
             echo "::error::Supabase db reset failed or timed out!"
             echo "--- Reset Output ---"
             cat reset_output.log || true
