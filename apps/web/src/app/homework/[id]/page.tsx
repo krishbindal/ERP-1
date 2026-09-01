@@ -36,7 +36,7 @@ export default async function HomeworkDetailsPage(props: { params: Promise<{ id:
   // Fetch assignment
   const { data: assignment, error: assignErr } = await supabase
     .from('homework_assignments')
-    .select('*, sections(name), subjects(name)')
+    .select('*, sections!homework_assignments_section_id_fkey(name), subjects(name)')
     .eq('id', params.id)
     .single();
 
