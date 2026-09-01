@@ -50,7 +50,7 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
     // For teachers/admins, fetch assignments they can see
     const { data: assignments, error: assignErr } = await supabase
       .from('homework_assignments')
-      .select('*, sections!homework_assignments_section_id_fkey(name), subjects(name)')
+      .select('*, sections!homework_assignments_section_id_fkey(name), subjects!homework_assignments_subject_id_fkey(name)')
       .eq('branch_id', branchId)
       .eq('academic_year_id', currentYear.id)
       .order('due_at', { ascending: true });
@@ -71,7 +71,7 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
     // For students/guardians, fetch published/closed assignments
     const { data: assignments, error: assignErr } = await supabase
       .from('homework_assignments')
-      .select('*, sections!homework_assignments_section_id_fkey(name), subjects(name)')
+      .select('*, sections!homework_assignments_section_id_fkey(name), subjects!homework_assignments_subject_id_fkey(name)')
       .eq('branch_id', branchId)
       .eq('academic_year_id', currentYear.id)
       .order('due_at', { ascending: true });
