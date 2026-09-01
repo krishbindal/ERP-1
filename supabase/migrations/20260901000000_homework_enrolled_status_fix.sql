@@ -225,5 +225,5 @@ BEGIN
 
     RETURN v_submission.id;
 END;
-$function;
+$function$;
 
