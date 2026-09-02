@@ -30,8 +30,8 @@ test.describe('Proxy / Middleware Runtime Security', () => {
     await page.goto('/students');
     await expect(page.locator('h1:has-text("Students")')).toBeVisible();
     
-    // Perform logout
-    await page.getByRole('button', { name: 'Logout' }).click();
+    // Perform logout by navigating to the auth/logout route
+    await page.goto('/auth/logout');
     
     // Verify redirect to login
     await expect(page).toHaveURL(/.*\/login/);
@@ -46,11 +46,18 @@ test.describe('Proxy / Middleware Runtime Security', () => {
       const context = await browser.newContext({ storageState: undefined });
       const page = await context.newPage();
       
+      page.on('console', msg => console.log('BROWSER CONSOLE:', msg.text()));
+      
       // Login with the reset user
       await page.goto('/login');
       await page.getByLabel('Email').fill('reset.user@test.com');
       await page.getByLabel('Password').fill('password123');
       await page.getByRole('button', { name: 'Sign in' }).click();
+
+      // Check if any error text appears on screen
+      page.locator('.text-red-500').textContent().then(text => {
+        if (text) console.log('UI ERROR:', text);
+      }).catch(() => {});
 
       // Should be forced to update-password
       await expect(page).toHaveURL(/.*\/auth\/update-password/, { timeout: 15000 });

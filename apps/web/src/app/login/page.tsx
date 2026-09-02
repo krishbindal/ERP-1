@@ -37,9 +37,9 @@ export default function LoginPage() {
             setError(authError.message);
           } else {
             console.log("LOGIN SUCCESS! Navigating...");
-            const targetUrl = "/";
-            // eslint-disable-next-line
-            window.location.href = targetUrl;
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 500);
           }
         }}
       >
