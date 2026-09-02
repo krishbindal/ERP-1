@@ -8,9 +8,9 @@ const BRANCH_A2 = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03'; // Teacher is NOT in t
 // Helper to extract JWT for API requests
 async function getAuthToken(context: BrowserContext) {
   const cookies = await context.cookies();
-  const tokenCookies = cookies.filter((c: any) => c.name.includes('-auth-token'));
-  tokenCookies.sort((a: any, b: any) => a.name.localeCompare(b.name));
-  const fullCookieValue = tokenCookies.map((c: any) => decodeURIComponent(c.value)).join('');
+  const tokenCookies = cookies.filter((c: { name: string, value: string }) => c.name.includes('-auth-token'));
+  tokenCookies.sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name));
+  const fullCookieValue = tokenCookies.map((c: { name: string, value: string }) => decodeURIComponent(c.value)).join('');
   
   if (!fullCookieValue) return null;
   

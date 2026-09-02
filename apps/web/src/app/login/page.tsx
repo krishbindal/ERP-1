@@ -1,8 +1,10 @@
 "use client";
 import React, { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [error, setError] = useState("");
 
   return (
@@ -36,8 +38,8 @@ export default function LoginPage() {
           if (authError) {
             setError(authError.message);
           } else {
-            console.log("LOGIN SUCCESS! Navigating...");
-            window.location.href = "/";
+            console.log("Session established", { access_token: data.session?.access_token });
+            router.push("/");
           }
         }}
       >
