@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
@@ -48,7 +48,7 @@ export default async function HomeworkDetailsPage(props: { params: Promise<{ id:
 
   if (isStaff) {
     // For teachers, we also want to fetch submissions
-    const { data: submissions, error: subErr } = await supabase
+    const { data: submissions } = await supabase
       .from('homework_submissions')
       .select('*, students(first_name, last_name, roll_number)')
       .eq('assignment_id', assignment.id)
@@ -57,6 +57,7 @@ export default async function HomeworkDetailsPage(props: { params: Promise<{ id:
     return (
       <div className="space-y-6">
         <TeacherHomeworkDetails 
+          branchId={branchId}
           assignment={assignment}
           submissions={submissions || []}
         />
