@@ -28,6 +28,12 @@ const exceptions = {
     classification: 'build-only',
     reason: 'Transitive build dependency.',
     reviewAfter: 'Next upgrade'
+  },
+  'GHSA-6gmq-8vp8-gcm6': {
+    package: '@xmldom/xmldom',
+    classification: 'build-only',
+    reason: 'Transitive build dependency introduced by updated e2e tools.',
+    reviewAfter: 'Next upgrade'
   }
 };
 
