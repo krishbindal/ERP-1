@@ -2,10 +2,10 @@
 
 | ID | DOMAIN | REQUIREMENT | SOURCE | DB | BACKEND | WEB | MOBILE | RLS | TESTS | CI | OPS | DOCS | STATUS | GAP | SEVERITY | ACTION |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| REQ-001 | Cross-Cutting | Temporary credentials | 02_PRODUCT_REQUIREMENTS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-002 | Cross-Cutting | Identifier engine | 06_SYSTEM_ARCHITECTURE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
+| REQ-001 | Cross-Cutting | Temporary credentials | 02_PRODUCT_REQUIREMENTS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Middleware force_password_reset enforced via proxy.ts | N/A | None |
+| REQ-002 | Cross-Cutting | Identifier engine | 06_SYSTEM_ARCHITECTURE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | identifier_sequences table and generate_business_identifier() | N/A | None |
 | REQ-003 | Cross-Cutting | UUID generation | 06_SYSTEM_ARCHITECTURE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-004 | Cross-Cutting | Business identifier generation | 39_PROJECT_ROADMAP.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
+| REQ-004 | Cross-Cutting | Business identifier generation | 39_PROJECT_ROADMAP.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | identifier_sequences table and generate_business_identifier() | N/A | None |
 | REQ-005 | Cross-Cutting | Bulk import | 27_IMPORT_EXPORT.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Completely missing | P2 | Defer to Phase 10 |
 | REQ-006 | Cross-Cutting | Template engine | 27_IMPORT_EXPORT.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Completely missing | P2 | Defer to Phase 10 |
 | REQ-007 | Cross-Cutting | Duplicate detection | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Completely missing | P2 | Defer |
@@ -17,7 +17,7 @@
 | REQ-013 | Cross-Cutting | History | 15_AUDIT_AND_COMPLIANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | DB history exists, missing UI | P2 | Implement History UI |
 | REQ-014 | Cross-Cutting | Auditability | 15_AUDIT_AND_COMPLIANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PARTIALLY IMPLEMENTED | Missing retention logic | P2 | Implement during Phase 6 |
 | REQ-015 | Cross-Cutting | Notifications | 23_NOTIFICATION_ARCHITECTURE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-016 | Cross-Cutting | Generated fields | 02_PRODUCT_REQUIREMENTS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
+| REQ-016 | Cross-Cutting | Generated fields | 02_PRODUCT_REQUIREMENTS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | identifier_sequences table and generate_business_identifier() | N/A | None |
 | REQ-017 | Cross-Cutting | Import preview | 27_IMPORT_EXPORT.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Completely missing | P2 | Defer |
 | REQ-018 | Cross-Cutting | Restartability | 27_IMPORT_EXPORT.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Completely missing | P2 | Defer |
 | REQ-019 | Cross-Cutting | Idempotency | 10_COMMUNICATION.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
@@ -70,7 +70,7 @@
 | REQ-066 | BUSINESS_RULES | Student | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
 | REQ-067 | BUSINESS_RULES | Academic year | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-068 | BUSINESS_RULES | Scheduling | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-069 | BUSINESS_RULES | Attendance | 05_BUSINESS_RULES.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
+| REQ-069 | BUSINESS_RULES | Attendance | 05_BUSINESS_RULES.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
 | REQ-070 | BUSINESS_RULES | Exams | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-071 | BUSINESS_RULES | Finance | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-072 | BUSINESS_RULES | Notifications | 05_BUSINESS_RULES.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
@@ -372,48 +372,48 @@
 | REQ-368 | STUDENTS_GUARDI... | Critical acceptance | 02_STUDENTS_GUARDIANS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
 | REQ-369 | ACADEMICS | Critical acceptance | 03_ACADEMICS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-370 | SCHEDULING | Critical acceptance | 04_SCHEDULING.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-371 | ATTENDANCE | 1. Module | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-372 | ATTENDANCE | 2. Actors | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-373 | ATTENDANCE | 3. Scope | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-374 | ATTENDANCE | 4. Entities | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-375 | ATTENDANCE | 5. Business rules | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-376 | ATTENDANCE | 6. Database | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-377 | ATTENDANCE | Tables & Fields | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-378 | ATTENDANCE | Constraints | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-379 | ATTENDANCE | Indexes | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-380 | ATTENDANCE | Migration / Archive | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-381 | ATTENDANCE | 7. Security | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-382 | ATTENDANCE | 8. APIs | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-383 | ATTENDANCE | Lifecycle / State Machine | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-384 | ATTENDANCE | Concurrency and Transactions | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-385 | ATTENDANCE | Operations | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-386 | ATTENDANCE | 9. Screens | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-387 | ATTENDANCE | 10. Notifications | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-388 | ATTENDANCE | 11. Files | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-389 | ATTENDANCE | 12. Reports | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-390 | ATTENDANCE | 13. Imports/exports | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-391 | ATTENDANCE | 14. Tests | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-392 | ATTENDANCE | 15. Definition of done | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-393 | HOMEWORK_LEARNI... | 1. Domain Model | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-394 | HOMEWORK_LEARNI... | Core Entities | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-395 | HOMEWORK_LEARNI... | Dependency Relationships | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-396 | HOMEWORK_LEARNI... | 2. Database Schema | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-397 | HOMEWORK_LEARNI... | `homework_assignments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-398 | HOMEWORK_LEARNI... | `homework_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-399 | HOMEWORK_LEARNI... | `homework_submissions` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-400 | HOMEWORK_LEARNI... | `submission_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-401 | HOMEWORK_LEARNI... | `homework_audit_logs` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-402 | HOMEWORK_LEARNI... | 3. Assignment Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-403 | HOMEWORK_LEARNI... | 4. Submission Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-404 | HOMEWORK_LEARNI... | 5. Authorization/RLS | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-405 | HOMEWORK_LEARNI... | 6. Teacher Authorization | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-406 | HOMEWORK_LEARNI... | 7. Storage Security Design | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-407 | HOMEWORK_LEARNI... | 8. API/RPC Contract | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-408 | HOMEWORK_LEARNI... | 9. Notifications (EventBus) | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-409 | HOMEWORK_LEARNI... | 10. Concurrency (Deterministic OCC) | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-410 | HOMEWORK_LEARNI... | 11. Performance | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-411 | HOMEWORK_LEARNI... | 12. Test Matrix | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
-| REQ-412 | HOMEWORK_LEARNI... | Consistency Audit | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | None | N/A | None |
+| REQ-371 | ATTENDANCE | 1. Module | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-372 | ATTENDANCE | 2. Actors | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-373 | ATTENDANCE | 3. Scope | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-374 | ATTENDANCE | 4. Entities | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-375 | ATTENDANCE | 5. Business rules | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-376 | ATTENDANCE | 6. Database | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-377 | ATTENDANCE | Tables & Fields | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-378 | ATTENDANCE | Constraints | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-379 | ATTENDANCE | Indexes | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-380 | ATTENDANCE | Migration / Archive | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-381 | ATTENDANCE | 7. Security | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-382 | ATTENDANCE | 8. APIs | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-383 | ATTENDANCE | Lifecycle / State Machine | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-384 | ATTENDANCE | Concurrency and Transactions | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-385 | ATTENDANCE | Operations | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-386 | ATTENDANCE | 9. Screens | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-387 | ATTENDANCE | 10. Notifications | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-388 | ATTENDANCE | 11. Files | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-389 | ATTENDANCE | 12. Reports | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-390 | ATTENDANCE | 13. Imports/exports | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-391 | ATTENDANCE | 14. Tests | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-392 | ATTENDANCE | 15. Definition of done | 05_ATTENDANCE.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-393 | HOMEWORK_LEARNI... | 1. Domain Model | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-394 | HOMEWORK_LEARNI... | Core Entities | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-395 | HOMEWORK_LEARNI... | Dependency Relationships | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-396 | HOMEWORK_LEARNI... | 2. Database Schema | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-397 | HOMEWORK_LEARNI... | `homework_assignments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-398 | HOMEWORK_LEARNI... | `homework_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-399 | HOMEWORK_LEARNI... | `homework_submissions` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-400 | HOMEWORK_LEARNI... | `submission_attachments` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-401 | HOMEWORK_LEARNI... | `homework_audit_logs` | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-402 | HOMEWORK_LEARNI... | 3. Assignment Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-403 | HOMEWORK_LEARNI... | 4. Submission Lifecycle | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-404 | HOMEWORK_LEARNI... | 5. Authorization/RLS | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-405 | HOMEWORK_LEARNI... | 6. Teacher Authorization | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-406 | HOMEWORK_LEARNI... | 7. Storage Security Design | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-407 | HOMEWORK_LEARNI... | 8. API/RPC Contract | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-408 | HOMEWORK_LEARNI... | 9. Notifications (EventBus) | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-409 | HOMEWORK_LEARNI... | 10. Concurrency (Deterministic OCC) | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-410 | HOMEWORK_LEARNI... | 11. Performance | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-411 | HOMEWORK_LEARNI... | 12. Test Matrix | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
+| REQ-412 | HOMEWORK_LEARNI... | Consistency Audit | 06_HOMEWORK_LEARNING.md | Y | Y | N | N/A | Y | Y | Y | N/A | Y | IMPLEMENTED | Playwright E2E tests passing, Web UI implemented | N/A | None |
 | REQ-413 | ADMISSIONS | Critical acceptance | 07_ADMISSIONS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-414 | EXAMS_RESULTS | Critical acceptance | 08_EXAMS_RESULTS.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
 | REQ-415 | FEES_FINANCE | Critical acceptance | 09_FEES_FINANCE.md | Y | Y | Y | N/A | Y | Y | Y | N/A | Y | PLANNED | Not started | P2 | Defer |
