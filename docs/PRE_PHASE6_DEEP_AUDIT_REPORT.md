@@ -3,104 +3,184 @@
 ## 1. Executive Decision
 **NOT READY FOR PHASE 6**
 
-A deep forensic audit of the `krishbindal/ERP-1` repository has revealed a severe P0 security bypass (Next.js middleware misconfiguration), multiple P1 multi-tenancy and concurrency blockers in the Identifier Engine, and systemic weaknesses in E2E test integrity (tests passing by validating UI state instead of mutation authorization). These must be fully resolved before Phase 6 can commence.
+The repository remains blocked from Phase 6, but the initial audit report contained one material framework-version error: `apps/web/src/proxy.ts` is the correct convention for Next.js 16 and is not, by itself, a P0 middleware bypass. The gate is therefore based on the confirmed identifier authorization issue, insufficient adversarial E2E coverage, and the need to prove identifier concurrency behavior under Phase-6-style load.
 
-## 2. Exact Repository HEAD
-`25b439084c9d84ee79deb9b7c15a2a2a58c4259f` (Verified via user instruction / exact current commit)
+A separate security-maintenance finding is also recorded: the repository currently declares Next.js `16.3.1`, while Next.js published `16.3.3` as the Active LTS security release on August 25, 2026 addressing two critical vulnerabilities. This must be evaluated and patched before production certification.
+
+## 2. Exact Repository State
+Audit report was generated at commit `94458988149c93633dd72aa975e38f3700b3f0d7`.
+The audited application code baseline is `25b439084c9d84ee79deb9b7c15a2a2a58c4259f` before the audit-report-only commit.
 
 ## 3. Repository Inventory
-The repository is structured as a standard monorepo containing:
-- `apps/web`: Next.js frontend
-- `supabase/migrations`: 45+ SQL migrations containing schema, RLS, and SECURITY DEFINER RPCs
-- `supabase/functions/communication-worker`: Deno-based background event processor
+The repository is a monorepo containing:
+- `apps/web`: Next.js web application
+- `supabase/migrations`: schema, RLS and SECURITY DEFINER functions
+- `supabase/functions/communication-worker`: Deno communication worker
 - `supabase/tests/db`: pgTAP database tests
-- `apps/web/e2e`: Playwright End-to-End tests
+- `apps/web/e2e`: Playwright end-to-end tests
+- shared packages including authentication and permissions
 
 ## 4. Architecture Audit
-The overall architecture largely conforms to the Phase 3+ specifications (Branch/Organization multi-tenancy, RPC-based mutations, Event-driven communication worker). However, edge-protection via middleware is structurally broken.
+The overall architecture largely conforms to the documented multi-tenant, multi-branch model: organization/branch separation, RLS, RPC-based mutations, event-driven communication, and explicit authorization layers exist.
 
-## 5. Security Audit
-**CRITICAL FINDING (P0):** 
-The temporary credentials enforcement and edge-level route protection are entirely bypassed. The intended Next.js middleware file was incorrectly named `apps/web/src/proxy.ts`. Next.js strictly requires middleware to be named `middleware.ts`. Consequently, the framework entirely ignores the file, meaning users are never forced to reset their passwords, and unauthorized users can potentially reach protected pages.
+The remaining concern is not that the architecture is fundamentally unusable, but that several security-critical boundaries rely on manually enforced authorization inside SECURITY DEFINER functions and on E2E coverage that does not always exercise the same mutation path.
 
-## 6. Multi-Tenancy/RLS Audit
-RLS is extensively implemented across tables using `auth.uid()` and branch lookup functions. However, several mutations use `SECURITY DEFINER` RPCs to bypass RLS for complex operations (like Attendance or Homework grading), relying on manual authorization checks inside the function body.
+## 5. Corrected Next.js Proxy Finding
+**AUD-001 from the original report is REJECTED.**
 
-## 7. SECURITY DEFINER Inventory
-The database contains over 60 `SECURITY DEFINER` functions. Many are safe wrappers (`get_auth_my_student_ids`, `auth_is_super_admin`). However, mutating functions like `generate_business_identifier`, `rpc_publish_homework`, `rpc_save_attendance`, and `rpc_claim_platform_events` manually assume authorization responsibilities. 
+The web application declares Next.js `16.3.1`. In Next.js 16, the routing convention changed from `middleware.ts` to `proxy.ts`; the official Next.js documentation demonstrates a root `proxy.ts` file for route protection. Therefore `apps/web/src/proxy.ts` is not evidence of an ignored middleware.
 
-**Vulnerability:** `generate_business_identifier` uses `SECURITY DEFINER` to bypass sequence RLS but fails to perform a branch-level authorization check, breaking branch isolation.
+The file exports a `proxy` function and an applicable `matcher`, so the filename alone does not demonstrate a temporary-credential bypass.
 
-## 8. Auth Audit (Temporary Credentials)
-As noted in the Security Audit, the `requires_password_reset` logic is fundamentally disconnected from the web application lifecycle due to the `proxy.ts` misconfiguration.
+This finding must not be remediated by renaming `proxy.ts` to `middleware.ts`.
 
-## 9. Identifier Engine Audit
-- **Branch Scoping Bypass (P1):** The engine checks `organization_memberships` but fails to check if the caller belongs to `p_branch_id`. A user in Branch A can generate identifiers for Branch B.
-- **Concurrency Bottleneck (P1):** The engine uses `UPDATE ... RETURNING` natively inside the caller's transaction. While this prevents sequence gaps on rollback (contrary to what `IDENTIFIER_ENGINE_DESIGN.md` claims), it imposes a strict serialization lock. If an outer transaction (e.g., bulk grading in Phase 6) takes 3 seconds, all other identifier generations for that entity across the system will block, risking massive deadlocks under load.
+A runtime/build-level test should still prove that the deployed Next.js build executes the proxy and that `requires_password_reset` actually redirects users who require a password change.
 
-## 10. Attendance Audit
-Server-side RPCs (`rpc_save_attendance`, `rpc_correct_attendance`) correctly check `fn_has_branch_permission` and validate state transitions. However, E2E tests for attendance authorization merely assert that navigating to an unauthorized branch URL renders an "Access Denied" UI element, completely failing to test if the underlying API actually rejects unauthorized mutations.
+## 6. Auth / Temporary Credentials
+The temporary-credential logic itself exists inside the proxy and calls `requires_password_reset` for authenticated users. The remaining audit requirement is execution-path verification, not filename correction.
 
-## 11. Homework Audit
-Homework RLS and RPCs (`rpc_publish_homework`) correctly check `teacher_subject_assignments` to authorize teachers. However, similar to Attendance, the E2E tests are largely "happy path" or UI-only authorization assertions.
+Required proof before production certification:
+1. Build the web application using the repository's pinned dependency set.
+2. Confirm the proxy is loaded by the built application.
+3. Authenticate as a user requiring password reset.
+4. Confirm protected routes redirect to `/auth/update-password`.
+5. Confirm logout and password-update routes remain usable.
 
-## 12. Communication Worker Audit
-The worker (`apps/worker/src/index.ts` is actually located in `supabase/functions/communication-worker/index.ts`) is well-structured. It fails closed in production (refusing to use Mock providers). 
-- **Zero-recipient behavior:** Handled correctly by marking the event as `FAILED` (allSuccess = false) if the recipient list is empty, though this may trigger DLQ alerts unnecessarily depending on business rules.
+## 7. Multi-Tenancy / RLS Audit
+RLS is extensively implemented and the existing database tests cover important organization and branch isolation scenarios. However, SECURITY DEFINER RPCs can bypass table RLS and therefore must perform explicit authorization inside the function body.
 
-## 13. Database Integrity Audit
-The schema enforces extensive relational integrity using `ON DELETE CASCADE`. Soft-delete (`deleted_at`) is present on many entities. 
-- **Constraint Gap:** Some cross-tenant boundaries rely heavily on RLS and UI validation rather than composite Foreign Keys containing `(id, branch_id)`, though this is a known architectural trade-off in the existing codebase.
+This makes the correctness of those manual checks security-critical rather than merely defensive.
 
-## 14. Test Integrity Audit
-**Major Debt (P1):**
-Playwright tests provide a false sense of security. 
-1. Tests labeled "Teacher cannot bypass authorization for another branch" only perform `page.goto()` and check for `Access Denied` text. They do not simulate raw API requests to ensure the server blocks the mutation.
-2. Form submission tests (e.g., `Students/new`) merely assert that input fields are visible, without actually filling out the form, submitting it, and verifying database state.
+## 8. SECURITY DEFINER Audit
+The repository contains many SECURITY DEFINER functions. Several established functions use hardened search paths, controlled grants, and explicit branch/organization checks.
 
-## 15. CI/CD Audit
-The CI pipeline (`schoolos-pipeline.yml`) successfully runs the full test suite and pgTAP tests. However, a recent execution hung for 40+ minutes due to a WSL/Docker volume mount issue affecting `pg_prove`. While CI is "green" when it finishes, it is green against flawed E2E assertions.
+The Identifier Engine function is a notable exception and requires remediation and hardening.
 
-## 16. Dependency/Security Audit
-No direct supply chain vulnerabilities observed in this static pass, but the misnamed Next.js middleware is a fundamental deployment/security gap.
+## 9. AUD-002 — Identifier Engine Branch Authorization Bypass — P1
+`generate_business_identifier(...)` authorizes the caller at organization scope but does not adequately verify authorization for the requested `p_branch_id`.
 
-## 17. Documentation Drift Audit
-- `IDENTIFIER_ENGINE_DESIGN.md` explicitly claims the engine is "NOT strictly gap-free" due to rollbacks. This contradicts the actual Postgres behavior of transactional updates (proven in `07_identifier_engine.sql`), which *are* rolled back, meaning it *is* strictly gap-free but causes high lock contention.
+Because the function is SECURITY DEFINER, the caller can obtain effects that are intentionally unavailable through direct sequence-table access. An authenticated member of an organization may therefore be able to request identifier generation against another branch in that same organization.
 
-## 18. Phase-6 Prerequisite Audit
-Phase 6 (Exams & Marks) requires bulk identifier generation and heavy transactional updates. The current Identifier Engine's serialization lock (holding the sequence row lock until the outer transaction commits) will cause catastrophic deadlocks when bulk-generating marks or report cards. It is architecturally unready for Phase 6.
+This violates the repository's branch isolation model and is a confirmed foundation blocker.
 
-## 19. Complete Findings Register
+### Required remediation
+- Validate that `p_branch_id` exists and belongs to `p_organization_id`.
+- Require the caller to have an authorized relationship/role for that branch, with an explicit Super Admin exception where documented.
+- Validate any academic-year/entity scope against the requested branch and organization.
+- Harden the SECURITY DEFINER function with an explicit safe `search_path` and controlled EXECUTE grants.
+- Add a direct DB test proving an A1 user cannot generate identifiers for A2 in the same organization.
+
+## 10. AUD-003 — Identifier Transaction Serialization / Contention — P1 pending workload proof
+The current generator advances the sequence using transactional `UPDATE ... RETURNING`. PostgreSQL row locks acquired by the update remain held until the surrounding transaction completes.
+
+This means concurrent identifier requests for the same sequence are serialized. That behavior is useful for correctness, but it can create significant contention when a long-running application transaction generates identifiers and holds the sequence row lock for an extended period.
+
+The current audit report overstated this by calling it a proven "catastrophic deadlock". A deadlock requires a reproducible wait cycle; the static implementation review alone does not prove one.
+
+### Required remediation / proof
+Before Phase 6:
+- Run a two-session concurrency test against the actual database function.
+- Measure lock wait time at increasing transaction durations and concurrency.
+- Exercise bulk operations representative of Phase 6.
+- Determine whether the intended identifier semantics should be transactional or gap-tolerant.
+- Document the resulting guarantee precisely.
+
+Do not introduce an autonomous-transaction mechanism merely to make numbers gap-prone until the business requirement and load test justify it.
+
+## 11. Identifier Transaction Semantics / Documentation — P2
+The existing documentation says the identifier engine is not strictly gap-free because outer transaction rollback can consume a value. That statement should be corrected for the current transactional implementation: the sequence-table update participates in the caller's transaction and is rolled back with it.
+
+However, this does not establish a universal business-level guarantee of "no gaps" across every possible application design. The specification should distinguish database transaction rollback behavior from end-to-end identifier lifecycle guarantees.
+
+The existing test suite also needs explicit concurrent-session coverage rather than relying only on savepoint behavior.
+
+## 12. AUD-004 — E2E Test Integrity — P1
+Several authorization tests validate only the browser presentation layer. For example, a test that navigates to another branch and checks for `Access Denied` does not prove that a lower-privileged principal cannot invoke the underlying mutation endpoint/RPC directly.
+
+Likewise, a form test that asserts the presence of inputs does not prove that submission persists valid state.
+
+### Required remediation
+Security-critical E2E tests must exercise the server boundary directly. Add adversarial tests that:
+- authenticate as the lower-privileged role;
+- issue the actual POST/RPC/API mutation request;
+- assert the request fails with the expected authorization result;
+- verify that no unauthorized database state changed;
+- repeat this for cross-branch, cross-organization, role-restricted, locked/published, and other privileged mutation paths.
+
+For important create/update flows, fill the form, submit it, and verify resulting database/UI state.
+
+## 13. Attendance Audit
+Attendance server-side RPCs contain meaningful authorization and state-transition checks. The remaining gap is certification depth: the E2E suite should independently exercise direct unauthorized mutation attempts rather than relying primarily on route-level denial assertions.
+
+## 14. Homework Audit
+Homework authorization is similarly stronger at the server/RPC layer than the current E2E security assertions demonstrate. Direct unauthorized mutation tests and state-verification assertions are required before calling the module security-certified.
+
+## 15. Communication Worker Audit
+The communication worker fails closed in production when mock providers are disabled. Production email/push provider integrations are still incomplete and must not be represented as production-complete until their third-party connections are implemented and certified.
+
+## 16. Database Integrity Audit
+The schema contains substantial relational constraints and tenant-aware RLS. Some cross-tenant correctness still depends on RLS and explicit authorization rather than composite `(entity_id, branch_id)` foreign keys. This is an architectural trade-off, but every SECURITY DEFINER mutation crossing those boundaries must have explicit tests.
+
+## 17. CI/CD Audit
+The pipeline executes a broad validation surface including lint, typecheck, unit tests, database tests, security checks, builds, worker certification and Playwright.
+
+The audit does not treat a green CI result as proof of complete authorization coverage because the E2E assertions themselves can be too weak.
+
+The persistent self-hosted-runner model also remains an operational security concern for untrusted pull requests; this should be assessed against repository contribution policy and runner isolation.
+
+## 18. Dependency / Security Maintenance — P1
+The web package currently declares `next` version `16.3.1`. Next.js published `16.3.3` on August 25, 2026 as an Active LTS security release addressing two critical vulnerabilities.
+
+Therefore the dependency baseline is behind the current security patch level and requires immediate assessment and update before production certification.
+
+The previous report statement that no supply-chain/security dependency issue was observed is superseded by this finding.
+
+## 19. Documentation / Requirements Drift — P2
+The requirements catalog and reconciliation artifacts still contain contradictory status/evidence combinations in places, including rows marked IMPLEMENTED while their evidence still says missing. Layer columns also appear to mix applicability with implementation state.
+
+This does not directly compromise runtime security, but it reduces the reliability of the repository's own completion/certification claims and must be cleaned before final production certification.
+
+## 20. Complete Findings Register
 
 | ID | Sev | Component | Description |
 |---|---|---|---|
-| AUD-001 | P0 | Auth/Web | `proxy.ts` is ignored by Next.js. Temporary credentials enforcement is completely dead. |
-| AUD-002 | P1 | Identifiers | `generate_business_identifier` fails to check branch authorization, allowing cross-branch generation. |
-| AUD-003 | P1 | Identifiers | Transactional lock on sequence table will cause massive contention/deadlocks under Phase 6 load. |
-| AUD-004 | P1 | E2E Tests | Authorization E2E tests are brittle UI-only assertions; they do not test server-side mutation blocks. |
-| AUD-005 | P2 | Docs | `IDENTIFIER_ENGINE_DESIGN.md` fundamentally misunderstands Postgres transactional rollbacks. |
+| AUD-001 | CLOSED | Auth/Web | Original `middleware.ts` naming finding rejected; `proxy.ts` is the Next.js 16 convention. |
+| AUD-002 | P1 | Identifiers | SECURITY DEFINER identifier generation lacks sufficient requested-branch authorization. |
+| AUD-003 | P1 | Identifiers | Transactional sequence update serializes concurrent requests and may cause severe contention; Phase-6 workload must be benchmarked. |
+| AUD-004 | P1 | E2E Tests | Security-critical authorization tests are too UI-centric and do not consistently prove server-side mutation denial/state immutability. |
+| AUD-005 | P2 | Identifier Docs | Transaction/rollback semantics are inaccurately documented and need precise end-to-end guarantees. |
+| AUD-006 | P1 | Dependencies | Next.js `16.3.1` is behind the August 2026 security patch `16.3.3` and requires security update assessment. |
+| AUD-007 | P2 | Governance | Requirements/reconciliation status and evidence fields contain contradictions. |
 
-## 20. P0/P1/P2/P3 Totals
-- **P0:** 1
-- **P1:** 3
-- **P2:** 1
+## 21. Severity Totals
+- **P0:** 0 confirmed
+- **P1:** 4
+- **P2:** 2
 - **P3:** 0
 
-## 21. Blocking Findings
-- **AUD-001** blocks all production deployment (Security).
-- **AUD-002** blocks cross-branch isolation (Security).
-- **AUD-003** blocks Phase 6 architecture (Data/Performance).
-- **AUD-004** blocks certification trust (Testing).
+## 22. Phase-6 Blocking Findings
+The following remain blocking until repaired and independently verified:
 
-## 22. Non-blocking Findings
-- **AUD-005** (Documentation drift).
+- **AUD-002** — cross-branch identifier authorization
+- **AUD-003** — identifier concurrency behavior not yet proven safe for Phase-6 workload
+- **AUD-004** — insufficient adversarial authorization test coverage
+- **AUD-006** — security-patch assessment/update for Next.js
 
-## 23. Explicit Remediation Recommendations
-1. Rename `apps/web/src/proxy.ts` to `apps/web/src/middleware.ts` (or `apps/web/middleware.ts`) and ensure Next.js loads it properly.
-2. Update `generate_business_identifier` to include: `auth_user_has_branch_role(p_branch_id)`.
-3. Refactor the Identifier Engine to use a separate autonomous transaction (e.g., via `dblink` or `pg_background`) OR accept gaps by removing the outer transaction requirement, preventing long-running locks.
-4. Rewrite Playwright authorization tests to execute `request.post(...)` directly using lower-privileged user contexts to prove the server rejects the mutation.
+AUD-005 and AUD-007 are not the primary reasons Phase 6 is frozen, but they must be resolved before final production certification.
+
+## 23. Required Verification Gate Before Phase 6
+Phase 6 may begin only after all of the following are true:
+
+1. Cross-branch identifier generation is explicitly rejected at the database function boundary and covered by pgTAP.
+2. SECURITY DEFINER identifier function uses hardened search-path and privilege configuration.
+3. Identifier concurrency has been exercised with real concurrent database sessions under Phase-6-like load and the documented behavior is accepted.
+4. Attendance/Homework and other security-critical E2E tests perform direct unauthorized mutation attempts and verify unchanged database state.
+5. Next.js is updated to the currently supported security-patched release line after regression testing.
+6. Temporary-credential proxy behavior is proven in a production build/runtime test.
+7. The requirements catalog/reconciliation is synchronized so status, evidence and layer semantics agree.
 
 ## 24. Final Decision
 
 > **NOT READY FOR PHASE 6**
+
+This decision is intentionally conservative: the repository has a strong base and green CI, but the remaining foundation security and certification gaps must be closed before adding a large new mutation-heavy module.
