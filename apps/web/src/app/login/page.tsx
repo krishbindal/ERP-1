@@ -38,7 +38,7 @@ export default function LoginPage() {
           if (authError) {
             setError(authError.message);
           } else {
-            console.log("Session established", { access_token: data.session?.access_token });
+            console.log("LOGIN SUCCESS! Navigating...");
             router.push("/");
           }
         }}
