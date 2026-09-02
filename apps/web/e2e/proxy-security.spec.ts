@@ -4,7 +4,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
 
   test('Unauthenticated user is redirected to /login', async ({ browser }) => {
     // Create an isolated context without any auth state
-    const context = await browser.newContext();
+    const context = await browser.newContext({ storageState: undefined });
     const page = await context.newPage();
     
     await page.goto('/students');
@@ -40,7 +40,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
 
   test.describe('Password Reset Flow', () => {
     test('User requiring password reset is redirected to /auth/update-password', async ({ browser }) => {
-      const context = await browser.newContext();
+      const context = await browser.newContext({ storageState: undefined });
       const page = await context.newPage();
       
       // Login with the reset user
