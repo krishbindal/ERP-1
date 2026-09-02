@@ -39,7 +39,9 @@ export default function LoginPage() {
             setError(authError.message);
           } else {
             console.log("LOGIN SUCCESS! Navigating...");
-            router.push("/");
+            const targetUrl = "/";
+            // eslint-disable-next-line
+            window.location.href = targetUrl;
           }
         }}
       >
