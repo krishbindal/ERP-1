@@ -37,9 +37,19 @@ export default function LoginPage() {
             setError(authError.message);
           } else {
             console.log("LOGIN SUCCESS! Navigating...");
+            // Ensure cookie is actually written by the SSR client before navigating
+            const checkCookie = setInterval(() => {
+              if (document.cookie.includes('sb-')) {
+                clearInterval(checkCookie);
+                window.location.href = "/";
+              }
+            }, 100);
+            
+            // Fallback timeout in case cookie name is different or doesn't write
             setTimeout(() => {
+              clearInterval(checkCookie);
               window.location.href = "/";
-            }, 500);
+            }, 2000);
           }
         }}
       >
