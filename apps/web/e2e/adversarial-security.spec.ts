@@ -1,16 +1,16 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, BrowserContext } from '@playwright/test';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321';
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 const BRANCH_A1 = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02'; // Teacher is in this branch
 const BRANCH_A2 = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03'; // Teacher is NOT in this branch
-const ACADEMIC_YEAR = 'aaaaaaaa-1111-1111-1111-111111111111'; // Needs checking
 
 // Helper to extract JWT for API requests
-async function getAuthToken(context) {
+async function getAuthToken(context: BrowserContext) {
   const cookies = await context.cookies();
-  const tokenCookies = cookies.filter(c => c.name.includes('-auth-token'));
-  tokenCookies.sort((a, b) => a.name.localeCompare(b.name));
-  const fullCookieValue = tokenCookies.map(c => decodeURIComponent(c.value)).join('');
+  const tokenCookies = cookies.filter((c: any) => c.name.includes('-auth-token'));
+  tokenCookies.sort((a: any, b: any) => a.name.localeCompare(b.name));
+  const fullCookieValue = tokenCookies.map((c: any) => decodeURIComponent(c.value)).join('');
   
   if (!fullCookieValue) return null;
   
@@ -18,8 +18,13 @@ async function getAuthToken(context) {
   if (fullCookieValue.startsWith('base64-')) {
     decodedCookieValue = Buffer.from(fullCookieValue.replace('base64-', ''), 'base64').toString('utf-8');
   }
-  const parsed = JSON.parse(decodedCookieValue);
-  return parsed.access_token || parsed[0];
+
+  try {
+    const sessionData = JSON.parse(decodedCookieValue);
+    return sessionData.access_token;
+  } catch {
+    return null;
+  }
 }
 
 test.describe('Adversarial Server-Boundary Security', () => {
@@ -41,7 +46,7 @@ test.describe('Adversarial Server-Boundary Security', () => {
       const res = await request.post(`${SUPABASE_URL}/rest/v1/rpc/rpc_save_attendance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'apikey': ANON_KEY,
           'Content-Type': 'application/json'
         },
         data: payload
@@ -71,7 +76,7 @@ test.describe('Adversarial Server-Boundary Security', () => {
       const res = await request.post(`${SUPABASE_URL}/rest/v1/rpc/rpc_create_homework_assignment`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'apikey': ANON_KEY,
           'Content-Type': 'application/json'
         },
         data: payload
@@ -85,7 +90,7 @@ test.describe('Adversarial Server-Boundary Security', () => {
       const checkRes = await request.get(`${SUPABASE_URL}/rest/v1/homework_assignments?branch_id=eq.${BRANCH_A2}&title=eq.Hacked Homework`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'apikey': ANON_KEY,
         }
       });
       
@@ -110,7 +115,7 @@ test.describe('Adversarial Server-Boundary Security', () => {
       const res = await request.post(`${SUPABASE_URL}/rest/v1/rpc/rpc_send_communication_message`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'apikey': ANON_KEY,
           'Content-Type': 'application/json'
         },
         data: payload
@@ -135,7 +140,7 @@ test.describe('Adversarial Server-Boundary Security', () => {
       const res = await request.post(`${SUPABASE_URL}/rest/v1/rpc/rpc_save_attendance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'apikey': ANON_KEY,
           'Content-Type': 'application/json'
         },
         data: payload
@@ -149,7 +154,7 @@ test.describe('Adversarial Server-Boundary Security', () => {
       const checkRes = await request.get(`${SUPABASE_URL}/rest/v1/attendance_records?session_id=eq.bbbbbbbb-4444-4444-4444-444444444444`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'apikey': ANON_KEY,
         }
       });
       
@@ -175,7 +180,7 @@ test.describe('Adversarial Server-Boundary Security', () => {
       const res = await request.post(`${SUPABASE_URL}/rest/v1/rpc/rpc_save_attendance`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+          'apikey': ANON_KEY,
           'Content-Type': 'application/json'
         },
         data: payload

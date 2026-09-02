@@ -61,7 +61,7 @@ test.describe('Attendance Management', () => {
       await expect(page.getByRole('button', { name: 'Correct' })).not.toBeVisible();
     });
     
-    test('Teacher cannot bypass authorization for another branch', async ({ page, request }) => {
+    test('Teacher cannot bypass authorization for another branch', async ({ page }) => {
        // Just a simple navigation check
        await page.goto('/attendance?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01'); // different branch
        await expect(page.locator('text=Access Denied')).toBeVisible();

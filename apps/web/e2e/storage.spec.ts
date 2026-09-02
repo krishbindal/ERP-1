@@ -16,7 +16,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SERVICE_ROLE) {
       SUPABASE_ANON_KEY = SUPABASE_ANON_KEY || statusJson.ANON_KEY;
       SERVICE_ROLE = SERVICE_ROLE || statusJson.SERVICE_ROLE_KEY;
     }
-  } catch (e) {
+  } catch {
     console.warn("Could not derive Supabase keys from CLI. E2E tests may fail if env vars are missing.");
   }
 }

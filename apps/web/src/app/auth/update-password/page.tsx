@@ -40,7 +40,7 @@ export default function UpdatePasswordPage() {
             if (result.error) {
               setError(result.error);
             } else {
-              window.location.href = '/';
+              router.push('/');
             }
           }}
         >
