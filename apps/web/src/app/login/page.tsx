@@ -37,19 +37,30 @@ export default function LoginPage() {
             setError(authError.message);
           } else {
             console.log("LOGIN SUCCESS! Navigating...");
-            // Ensure cookie is actually written by the SSR client before navigating
-            const checkCookie = setInterval(() => {
-              if (document.cookie.includes('sb-')) {
-                clearInterval(checkCookie);
-                window.location.href = "/";
-              }
-            }, 100);
             
-            // Fallback timeout in case cookie name is different or doesn't write
-            setTimeout(() => {
-              clearInterval(checkCookie);
-              window.location.href = "/";
-            }, 2000);
+            // Wait for onAuthStateChange to fire and write cookies before navigating
+            // We use a Promise that resolves when the `SIGNED_IN` event is received
+            const waitForCookies = new Promise<void>((resolve) => {
+              const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+                if (event === 'SIGNED_IN') {
+                  subscription.unsubscribe();
+                  // Wait an extra 50ms to ensure the browser has completely persisted the cookie chunks
+                  setTimeout(resolve, 50);
+                }
+              });
+              
+              // Fallback resolve after 1 second if event doesn't fire
+              setTimeout(() => {
+                subscription.unsubscribe();
+                resolve();
+              }, 1000);
+            });
+
+            await waitForCookies;
+            
+            // Use hard navigation to avoid Playwright Next.js router cache timeouts
+            // eslint-disable-next-line
+            window.location.href = "/";
           }
         }}
       >
