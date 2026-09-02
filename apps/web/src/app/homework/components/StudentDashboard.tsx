@@ -1,17 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 
 export function StudentDashboard({ 
   branchId, 
-  assignments, 
-  isGuardian 
+  assignments 
 }: { 
   branchId: string; 
   assignments: any[]; 
-  isGuardian: boolean 
 }) {
   return (
     <div className="space-y-4">

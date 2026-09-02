@@ -62,7 +62,6 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
         <h1 className="text-2xl font-bold">Homework Management</h1>
         <TeacherDashboard 
           branchId={branchId}
-          academicYearId={currentYear.id}
           assignments={assignments || []} 
         />
       </div>
@@ -84,7 +83,6 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
         <StudentDashboard 
           branchId={branchId}
           assignments={assignments || []}
-          isGuardian={isGuardian}
         />
       </div>
     );

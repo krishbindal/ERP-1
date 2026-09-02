@@ -57,7 +57,6 @@ export default async function HomeworkDetailsPage(props: { params: Promise<{ id:
     return (
       <div className="space-y-6">
         <TeacherHomeworkDetails 
-          branchId={branchId}
           assignment={assignment}
           submissions={submissions || []}
         />
@@ -87,7 +86,6 @@ export default async function HomeworkDetailsPage(props: { params: Promise<{ id:
     return (
       <div className="space-y-6">
         <StudentHomeworkDetails 
-          branchId={branchId}
           assignment={assignment}
           submission={submission}
           isGuardian={isGuardian}

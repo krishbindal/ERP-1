@@ -6,12 +6,10 @@ import { useRouter } from 'next/navigation';
 import { submitHomework } from '@/lib/homework/actions';
 
 export function StudentHomeworkDetails({
-  branchId,
   assignment,
   submission,
   isGuardian,
 }: {
-  branchId: string;
   assignment: any;
   submission: any;
   isGuardian: boolean;

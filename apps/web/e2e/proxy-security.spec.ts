@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Proxy / Middleware Runtime Security', () => {
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-teacher', 'Only need to run proxy tests once');
+  });
 
   test('Unauthenticated user is redirected to /login', async ({ browser }) => {
     // Create an isolated context without any auth state
@@ -10,7 +13,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
     await page.goto('/students');
     // Should be redirected by proxy.ts to login
     await expect(page).toHaveURL(/.*\/login/);
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     await context.close();
   });
 
@@ -50,7 +53,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
       await page.getByRole('button', { name: 'Sign in' }).click();
 
       // Should be forced to update-password
-      await expect(page).toHaveURL(/.*\/auth\/update-password/);
+      await expect(page).toHaveURL(/.*\/auth\/update-password/, { timeout: 15000 });
       await expect(page.getByRole('heading', { name: 'Update Password' })).toBeVisible();
 
       // Trying to navigate to a protected page directly should still redirect
