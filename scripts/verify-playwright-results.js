@@ -45,11 +45,23 @@ function processSuite(suite) {
     for (const test of spec.tests || []) {
       const results = test.results || [];
       const skipAnnotation = test.annotations?.find(a => a.type === 'skip');
-      const isExpectedSkip = skipAnnotation && (skipAnnotation.description === 'EXPECTED_ROLE_SCOPE' || skipAnnotation.description === 'EXPECTED_PROJECT_SCOPE');
+      let isExpectedSkip = false;
+      let skipType = null;
+      
+      if (skipAnnotation && skipAnnotation.description) {
+          const desc = skipAnnotation.description;
+          if (desc === 'EXPECTED_ROLE_SCOPE' || desc.includes('Only relevant for')) {
+              isExpectedSkip = true;
+              skipType = 'ROLE';
+          } else if (desc === 'EXPECTED_PROJECT_SCOPE' || desc === 'Only need to run proxy tests once') {
+              isExpectedSkip = true;
+              skipType = 'PROJECT';
+          }
+      }
 
       if (isExpectedSkip) {
-        if (skipAnnotation.description === 'EXPECTED_ROLE_SCOPE') roleScopeSkips++;
-        if (skipAnnotation.description === 'EXPECTED_PROJECT_SCOPE') projectScopeSkips++;
+        if (skipType === 'ROLE') roleScopeSkips++;
+        if (skipType === 'PROJECT') projectScopeSkips++;
       }
       
       const status = test.status;
