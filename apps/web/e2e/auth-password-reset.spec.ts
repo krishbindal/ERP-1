@@ -61,7 +61,7 @@ test.describe('Temporary Credentials Enforcement', () => {
 
   test('Normal user without force_password_reset can login normally', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel('Email').fill('teacher.a1.e2e@test.com');
+    await page.getByLabel('Email').fill('normal.user@test.com');
     await page.getByLabel('Password').fill('password123');
     await page.getByRole('button', { name: 'Sign in' }).click();
 

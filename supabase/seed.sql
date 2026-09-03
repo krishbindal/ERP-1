@@ -247,7 +247,10 @@ INSERT INTO auth.users (
 ) VALUES 
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'teacher2.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'teacher.limit.e2e@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'reset.user@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false)
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'reset.user@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'logout.user@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'reset.user2@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'normal.user@test.com', crypt('password123', gen_salt('bf')), now(), now(), now(), '{"provider": "email", "providers": ["email"]}', '{}', '', '', '', '', false, false)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO auth.identities (
@@ -255,11 +258,18 @@ INSERT INTO auth.identities (
 ) VALUES
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', 'teacher2.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeb03', 'teacher2.e2e@test.com')::jsonb, 'email', now(), now(), now()),
 ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'teacher.limit.e2e@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeec03', 'teacher.limit.e2e@test.com')::jsonb, 'email', now(), now(), now()),
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'reset.user@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'reset.user@test.com')::jsonb, 'email', now(), now(), now())
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'reset.user@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'reset.user@test.com')::jsonb, 'email', now(), now(), now()),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'logout.user@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'logout.user@test.com')::jsonb, 'email', now(), now(), now()),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'reset.user2@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'reset.user2@test.com')::jsonb, 'email', now(), now(), now()),
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'normal.user@test.com', format('{"sub": "%s", "email": "%s"}', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'normal.user@test.com')::jsonb, 'email', now(), now(), now())
 ON CONFLICT (provider_id, provider) DO NOTHING;
 
 INSERT INTO public.profiles (id, first_name, last_name)
 SELECT id, 'Teacher', 'A2' FROM auth.users WHERE email = 'teacher2.e2e@test.com'
+UNION ALL SELECT id, 'Reset', 'User' FROM auth.users WHERE email = 'reset.user@test.com'
+UNION ALL SELECT id, 'Logout', 'User' FROM auth.users WHERE email = 'logout.user@test.com'
+UNION ALL SELECT id, 'Reset', 'User2' FROM auth.users WHERE email = 'reset.user2@test.com'
+UNION ALL SELECT id, 'Normal', 'User' FROM auth.users WHERE email = 'normal.user@test.com'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.profiles (id, first_name, last_name)
@@ -311,6 +321,16 @@ COMMIT;
 INSERT INTO public.user_credentials (id, username, profile_id, role_id, branch_id, force_password_reset) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'resetuser', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', true) ON CONFLICT DO NOTHING;
 INSERT INTO public.branch_memberships (id, branch_id, user_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04') ON CONFLICT DO NOTHING;
 INSERT INTO public.user_role_assignments (id, branch_membership_id, role_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed04', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31') ON CONFLICT DO NOTHING;
+
+-- Add user_credentials for reset user 2
+INSERT INTO public.user_credentials (id, username, profile_id, role_id, branch_id, force_password_reset) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'resetuser2', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', true) ON CONFLICT DO NOTHING;
+INSERT INTO public.branch_memberships (id, branch_id, user_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06') ON CONFLICT DO NOTHING;
+INSERT INTO public.user_role_assignments (id, branch_membership_id, role_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed06', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31') ON CONFLICT DO NOTHING;
+
+-- Add user_credentials for normal user
+INSERT INTO public.user_credentials (id, username, profile_id, role_id, branch_id, force_password_reset) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'normaluser', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', false) ON CONFLICT DO NOTHING;
+INSERT INTO public.branch_memberships (id, branch_id, user_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07') ON CONFLICT DO NOTHING;
+INSERT INTO public.user_role_assignments (id, branch_membership_id, role_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed07', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31') ON CONFLICT DO NOTHING;
 
 -- Fix missing role permissions for attendance
 INSERT INTO public.role_permissions (role_id, permission_id)
@@ -368,3 +388,8 @@ SELECT 'bbbbbbbb-5555-5555-5555-555555555555', 'eeeeeeee-eeee-eeee-eeee-eeeeeeee
 FROM public.staff_branch_profiles LIMIT 1
 ON CONFLICT DO NOTHING;
 
+
+-- Add user_credentials for logout user
+INSERT INTO public.user_credentials (id, username, profile_id, role_id, branch_id, force_password_reset) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'logoutuser', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', false) ON CONFLICT DO NOTHING;
+INSERT INTO public.branch_memberships (id, branch_id, user_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05') ON CONFLICT DO NOTHING;
+INSERT INTO public.user_role_assignments (id, branch_membership_id, role_id) VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeed05', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee31') ON CONFLICT DO NOTHING;

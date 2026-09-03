@@ -32,7 +32,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
 
     // Manually log in
     await page.goto('/login');
-    await page.getByLabel('Email').fill('teacher.a1.e2e@test.com');
+    await page.getByLabel('Email').fill('logout.user@test.com');
     await page.getByLabel('Password').fill('password123');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
@@ -63,7 +63,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
       
       // Login with the reset user
       await page.goto('/login');
-      await page.getByLabel('Email').fill('reset.user@test.com');
+      await page.getByLabel('Email').fill('reset.user2@test.com');
       await page.getByLabel('Password').fill('password123');
       await page.getByRole('button', { name: 'Sign in' }).click();
 
