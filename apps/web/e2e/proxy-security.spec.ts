@@ -25,7 +25,18 @@ test.describe('Proxy / Middleware Runtime Security', () => {
     await expect(page.locator('h1:has-text("Students")')).toBeVisible();
   });
 
-  test('Logout remains usable', async ({ page }) => {
+  test('Logout remains usable', async ({ browser }) => {
+    // Create an isolated context without any auth state to prevent destroying the shared session
+    const context = await browser.newContext({ storageState: undefined });
+    const page = await context.newPage();
+
+    // Manually log in
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('teacher.a1.e2e@test.com');
+    await page.getByLabel('Password').fill('password123');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+
     // Navigate to a page
     await page.goto('/students');
     await expect(page.locator('h1:has-text("Students")')).toBeVisible();
@@ -39,6 +50,8 @@ test.describe('Proxy / Middleware Runtime Security', () => {
     // Verify session is actually destroyed
     await page.goto('/students');
     await expect(page).toHaveURL(/.*\/login/);
+
+    await context.close();
   });
 
   test.describe('Password Reset Flow', () => {
