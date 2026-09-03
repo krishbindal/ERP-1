@@ -1,7 +1,8 @@
 {
   "name": "@schoolos/permissions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.ts",
+  "description": "Client-side permission hints only; database/RPC authorization is authoritative.",
   "dependencies": {
     "@schoolos/auth": "*"
   }

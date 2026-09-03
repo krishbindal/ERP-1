@@ -14,7 +14,7 @@ jobs:
   validate:
     name: Core Validation & E2E
     runs-on: [self-hosted, linux, x64, schoolos-ci]
-    
+
     steps:
       - name: Checkout commit
         uses: actions/checkout@v5
@@ -44,10 +44,9 @@ jobs:
       - name: Unit Tests
         run: npm run test --workspaces --if-present
 
-
       - name: Run Full Audit (Artifact)
         run: npm audit --json > audit-full.json || true
-        
+
       - name: Run Production Audit (Artifact)
         run: npm audit --omit=dev --json > audit-prod.json || true
 
@@ -124,55 +123,30 @@ jobs:
             echo "Supabase DB container not found!"
             exit 1
           fi
-          
           NETWORK_NAME=$(docker inspect $DB_CONTAINER --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')
           DB_NAME=$(docker inspect $DB_CONTAINER --format='{{.Name}}' | sed 's/^\///')
-          
           echo "Network: $NETWORK_NAME"
           echo "DB Host: $DB_NAME"
-          
-          echo "Initializing pgTAP..."
           docker exec "$DB_NAME" psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;"
-          
-          echo "Copying tests to a native Docker volume to prevent WSL 9p deadlock..."
           docker volume create pg_tests_volume
           docker create -v pg_tests_volume:/tests --name pg_tests_dummy alpine /bin/true
           docker cp ${{ github.workspace }}/supabase/tests/. pg_tests_dummy:/tests/
           docker rm pg_tests_dummy
-
-          echo "Running pg_prove tests..."
           TEST_EXIT=0
-          
           set +e
           docker run --rm \
             --network "$NETWORK_NAME" \
             -v pg_tests_volume:/tests:ro \
-            -e PGHOST="$DB_NAME" \
-            -e PGUSER=postgres \
-            -e PGPASSWORD=postgres \
-            -e PGDATABASE=postgres \
-            public.ecr.aws/supabase/pg_prove:3.36 \
+            -e PGHOST="$DB_NAME" -e PGUSER=postgres -e PGPASSWORD=postgres -e PGDATABASE=postgres \
+            public.ecr.aws/supabase/pg_prove:3.36_amd64@sha256:715739e7fdd07a8631c36ea2f1c88fc0144f99a8f5eaa6c3a9799be377f94f2c \
             pg_prove --ext .sql -r /tests/db
           TEST_EXIT=$?
           set -e
-          
-          echo "Cleaning up pgTAP..."
           CLEANUP_EXIT=0
           docker exec "$DB_NAME" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DROP EXTENSION IF EXISTS pgtap;" || CLEANUP_EXIT=$?
-          
-          echo "Removing native Docker volume..."
           docker volume rm pg_tests_volume || true
-          
-          if [ "$TEST_EXIT" -ne 0 ]; then
-            echo "Database tests FAILED with exit code $TEST_EXIT"
-            exit "$TEST_EXIT"
-          fi
-          
-          if [ "$CLEANUP_EXIT" -ne 0 ]; then
-            echo "pgTAP cleanup FAILED with exit code $CLEANUP_EXIT"
-            exit "$CLEANUP_EXIT"
-          fi
-          
+          if [ "$TEST_EXIT" -ne 0 ]; then exit "$TEST_EXIT"; fi
+          if [ "$CLEANUP_EXIT" -ne 0 ]; then exit "$CLEANUP_EXIT"; fi
           echo "Database tests and pgTAP cleanup completed successfully."
 
       - name: Export Supabase Environment Variables
@@ -180,25 +154,14 @@ jobs:
           API_URL=$(npx --no-install supabase status -o env | grep API_URL | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
           ANON_KEY=$(npx --no-install supabase status -o env | grep ANON_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
           SERVICE_KEY=$(npx --no-install supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
-          
           echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
           echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
-          
-          echo "Playwright Preflight Environment Check:"
           echo "NEXT_PUBLIC_SUPABASE_URL: ${API_URL:+PRESENT}"
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:+PRESENT}"
           echo "SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_KEY:+PRESENT}"
-          
-          if ! [[ "$API_URL" =~ ^https?:// ]]; then
-            echo "::error::NEXT_PUBLIC_SUPABASE_URL is not a valid HTTP/HTTPS URL! Found: '$API_URL'"
-            exit 1
-          fi
-          
-          if [[ -z "$API_URL" || -z "$ANON_KEY" ]]; then
-            echo "::error::Missing required Supabase environment variables for Playwright!"
-            exit 1
-          fi
+          if ! [[ "$API_URL" =~ ^https?:// ]]; then exit 1; fi
+          if [[ -z "$API_URL" || -z "$ANON_KEY" ]]; then exit 1; fi
 
       - name: Build Web
         run: npm run build:web
@@ -207,14 +170,9 @@ jobs:
         run: |
           echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
           npx --no-install supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
-          echo "Waiting for communication-worker..."
           for i in {1..15}; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:54321/functions/v1/communication-worker || echo "000")
-            if [ "$STATUS" = "405" ] || [ "$STATUS" = "401" ]; then
-              echo "Worker is ready!"
-              break
-            fi
-            echo "Waiting... (Status: $STATUS)"
+            if [ "$STATUS" = "405" ] || [ "$STATUS" = "401" ]; then break; fi
             sleep 2
           done
           node scripts/test-worker.js
@@ -228,8 +186,7 @@ jobs:
           npx --no-install playwright test --reporter=line,json
 
       - name: Verify JSON Certification Artifact
-        run: |
-          node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
+        run: node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
 
       - name: Upload Certification Artifacts
         uses: actions/upload-artifact@v4
@@ -241,8 +198,6 @@ jobs:
             audit-full.json
             audit-prod.json
           retention-days: 14
-
-
 
       - name: Cleanup Workspace
         if: always()

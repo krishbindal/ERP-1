@@ -1,51 +1,24 @@
-# Post-Foundation Remediation Final Report
+# Post-Foundation Remediation Report
 
-## Executive Summary
-This report certifies the remediation of all pre-Phase 6 deep audit findings (AUD-002 through AUD-007). The SchoolOS repository has been hardened, benchmarked, and verified to safely support Phase 6 (Grading & Results) workloads.
+## Current Status
+**PENDING FINAL CI ON FOUNDATION-HARDENING COMMIT**
 
-**Final Decision: READY FOR PHASE 6**
+The previously identified pre-Phase-6 remediation findings have been addressed in the current repository state. Final certification remains contingent on a green CI run for the exact hardening commit.
 
-## Remediation Details
+## Verified remediation
+1. Identifier branch authorization is enforced inside the SECURITY DEFINER generator.
+2. Identifier concurrency and transaction semantics are documented precisely, with runnable benchmark assets.
+3. Adversarial server-boundary E2E tests cover unauthorized attendance/homework/communication mutations and locked attendance.
+4. Next.js is on 16.3.3.
+5. Temporary credentials are enforced by `proxy.ts`, including fail-closed handling when the reset-check RPC itself fails.
+6. Password-reset SECURITY DEFINER privileges are explicitly restricted.
+7. Playwright result accounting no longer relies on global skip arithmetic.
+8. CI pg_prove execution is digest pinned.
+9. Repository debug artifacts were removed.
+10. The unfinished client permissions helper now fails closed without explicit permission data and is clearly non-authoritative.
 
-### 1. AUD-002: Identifier Engine Cross-Branch Authorization
-- **Finding**: `generate_business_identifier` lacked branch authorization.
-- **Remediation**: Re-implemented as a `SECURITY DEFINER` function with strict `search_path=''`.
-- **Enforcement**: Validates the caller's organizational context via `auth_is_active_user()` and explicit branch checks. Super Admin canonical behavior is fully supported. Academic year validation ensures branch mismatch isolation.
-- **Verification**: Covered by 21 assertions in `07_identifier_engine.sql`. All passing.
+## CI evidence already obtained
+CI #356 on commit `329d0e16f61e3b27c31df1738f0f114bea5be592` was green before these final hardening changes: database 479/479, Playwright 234/234 with 392 intentional skips, verifier passed, and worker certification 20/20.
 
-### 2. AUD-003: Identifier Transaction Semantics & Concurrency
-- **Finding**: Theoretical lock queuing needed real workload proof.
-- **Remediation**: Deployed `pgbench` directly against the database container with realistic workloads (2 to 10 concurrent clients, varying transaction hold times).
-- **Results**: 
-  - Monotonic, gap-free generation guaranteed at the database level.
-  - Zero deadlocks under heavy contention.
-  - Latency scales linearly with lock queue time.
-  - Independent sequences execute in complete parallel without blocking.
-- **Conclusion**: The atomic `UPDATE` model (Option A) is robust and operationally acceptable.
-
-### 3. AUD-004: Adversarial Security Boundary
-- **Finding**: E2E tests lacked direct server-boundary adversarial attacks.
-- **Remediation**: Introduced `adversarial-security.spec.ts` using direct JWT authentication to the PostgREST API to attempt unauthorized mutations.
-- **Verified Protections**:
-  - Teacher cannot mutate attendance in unauthorized branches.
-  - Teacher cannot mutate homework in unauthorized branches.
-  - Teacher cannot alter a locked attendance session.
-  - Guardian cannot mutate their own child's attendance.
-  - Teacher cannot invoke admin-only communication endpoints.
-
-### 4. AUD-006: Next.js Security Patch
-- **Finding**: `next` and `eslint-config-next` required updates.
-- **Remediation**: Updated from `16.3.1` to `16.3.3` in `package.json`.
-- **Verification**: `proxy-security.spec.ts` introduced to ensure the middleware (`proxy.ts`) correctly isolates authenticated, unauthenticated, and reset-required users across the patched Next.js runtime.
-
-### 5. AUD-005: Documentation Integrity
-- **Finding**: `IDENTIFIER_ENGINE_DESIGN.md` contained inaccurate transaction semantics.
-- **Remediation**: Documented the proven database transaction guarantee (gap-free at the DB level) and included the pgbench empirical results.
-
-### 6. AUD-007: Requirements Reconciliation
-- **Finding**: Catalog and Reconciliation matrices contained stale Evidence values ("Missing middleware enforcement", etc.).
-- **Remediation**: Synchronized all documentation fields for REQ-001, REQ-002, REQ-004, REQ-016, REQ-069, REQ-371-392, and REQ-393-412. Evidence now explicitly references the verified remediations.
-- **Status**: 421 requirements reconciled. 100% agreement.
-
-## Repository State
-All remediations have been committed. The master branch is architecturally, securely, and operationally sound for the immediate commencement of Phase 6: Exams, Marks, Grading, and Results.
+## Remaining production-operational work
+Real communication providers, backup/DR, observability, and self-hosted runner isolation remain deployment/infrastructure responsibilities and are not represented as completed application features.

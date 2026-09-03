@@ -1,16 +1,11 @@
 BEGIN;
 
-SELECT plan(5);
+SELECT plan(9);
 
--- Helper functions for deterministic UUIDs
 CREATE FUNCTION get_test_user_1() RETURNS uuid LANGUAGE sql AS $$ SELECT '77777777-7777-7777-7777-777777777777'::uuid $$;
 CREATE FUNCTION get_test_user_2() RETURNS uuid LANGUAGE sql AS $$ SELECT '88888888-8888-8888-8888-888888888888'::uuid $$;
 CREATE FUNCTION get_test_role() RETURNS uuid LANGUAGE sql AS $$ SELECT '99999999-8888-7777-6666-555555555555'::uuid $$;
 CREATE FUNCTION get_test_org() RETURNS uuid LANGUAGE sql AS $$ SELECT 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'::uuid $$;
-
--- 1. Setup Mock Data
--- Need auth schema since users table is in auth
--- Need auth schema since users table is in auth
 
 INSERT INTO auth.users (id, email) VALUES
 (get_test_user_1(), 'test1@example.com'),
@@ -35,58 +30,27 @@ INSERT INTO public.user_credentials (username, profile_id, role_id, is_active, f
 ('testuser2', get_test_user_2(), get_test_role(), true, false)
 ON CONFLICT DO NOTHING;
 
--- =================================================================
--- TEST 1: requires_password_reset() returns true when force_password_reset = true
--- =================================================================
 SELECT set_config('request.jwt.claims', format('{"sub": "%s", "role": "authenticated"}', get_test_user_1()), true);
 SELECT set_config('role', 'authenticated', true);
+SELECT is(public.requires_password_reset(), true, 'flagged user requires reset');
 
-SELECT is(
-    public.requires_password_reset(),
-    true,
-    'TEST 1: requires_password_reset() returns true for user with force_password_reset = true'
-);
-
--- =================================================================
--- TEST 2: requires_password_reset() returns false when force_password_reset = false
--- =================================================================
 SELECT set_config('request.jwt.claims', format('{"sub": "%s", "role": "authenticated"}', get_test_user_2()), true);
 SELECT set_config('role', 'authenticated', true);
+SELECT is(public.requires_password_reset(), false, 'unflagged user does not require reset');
 
-SELECT is(
-    public.requires_password_reset(),
-    false,
-    'TEST 2: requires_password_reset() returns false for user with force_password_reset = false'
-);
-
--- =================================================================
--- TEST 3: clear_password_reset_flag() sets force_password_reset to false
--- =================================================================
 SELECT set_config('request.jwt.claims', format('{"sub": "%s", "role": "authenticated"}', get_test_user_1()), true);
 SELECT set_config('role', 'authenticated', true);
+SELECT lives_ok($$ SELECT public.clear_password_reset_flag() $$, 'clear_password_reset_flag() executes');
+SELECT is(public.requires_password_reset(), false, 'reset flag is cleared');
 
-SELECT lives_ok(
-    $$ SELECT public.clear_password_reset_flag() $$,
-    'TEST 3a: clear_password_reset_flag() executes without error'
-);
-
-SELECT is(
-    public.requires_password_reset(),
-    false,
-    'TEST 3b: requires_password_reset() returns false after calling clear_password_reset_flag()'
-);
-
--- =================================================================
--- TEST 4: requires_password_reset() returns false when record doesn't exist
--- =================================================================
 SELECT set_config('request.jwt.claims', '{"sub": "99999999-9999-9999-9999-999999999999", "role": "authenticated"}', true);
 SELECT set_config('role', 'authenticated', true);
+SELECT is(public.requires_password_reset(), false, 'unknown user does not require reset');
 
-SELECT is(
-    public.requires_password_reset(),
-    false,
-    'TEST 4: requires_password_reset() returns false for unknown user'
-);
+SELECT is(has_function_privilege('public', 'public.requires_password_reset()', 'EXECUTE'), false, 'PUBLIC cannot execute requires_password_reset()');
+SELECT is(has_function_privilege('authenticated', 'public.requires_password_reset()', 'EXECUTE'), true, 'authenticated can execute requires_password_reset()');
+SELECT is(has_function_privilege('public', 'public.clear_password_reset_flag()', 'EXECUTE'), false, 'PUBLIC cannot execute clear_password_reset_flag()');
+SELECT is(has_function_privilege('authenticated', 'public.clear_password_reset_flag()', 'EXECUTE'), true, 'authenticated can execute clear_password_reset_flag()');
 
 SELECT * FROM finish();
 ROLLBACK;
