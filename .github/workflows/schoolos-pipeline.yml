@@ -120,34 +120,6 @@ jobs:
             exit 1
           fi
 
-      - name: Reset Database
-        run: |
-          if ! timeout 900s npx --no-install supabase db reset --yes > reset_output.log 2>&1; then
-            echo "::error::Supabase db reset failed or timed out!"
-            echo "--- Reset Output ---"
-            cat reset_output.log || true
-            echo "--- Docker PS ---"
-            docker ps -a -f label=com.supabase.cli.project=ERP_1 || true
-            echo "--- Postgres Logs ---"
-            DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
-            if [ -n "$DB_CONTAINER" ]; then docker logs $DB_CONTAINER || true; fi
-            exit 1
-          fi
-
-      - name: Wait for PostgreSQL Readiness After Reset
-        run: |
-          echo "Waiting for PostgreSQL to be ready after reset..."
-          DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
-          if [ -n "$DB_CONTAINER" ]; then
-            until docker exec $DB_CONTAINER pg_isready -U postgres; do
-              echo "Waiting for postgres..."
-              sleep 2
-            done
-          else
-            echo "Supabase DB container not found!"
-            exit 1
-          fi
-
       - name: Database Tests (pgTAP & RLS)
         run: |
           echo "Discovering Supabase configuration..."
