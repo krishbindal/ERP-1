@@ -248,12 +248,6 @@ jobs:
 
 
 
-      - name: Stop Local Supabase
-        if: always()
-        run: |
-          chmod +x scripts/ci-cleanup.sh
-          ./scripts/ci-cleanup.sh
-
       - name: Cleanup Workspace
         if: always()
         run: |
@@ -262,4 +256,3 @@ jobs:
           pkill -f "webkit" || true
           pkill -f "next" || true
           pkill -f "supabase functions serve" || true
-          git clean -ffdx && git reset --hard HEAD

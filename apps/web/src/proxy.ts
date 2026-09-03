@@ -55,7 +55,16 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user }, error } = await supabase.auth.getUser()
+  let user = null;
+  let error = null;
+  for (let i = 0; i < 5; i++) {
+    const res = await supabase.auth.getUser();
+    user = res.data?.user;
+    error = res.error;
+    if (!error || error.message !== 'Failed to fetch') break;
+    console.warn(`proxy.ts getUser failed to fetch, retrying ${i + 1}/5...`);
+    await new Promise(r => setTimeout(r, 1000));
+  }
 
   const isLoginRoute = request.nextUrl.pathname.startsWith('/login');
   const isAuthUpdateRoute = request.nextUrl.pathname.startsWith('/auth/update-password');

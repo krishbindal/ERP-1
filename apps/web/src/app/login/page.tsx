@@ -18,7 +18,7 @@ export default function LoginPage() {
           const supabase = createClient();
           
           let authError = null;
-          for (let i = 0; i < 3; i++) {
+          for (let i = 0; i < 10; i++) {
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (!error) {
               authError = null;

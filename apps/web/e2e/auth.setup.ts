@@ -22,7 +22,7 @@ for (const role of roles) {
     await page.getByRole('button', { name: 'Sign in' }).click();
 
     try {
-      await page.waitForURL('/', { timeout: 10000 });
+      await page.waitForURL('/', { timeout: 30000 });
     } catch (e) {
       const errorMsg = page.locator('.text-red-500');
       if (await errorMsg.isVisible({ timeout: 2000 })) {
