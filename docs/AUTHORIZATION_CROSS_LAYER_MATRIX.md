@@ -11,6 +11,6 @@
 
 ## Implementation Trace
 - **UI**: Addressed via `activeBranchId` context blocking UI elements.
-- **Shared Auth/Permissions**: `canAccessBranch(branchId)` throws error in `packages/permissions`.
+- **Shared Auth/Permissions**: `canAccessBranch(branchId)` returns a boolean client-side authorization hint in `packages/permissions`.
 - **Server/API**: Edge functions check valid token + branch parameter.
 - **RLS**: Defined in PostgreSQL using `EXISTS(SELECT 1 FROM branch_memberships WHERE ...)` security definer checks.
