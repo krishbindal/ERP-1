@@ -27,12 +27,10 @@ export async function proxy(request: NextRequest) {
   )
 
   let user = null
-  let error = null
   for (let i = 0; i < 5; i++) {
     const res = await supabase.auth.getUser()
     user = res.data?.user ?? null
-    error = res.error ?? null
-    if (!error || error.message !== 'Failed to fetch') break
+    if (!res.error || res.error.message !== 'Failed to fetch') break
     console.warn(`proxy auth lookup failed to fetch; retry ${i + 1}/5`)
     await new Promise(resolve => setTimeout(resolve, 1000))
   }
