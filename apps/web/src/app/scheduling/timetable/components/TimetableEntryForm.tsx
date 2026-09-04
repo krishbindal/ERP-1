@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createTimetableEntry, updateTimetableEntry } from '../actions';
 import { TeacherSelect } from "../../components/TeacherSelect";
 import { DrawerForm } from '@/app/academic-structure/components/DrawerForm';
+import { ConfirmDialog, toast } from '@/components/ui';
 import { TimetableEntry, Period } from './TimetableGrid';
 
 interface Props {
@@ -34,6 +35,7 @@ export function TimetableEntryForm({
   const [isOpen, setIsOpen] = useState(triggerOpen);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
 
   // Cascading state
   const [selectedClassId, setSelectedClassId] = useState<string>(initialData?.class_id || '');
@@ -43,6 +45,29 @@ export function TimetableEntryForm({
   const handleClose = () => {
     setIsOpen(false);
     if (onClose) onClose();
+  };
+
+  const handleArchive = async () => {
+    if (!initialData) return;
+    setLoading(true);
+    try {
+      const { archiveTimetableEntry } = await import('../actions');
+      const result = await archiveTimetableEntry(initialData.id, branchId);
+      if (result?.error) {
+        setError(result.error);
+        toast.error(result.error);
+      } else {
+        toast.success('Timetable entry archived successfully.');
+        setIsArchiveConfirmOpen(false);
+        handleClose();
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -180,16 +205,7 @@ export function TimetableEntryForm({
               <div className="pt-4 border-t border-gray-200 mt-4">
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (confirm('Are you sure you want to archive this timetable entry?')) {
-                      setLoading(true);
-                      const { archiveTimetableEntry } = await import('../actions');
-                      const result = await archiveTimetableEntry(initialData.id, branchId);
-                      setLoading(false);
-                      if (result?.error) setError(result.error);
-                      else handleClose();
-                    }
-                  }}
+                  onClick={() => setIsArchiveConfirmOpen(true)}
                   className="w-full py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 font-medium text-sm"
                   disabled={loading}
                 >
@@ -200,6 +216,21 @@ export function TimetableEntryForm({
           </div>
         </DrawerForm>
       )}
+
+      {/* Canonical ConfirmDialog: Archive Timetable Entry */}
+      <ConfirmDialog
+        isOpen={isArchiveConfirmOpen}
+        onClose={() => {
+          if (!loading) setIsArchiveConfirmOpen(false);
+        }}
+        onConfirm={handleArchive}
+        title="Archive Timetable Entry"
+        message="Are you sure you want to archive this timetable entry? This entry will be removed from the active schedule."
+        confirmText="Archive Entry"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={loading}
+      />
     </>
   );
 }
