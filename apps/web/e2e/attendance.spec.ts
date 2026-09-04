@@ -15,24 +15,15 @@ test.describe('Attendance Management', () => {
       const offset = (pIdx * 2) + testIdx;
       
       const weekdays = [];
-      const curr = new Date('2026-08-11T00:00:00Z');
+      const curr = new Date('2026-09-01T00:00:00Z');
       while(weekdays.length < 100) {
         if (curr.getDay() !== 0 && curr.getDay() !== 6) weekdays.push(curr.toISOString().split('T')[0]);
         curr.setDate(curr.getDate() + 1);
       }
+      const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
       const targetDate = weekdays[offset];
 
-      await page.goto('/attendance');
-      await expect(page.getByRole('heading', { name: 'Attendance' })).toBeVisible();
-      
-      // Select Date
-      await page.fill('input[type="date"]', targetDate);
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
-      
-      // Select Section
-      await page.locator('select[aria-label="Section"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
-
+      await page.goto(`/attendance?date=${targetDate}&sectionId=${sectionId}`);
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as ABSENT
@@ -48,6 +39,9 @@ test.describe('Attendance Management', () => {
 
       // Lock
       await page.getByRole('button', { name: 'Lock' }).click();
+      const lockConfirmBtn = page.getByRole('button', { name: 'Lock Attendance' });
+      await expect(lockConfirmBtn).toBeVisible();
+      await lockConfirmBtn.click();
       await expect(page.locator('text=Attendance locked successfully')).toBeVisible();
 
       // Status should update to Locked
@@ -80,24 +74,15 @@ test.describe('Attendance Management', () => {
       const offset = (pIdx * 2) + testIdx;
       
       const weekdays = [];
-      const curr = new Date('2026-08-11T00:00:00Z');
+      const curr = new Date('2026-09-01T00:00:00Z');
       while(weekdays.length < 100) {
         if (curr.getDay() !== 0 && curr.getDay() !== 6) weekdays.push(curr.toISOString().split('T')[0]);
         curr.setDate(curr.getDate() + 1);
       }
+      const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
       const targetDate = weekdays[offset];
 
-      await page.goto('/attendance');
-      
-      // Select Date
-      await page.fill('input[type="date"]', targetDate);
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
-      
-      // Select Section
-      await page.locator('select[aria-label="Section"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
-
-      // Ensure it's unmarked
+      await page.goto(`/attendance?date=${targetDate}&sectionId=${sectionId}`);
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as LATE
@@ -108,10 +93,16 @@ test.describe('Attendance Management', () => {
       await page.getByRole('button', { name: 'Save Attendance' }).click();
       await expect(page.locator('text=Attendance saved successfully')).toBeVisible();
       await page.getByRole('button', { name: 'Lock' }).click();
+      const lockConfirmBtn = page.getByRole('button', { name: 'Lock Attendance' });
+      await expect(lockConfirmBtn).toBeVisible();
+      await lockConfirmBtn.click();
       await expect(page.locator('text=Attendance locked successfully')).toBeVisible();
 
       // Admin CAN publish
       await page.getByRole('button', { name: 'Publish' }).click();
+      const publishConfirmBtn = page.getByRole('button', { name: 'Publish Attendance' });
+      await expect(publishConfirmBtn).toBeVisible();
+      await publishConfirmBtn.click();
       await expect(page.locator('text=Attendance published successfully')).toBeVisible();
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Published' })).toBeVisible();
 

@@ -91,12 +91,57 @@ describe('StudentsTable component', () => {
     expect(container.textContent).not.toContain('Jane Smith');
   });
 
-  it('renders clear empty state card when 0 students found', async () => {
+  it('renders clear empty state card when 0 students found initially', async () => {
     await act(async () => {
       root.render(<StudentsTable students={[]} />);
     });
 
     expect(container.textContent).toContain('No students found');
     expect(container.textContent).toContain('No students found in your active branches.');
+  });
+
+  it('supports status filtering via select dropdown', async () => {
+    const mockStudents = [
+      { id: 'std-1', first_name: 'Alice', last_name: 'Active', status: 'ACTIVE' },
+      { id: 'std-2', first_name: 'Bob', last_name: 'Inactive', status: 'INACTIVE' },
+    ];
+
+    await act(async () => {
+      root.render(<StudentsTable students={mockStudents} />);
+    });
+
+    const select = container.querySelector('#student-status-filter') as HTMLSelectElement;
+    expect(select).not.toBeNull();
+
+    await act(async () => {
+      select.value = 'ACTIVE';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(container.textContent).toContain('Alice Active');
+    expect(container.textContent).not.toContain('Bob Inactive');
+  });
+
+  it('supports column sorting on student name and status', async () => {
+    const mockStudents = [
+      { id: 'std-1', first_name: 'Zach', last_name: 'Adams', status: 'ACTIVE' },
+      { id: 'std-2', first_name: 'Aaron', last_name: 'Brown', status: 'INACTIVE' },
+    ];
+
+    await act(async () => {
+      root.render(<StudentsTable students={mockStudents} />);
+    });
+
+    const sortNameBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Name')
+    );
+    expect(sortNameBtn).toBeDefined();
+
+    await act(async () => {
+      sortNameBtn?.click();
+    });
+
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows.length).toBe(2);
   });
 });

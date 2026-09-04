@@ -91,11 +91,13 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     }
   }
 
+  const selectedSection = sections?.find(s => s.id === sectionId);
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Attendance</h1>
       <AttendanceManager 
-        academicYearId={currentYear.id}
+        academicYearId={selectedSection?.academic_year_id || currentYear.id}
         branchId={branchId}
         sections={sections || []}
         selectedDate={date}

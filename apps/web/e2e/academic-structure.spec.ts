@@ -19,7 +19,7 @@ test.describe('Academic Structure Role Tests', () => {
     await expect(page.locator('button:has-text("Create Class")')).not.toBeVisible();
   });
 
-  test('Branch Admin can create, edit, and delete an Academic Year but cannot switch branch', async ({ page }) => {
+  test('Branch Admin can create, edit, and delete an Academic Year with ConfirmDialog', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/academic-structure');
@@ -46,13 +46,131 @@ test.describe('Academic Structure Role Tests', () => {
     await row.locator('button:has-text("Edit")').click();
     await page.fill('input[name="start_date"]', '2026-06-02');
     await page.click('button:has-text("Save")');
-    await expect(page.locator(`text=2026-06-02`)).toBeVisible();
+    await expect(row.locator('td', { hasText: '2026-06-02' })).toBeVisible();
     
-    // Delete
-    page.on('dialog', dialog => dialog.accept());
+    // Delete - verify ConfirmDialog opens and Cancel preserves data
     await row.locator('button:has-text("Delete")').click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Delete Academic Year' })).toBeVisible();
     
-    await expect(page.locator(`text=${uniqueYear}`)).not.toBeVisible();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.locator(`text=${uniqueYear}`)).toBeVisible();
+
+    // Now confirm deletion
+    await row.locator('button:has-text("Delete")').click();
+    const confirmDeleteBtn = page.getByRole('button', { name: 'Delete Academic Year' });
+    await expect(confirmDeleteBtn).toBeVisible();
+    await confirmDeleteBtn.click();
+    
+    await expect(page.locator('tr', { hasText: uniqueYear })).not.toBeVisible();
+  });
+
+  test('Branch Admin can create, edit, and delete a Class with ConfirmDialog', async ({ page }) => {
+    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
+    
+    await page.goto('/academic-structure?tab=classes');
+    await expect(page.locator('table')).toBeVisible();
+
+    // Create Class
+    await page.click('button:has-text("Create Class")');
+    await expect(page.locator('text=New Class')).toBeVisible();
+    
+    const uniqueClass = `Grade 10-${Date.now()}`;
+    await page.fill('input[name="name"]', uniqueClass);
+    await page.fill('input[name="level"]', '10');
+
+    // Select academic year if select is present
+    const aySelect = page.locator('select[name="academic_year_id"]');
+    if (await aySelect.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const firstOption = await aySelect.locator('option').first().getAttribute('value');
+      if (firstOption) {
+        await aySelect.selectOption(firstOption);
+      }
+    }
+    await page.click('button:has-text("Save")');
+
+    // Verify it appears in table
+    await expect(page.locator(`text=${uniqueClass}`)).toBeVisible();
+
+    // Edit Class
+    const classRow = page.locator('tr', { hasText: uniqueClass });
+    await classRow.locator('button:has-text("Edit")').click();
+    await expect(page.locator('text=Edit Class')).toBeVisible();
+    await page.fill('input[name="level"]', '11');
+    await page.click('button:has-text("Save")');
+    await expect(classRow.locator('td', { hasText: '11' })).toBeVisible();
+
+    // Delete Class with ConfirmDialog - test cancel then confirm
+    await classRow.locator('button:has-text("Delete")').click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Delete Class' })).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.locator(`text=${uniqueClass}`)).toBeVisible();
+
+    await classRow.locator('button:has-text("Delete")').click();
+    const confirmDeleteBtn = page.getByRole('button', { name: 'Delete Class' });
+    await expect(confirmDeleteBtn).toBeVisible();
+    await confirmDeleteBtn.click();
+
+    await expect(page.locator('tr', { hasText: uniqueClass })).not.toBeVisible();
+  });
+
+  test('Branch Admin can create, edit, and delete a Section with ConfirmDialog', async ({ page }) => {
+    if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
+    
+    await page.goto('/academic-structure?tab=sections');
+    await expect(page.locator('table')).toBeVisible();
+
+    // Create Section
+    await page.click('button:has-text("Create Section")');
+    await expect(page.locator('text=New Section')).toBeVisible();
+    
+    const uniqueSection = `Section Alpha-${Date.now()}`;
+    await page.fill('input[name="name"]', uniqueSection);
+    await page.fill('input[name="capacity"]', '30');
+
+    // Select class if select is present
+    const classSelect = page.locator('select[name="class_id"]');
+    if (await classSelect.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const firstOption = await classSelect.locator('option').first().getAttribute('value');
+      if (firstOption) {
+        await classSelect.selectOption(firstOption);
+      }
+    }
+    await page.click('button:has-text("Save")');
+
+    // Verify it appears in table
+    await expect(page.locator(`text=${uniqueSection}`)).toBeVisible();
+
+    // Edit Section
+    const sectionRow = page.locator('tr', { hasText: uniqueSection });
+    await sectionRow.locator('button:has-text("Edit")').click();
+    await expect(page.locator('text=Edit Section')).toBeVisible();
+    await page.fill('input[name="capacity"]', '35');
+    await page.click('button:has-text("Save")');
+    await expect(sectionRow.locator('td', { hasText: '35' })).toBeVisible();
+
+    // Delete Section with ConfirmDialog - test cancel then confirm
+    await sectionRow.locator('button:has-text("Delete")').click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: 'Delete Section' })).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.locator(`text=${uniqueSection}`)).toBeVisible();
+
+    await sectionRow.locator('button:has-text("Delete")').click();
+    const confirmDeleteBtn = page.getByRole('button', { name: 'Delete Section' });
+    await expect(confirmDeleteBtn).toBeVisible();
+    await confirmDeleteBtn.click();
+
+    await expect(page.locator('tr', { hasText: uniqueSection })).not.toBeVisible();
   });
   
   test('Branch Admin attempting to access another branch resource is denied', async ({ page, request }) => {
