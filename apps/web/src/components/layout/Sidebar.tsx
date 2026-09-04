@@ -49,10 +49,10 @@ export function Sidebar({ userEmail }: SidebarProps = {}) {
         <form action="/auth/logout" method="POST">
           <button
             type="submit"
-            className="p-1 rounded-md hover:bg-gray-800 focus-ring cursor-pointer"
+            className="min-h-[44px] min-w-[44px] p-2.5 rounded-md hover:bg-gray-800 focus-ring cursor-pointer inline-flex items-center justify-center text-gray-300 hover:text-white"
             aria-label="Log out"
           >
-            <LogOut size={16} aria-hidden="true" />
+            <LogOut size={18} aria-hidden="true" />
           </button>
         </form>
       </div>

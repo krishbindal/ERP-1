@@ -256,7 +256,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
                 <TableCell className="text-right">
                   <Link
                     href={`/students/${student.id}`}
-                    className="inline-flex items-center text-sm font-medium text-primary hover:underline focus-ring rounded p-1"
+                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-sm font-medium text-primary hover:underline focus-ring rounded p-2"
                     aria-label={`View profile for ${student.first_name} ${student.last_name}`}
                   >
                     View

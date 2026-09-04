@@ -278,7 +278,7 @@ export function AttendanceManager({
           <input 
             id="attendance-date"
             type="date" 
-            className="block w-full border border-input rounded-md shadow-sm p-2 bg-surface text-foreground text-sm focus:ring-primary focus:border-primary" 
+            className="block w-full border border-input rounded-md shadow-sm p-2 bg-surface text-foreground text-sm focus-ring min-h-[40px] sm:min-h-0" 
             value={selectedDate}
             onChange={handleDateChange}
             aria-label="Date"
@@ -289,7 +289,7 @@ export function AttendanceManager({
           <select 
             id="attendance-section"
             aria-label="Section"
-            className="block w-full border border-input rounded-md shadow-sm p-2 bg-surface text-foreground text-sm focus:ring-primary focus:border-primary"
+            className="block w-full border border-input rounded-md shadow-sm p-2 bg-surface text-foreground text-sm focus-ring min-h-[40px] sm:min-h-0"
             value={selectedSectionId || ''}
             onChange={handleSectionChange}
             disabled={isPending}
@@ -405,9 +405,12 @@ export function AttendanceManager({
                         {student.first_name} {student.last_name}
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                           {(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as AttendanceStatus[]).map((status) => (
-                            <label key={status} className="flex items-center space-x-1.5 cursor-pointer text-xs">
+                            <label
+                              key={status}
+                              className="flex items-center space-x-1.5 cursor-pointer text-xs px-2 py-1.5 min-h-[36px] sm:min-h-0 rounded-md hover:bg-muted/50 touch-manipulation transition-colors"
+                            >
                               <input
                                 type="radio"
                                 name={`status-${student.id}`}
@@ -416,9 +419,9 @@ export function AttendanceManager({
                                 onChange={() => handleStatusChange(student.id, status)}
                                 disabled={isLocked || isPublished}
                                 aria-label={`${status} for ${student.first_name}`}
-                                className="text-primary focus:ring-primary h-3.5 w-3.5 border-input"
+                                className="text-primary focus-ring h-4 w-4 border-input cursor-pointer"
                               />
-                              <span className={`font-medium ${
+                              <span className={`font-medium select-none ${
                                 status === 'PRESENT' ? 'text-success' :
                                 status === 'ABSENT' ? 'text-destructive' :
                                 status === 'LATE' ? 'text-warning' : 'text-muted-foreground'

@@ -140,7 +140,7 @@ export function EventModal({
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2"
+            className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus-ring sm:text-sm px-3 py-2 min-h-[44px] sm:min-h-0"
           />
         </div>
 
@@ -152,7 +152,7 @@ export function EventModal({
             id="event-type"
             value={type}
             onChange={(e) => setType(e.target.value as "HOLIDAY" | "CLOSURE" | "MAKEUP_DAY" | "OTHER")}
-            className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2"
+            className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus-ring sm:text-sm px-3 py-2 min-h-[44px] sm:min-h-0"
           >
             <option value="HOLIDAY">Holiday</option>
             <option value="CLOSURE">Closure</option>
@@ -161,7 +161,7 @@ export function EventModal({
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="start-date" className="block text-sm font-medium text-foreground">
               Start Date
@@ -172,7 +172,7 @@ export function EventModal({
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus-ring sm:text-sm px-3 py-2 min-h-[44px] sm:min-h-0"
             />
           </div>
           <div>
@@ -185,21 +185,21 @@ export function EventModal({
               required
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-input bg-surface text-foreground shadow-sm focus-ring sm:text-sm px-3 py-2 min-h-[44px] sm:min-h-0"
             />
           </div>
         </div>
 
-        <div className="flex items-center">
+        <div className="flex items-center min-h-[44px] sm:min-h-0">
           <input
             id="is-instructional"
             type="checkbox"
             checked={isInstructional}
             disabled={isInstructionalReadOnly}
             onChange={(e) => setManualIsInstructional(e.target.checked)}
-            className="h-4 w-4 text-primary focus:ring-primary border-input rounded disabled:opacity-50"
+            className="h-4 w-4 text-primary focus-ring border-input rounded disabled:opacity-50"
           />
-          <label htmlFor="is-instructional" className="ml-2 block text-sm text-foreground">
+          <label htmlFor="is-instructional" className="ml-2 block text-sm text-foreground cursor-pointer">
             Is Instructional Day
           </label>
         </div>

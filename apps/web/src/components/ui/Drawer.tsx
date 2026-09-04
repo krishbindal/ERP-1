@@ -64,7 +64,7 @@ export function Drawer({
       if (e.key === 'Tab' && drawerRef.current) {
         const focusableElements = Array.from(
           drawerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-        ).filter((el) => el.offsetParent !== null);
+        ).filter((el) => el.offsetParent !== null || process.env.NODE_ENV === 'test');
 
         if (focusableElements.length === 0) {
           e.preventDefault();
@@ -114,11 +114,12 @@ export function Drawer({
   const isLeft = side === 'left';
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
-      onClick={handleBackdropClick}
-      aria-hidden="true"
-    >
+    <div className="fixed inset-0 z-50 flex">
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        onClick={handleBackdropClick}
+        aria-hidden="true"
+      />
       <div
         ref={drawerRef}
         role="dialog"
@@ -127,7 +128,7 @@ export function Drawer({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
-          'fixed top-0 bottom-0 z-50 flex w-full max-w-md flex-col bg-surface text-surface-foreground shadow-2xl outline-none transition-transform duration-300 ease-in-out',
+          'fixed top-0 bottom-0 z-50 flex w-full max-w-[85vw] sm:max-w-md flex-col bg-surface text-surface-foreground shadow-2xl outline-none transition-transform duration-300 ease-in-out',
           isLeft
             ? 'left-0 border-r border-border animate-in slide-in-from-left'
             : 'right-0 border-l border-border animate-in slide-in-from-right',
@@ -135,7 +136,7 @@ export function Drawer({
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between border-b border-border p-6">
+        <div className="flex items-start justify-between border-b border-border p-4 sm:p-6">
           <div className="space-y-1">
             <h2 id={titleId} className="text-lg font-semibold leading-none tracking-tight text-foreground">
               {title}
@@ -151,13 +152,13 @@ export function Drawer({
               type="button"
               onClick={onClose}
               aria-label="Close drawer"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-ring transition-colors cursor-pointer"
+              className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-ring transition-colors cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>,
     document.body

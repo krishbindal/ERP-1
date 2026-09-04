@@ -36,11 +36,18 @@ vi.mock('lucide-react', () => {
   };
 });
 
+const mockCreateAcademicYear = vi.fn().mockResolvedValue({ success: true });
+const mockUpdateAcademicYear = vi.fn().mockResolvedValue({ success: true });
+const mockDeleteAcademicYear = vi.fn().mockResolvedValue({ success: true });
+
 vi.mock('../actions', () => ({
-  deleteAcademicYear: vi.fn().mockResolvedValue({ success: true }),
+  createAcademicYear: (...args: unknown[]) => mockCreateAcademicYear(...args),
+  updateAcademicYear: (...args: unknown[]) => mockUpdateAcademicYear(...args),
+  deleteAcademicYear: (...args: unknown[]) => mockDeleteAcademicYear(...args),
 }));
 
 import { AcademicYearsTable } from './AcademicYearsTable';
+import { AcademicYearForm } from './AcademicYearForm';
 import { AcademicYear } from './types';
 
 describe('AcademicYearsTable component', () => {
@@ -51,6 +58,7 @@ describe('AcademicYearsTable component', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {
@@ -137,5 +145,76 @@ describe('AcademicYearsTable component', () => {
 
     expect(container.textContent).toContain('No academic years configured');
     expect(container.textContent).toContain('Get started by creating your first academic year.');
+  });
+
+  it('supports sorting in AcademicYearsTable by name', async () => {
+    const mockYears: AcademicYear[] = [
+      { id: 'ay-1', branch_id: 'b-1', name: 'AY 2026-2027', start_date: '2026-06-01', end_date: '2027-03-31', status: 'active' },
+      { id: 'ay-2', branch_id: 'b-1', name: 'AY 2025-2026', start_date: '2025-06-01', end_date: '2026-03-31', status: 'archived' },
+    ];
+
+    await act(async () => {
+      root.render(<AcademicYearsTable data={mockYears} isReadOnly={false} />);
+    });
+
+    const nameSortBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Name')
+    );
+    expect(nameSortBtn).toBeDefined();
+
+    await act(async () => {
+      nameSortBtn?.click();
+    });
+
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows.length).toBe(2);
+  });
+
+  it('renders AcademicYearForm for creating a new academic year and handles submit', async () => {
+    const onClose = vi.fn();
+    await act(async () => {
+      root.render(<AcademicYearForm onClose={onClose} explicitBranchId="b-1" />);
+    });
+
+    expect(document.body.textContent).toContain('New Academic Year');
+    expect(document.body.querySelector('input[name="name"]')).not.toBeNull();
+    expect(document.body.querySelector('input[name="start_date"]')).not.toBeNull();
+    expect(document.body.querySelector('input[name="end_date"]')).not.toBeNull();
+
+    const form = document.body.querySelector('form');
+    await act(async () => {
+      form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+
+    expect(mockCreateAcademicYear).toHaveBeenCalled();
+  });
+
+  it('renders AcademicYearForm for editing and displays error if submission fails', async () => {
+    mockUpdateAcademicYear.mockResolvedValueOnce({ error: 'Academic year date conflict' });
+    const onClose = vi.fn();
+    const existingYear: AcademicYear = {
+      id: 'ay-1',
+      branch_id: 'b-1',
+      name: 'Existing AY',
+      start_date: '2026-06-01',
+      end_date: '2027-03-31',
+      status: 'active',
+    };
+
+    await act(async () => {
+      root.render(<AcademicYearForm onClose={onClose} initialData={existingYear} explicitBranchId="b-1" />);
+    });
+
+    expect(document.body.textContent).toContain('Edit Academic Year');
+    const nameInput = document.body.querySelector('input[name="name"]') as HTMLInputElement;
+    expect(nameInput.defaultValue).toBe('Existing AY');
+
+    const form = document.body.querySelector('form');
+    await act(async () => {
+      form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+
+    expect(mockUpdateAcademicYear).toHaveBeenCalled();
+    expect(document.body.textContent).toContain('Academic year date conflict');
   });
 });

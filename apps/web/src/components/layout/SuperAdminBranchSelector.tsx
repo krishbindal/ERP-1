@@ -38,7 +38,7 @@ export function SuperAdminBranchSelector({ organizationId }: { organizationId: s
         }
         router.push(url.pathname + url.search);
       }}
-      className="text-sm font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded-md border border-gray-200"
+      className="text-sm font-medium text-gray-900 bg-gray-100 px-3 py-1.5 min-h-[36px] sm:min-h-0 rounded-md border border-gray-200 focus-ring cursor-pointer"
     >
       <option value="">Select Branch...</option>
       {branches.map((b) => (

@@ -3,11 +3,20 @@ import { cn } from './utils';
 
 export interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
   containerClassName?: string;
+  regionLabel?: string;
 }
 
 export const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, containerClassName, ...props }, ref) => (
-    <div className={cn('relative w-full overflow-x-auto rounded-md border border-border bg-surface', containerClassName)}>
+  ({ className, containerClassName, regionLabel, ...props }, ref) => (
+    <div
+      role="region"
+      aria-label={regionLabel || props['aria-label'] || 'Data table'}
+      tabIndex={0}
+      className={cn(
+        'relative w-full overflow-x-auto rounded-md border border-border bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        containerClassName
+      )}
+    >
       <table
         ref={ref}
         className={cn('w-full caption-bottom text-sm text-foreground', className)}

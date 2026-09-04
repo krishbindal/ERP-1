@@ -38,7 +38,7 @@ export function AppShell({ children, context = null, userEmail = null }: AppShel
       <Sidebar userEmail={userEmail} />
       <div className="flex flex-col flex-1 overflow-hidden">
         <TopBar context={context} userEmail={userEmail} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

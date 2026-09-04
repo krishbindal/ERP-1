@@ -104,9 +104,9 @@ export function Toast({ toast: item, onDismiss }: ToastProps) {
         type="button"
         onClick={() => onDismiss(item.id)}
         aria-label="Dismiss notification"
-        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-ring transition-colors cursor-pointer"
+        className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] -mr-2.5 -mt-2.5 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-ring transition-colors cursor-pointer"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="h-4 w-4" />
       </button>
     </div>
   );
@@ -117,15 +117,35 @@ export interface ToastProviderProps {
 }
 
 const positionClasses = {
-  'top-right': 'top-4 right-4 items-end',
-  'top-left': 'top-4 left-4 items-start',
-  'bottom-right': 'bottom-4 right-4 items-end',
-  'bottom-left': 'bottom-4 left-4 items-start',
+  'top-right': 'top-2 sm:top-4 right-2 sm:right-4 left-2 sm:left-auto items-center sm:items-end',
+  'top-left': 'top-2 sm:top-4 left-2 sm:left-4 right-2 sm:right-auto items-center sm:items-start',
+  'bottom-right': 'bottom-2 sm:bottom-4 right-2 sm:right-4 left-2 sm:left-auto items-center sm:items-end',
+  'bottom-left': 'bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-auto items-center sm:items-start',
 };
 
 export function ToastProvider({ position = 'bottom-right' }: ToastProviderProps) {
   const activeToasts = React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const mounted = useMounted();
+
+  // Escape key dismisses the topmost active toast
+  React.useEffect(() => {
+    if (activeToasts.length === 0) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        const lastToast = activeToasts[activeToasts.length - 1];
+        if (lastToast) {
+          e.preventDefault();
+          dismissToast(lastToast.id);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activeToasts]);
 
   if (!mounted || activeToasts.length === 0) {
     return null;
@@ -136,7 +156,7 @@ export function ToastProvider({ position = 'bottom-right' }: ToastProviderProps)
       aria-live="polite"
       aria-atomic="false"
       className={cn(
-        'pointer-events-none fixed z-50 flex flex-col gap-2 p-4 max-w-md w-full',
+        'pointer-events-none fixed z-50 flex flex-col gap-2 p-2 sm:p-4 max-w-[calc(100vw-1rem)] sm:max-w-md w-full',
         positionClasses[position]
       )}
     >

@@ -93,7 +93,7 @@ export default async function NewStudentPage(props: {
   }
 
   return (
-    <div className="p-8 max-w-xl mx-auto">
+    <div className="p-4 sm:p-8 max-w-xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Enroll New Student</CardTitle>
@@ -149,9 +149,9 @@ export default async function NewStudentPage(props: {
               aria-invalid={errorMessage ? true : undefined}
             />
 
-            <div className="pt-4 flex justify-end items-center gap-3">
-              <Link href="/students">
-                <Button variant="secondary" type="button">
+            <div className="pt-4 flex flex-col-reverse sm:flex-row justify-end items-stretch sm:items-center gap-3">
+              <Link href="/students" className="w-full sm:w-auto">
+                <Button variant="secondary" type="button" className="w-full sm:w-auto min-h-[44px] sm:min-h-0">
                   Cancel
                 </Button>
               </Link>
@@ -159,7 +159,7 @@ export default async function NewStudentPage(props: {
                 id="enroll-submit-btn"
                 type="submit"
                 variant="primary"
-                className="relative"
+                className="relative w-full sm:w-auto min-h-[44px] sm:min-h-0"
               >
                 <Loader2
                   className="submit-spinner hidden mr-2 h-4 w-4 animate-spin shrink-0"

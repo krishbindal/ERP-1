@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { createSection, updateSection, getClasses } from '../actions';
 import { SectionWithClass } from './types';
 import { DrawerForm } from './DrawerForm';
+import { Input, Select } from '@/components/ui';
 
 export function SectionForm({ onClose, initialData, explicitBranchId }: { onClose: () => void, explicitBranchId?: string | null, initialData?: SectionWithClass | null }) {
   const [error, setError] = useState<string | null>(null);
@@ -67,30 +68,35 @@ export function SectionForm({ onClose, initialData, explicitBranchId }: { onClos
       loading={loading}
       error={error}
     >
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-900">Name</label>
-        <div className="mt-1">
-          <input required defaultValue={initialData?.name} type="text" name="name" id="name" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
-        </div>
+      <div className="space-y-4">
+        <Input
+          required
+          defaultValue={initialData?.name}
+          type="text"
+          name="name"
+          id="name"
+          label="Name"
+          placeholder="e.g. Section A"
+        />
+        <Input
+          required
+          defaultValue={initialData?.capacity}
+          type="number"
+          name="capacity"
+          id="capacity"
+          label="Capacity"
+          placeholder="e.g. 30"
+        />
+        {!initialData && (
+          <Select
+            required
+            name="class_id"
+            id="class_id"
+            label="Class"
+            options={classes.map(cls => ({ value: cls.id, label: cls.name }))}
+          />
+        )}
       </div>
-      <div>
-        <label htmlFor="capacity" className="block text-sm font-medium text-gray-900">Capacity</label>
-        <div className="mt-1">
-          <input required defaultValue={initialData?.capacity} type="number" name="capacity" id="capacity" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
-        </div>
-      </div>
-      {!initialData && (
-        <div>
-          <label htmlFor="class_id" className="block text-sm font-medium text-gray-900">Class</label>
-          <div className="mt-1">
-            <select required name="class_id" id="class_id" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md">
-              {classes.map(cls => (
-                <option key={cls.id} value={cls.id}>{cls.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
     </DrawerForm>
   );
 }

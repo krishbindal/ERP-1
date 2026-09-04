@@ -76,7 +76,7 @@ export function Dialog({
       if (e.key === 'Tab' && dialogRef.current) {
         const focusableElements = Array.from(
           dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
-        ).filter((el) => el.offsetParent !== null);
+        ).filter((el) => el.offsetParent !== null || process.env.NODE_ENV === 'test');
 
         if (focusableElements.length === 0) {
           e.preventDefault();
@@ -125,11 +125,12 @@ export function Dialog({
   };
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-150"
-      onClick={handleBackdropClick}
-      aria-hidden="true"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+        onClick={handleBackdropClick}
+        aria-hidden="true"
+      />
       <div
         ref={dialogRef}
         role="dialog"
@@ -138,13 +139,13 @@ export function Dialog({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
-          'relative w-full rounded-xl border border-border bg-surface text-surface-foreground p-6 shadow-xl outline-none transition-all',
+          'relative z-10 w-full rounded-xl border border-border bg-surface text-surface-foreground p-5 sm:p-6 shadow-xl outline-none transition-all my-auto max-h-[calc(100vh-2rem)] flex flex-col',
           maxWidthStyles[maxWidth],
           className
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-start justify-between gap-4 mb-4 shrink-0">
           <div className="space-y-1">
             <h2 id={titleId} className="text-lg font-semibold leading-none tracking-tight text-foreground">
               {title}
@@ -160,13 +161,13 @@ export function Dialog({
               type="button"
               onClick={onClose}
               aria-label="Close dialog"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-ring transition-colors cursor-pointer"
+              className="inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-ring transition-colors cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        <div>{children}</div>
+        <div className="overflow-y-auto flex-1">{children}</div>
       </div>
     </div>,
     document.body

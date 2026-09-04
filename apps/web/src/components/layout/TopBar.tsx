@@ -20,20 +20,20 @@ export function TopBar({ context, userEmail }: TopBarProps = {}) {
 
   return (
     <>
-      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6">
+      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
           <button
             type="button"
             aria-label="Open navigation menu"
             onClick={() => setIsDrawerOpen(true)}
-            className="md:hidden p-2 -ml-2 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus-ring cursor-pointer inline-flex items-center justify-center"
+            className="md:hidden min-h-[44px] min-w-[44px] p-2.5 -ml-1 rounded-md text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus-ring cursor-pointer inline-flex items-center justify-center"
           >
             <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
 
           {context?.type === "normal" ? (
             <div className="flex items-center space-x-2">
-              <span className="text-xs sm:text-sm font-medium text-gray-900 bg-gray-100 px-2.5 sm:px-3 py-1 rounded-md border border-gray-200 truncate max-w-[130px] sm:max-w-xs">
+              <span className="text-xs sm:text-sm font-medium text-gray-900 bg-gray-100 px-2.5 sm:px-3 py-1 rounded-md border border-gray-200 truncate max-w-[100px] sm:max-w-xs">
                 {context.branchName}
               </span>
             </div>
@@ -107,7 +107,7 @@ export function TopBar({ context, userEmail }: TopBarProps = {}) {
                         href={item.href}
                         onClick={() => setIsDrawerOpen(false)}
                         aria-current={active ? "page" : undefined}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium focus-ring transition-colors ${
+                        className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-md text-sm font-medium focus-ring transition-colors ${
                           active
                             ? "bg-primary text-primary-foreground font-semibold"
                             : "text-foreground hover:bg-muted hover:text-foreground"
@@ -139,10 +139,10 @@ export function TopBar({ context, userEmail }: TopBarProps = {}) {
             <form action="/auth/logout" method="POST">
               <button
                 type="submit"
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus-ring cursor-pointer"
+                className="min-h-[44px] min-w-[44px] p-2.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus-ring cursor-pointer inline-flex items-center justify-center"
                 aria-label="Log out"
               >
-                <LogOut size={16} aria-hidden="true" />
+                <LogOut size={18} aria-hidden="true" />
               </button>
             </form>
           </div>

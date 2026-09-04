@@ -14,8 +14,8 @@ export function TeacherSelect({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <select id={id} name={name} className="w-full border border-gray-300 rounded-md p-2" required defaultValue={defaultValue}>
+      <label htmlFor={id} className="block text-sm font-medium text-foreground mb-1">{label}</label>
+      <select id={id} name={name} className="w-full border border-input bg-surface text-foreground rounded-md p-2 focus-ring text-sm" required defaultValue={defaultValue}>
         <option value="">Select Teacher...</option>
         {teachers.map(t => {
           let tName = 'Unknown';
