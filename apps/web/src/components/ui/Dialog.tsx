@@ -125,11 +125,12 @@ export function Dialog({
   };
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-150"
-      onClick={handleBackdropClick}
-      aria-hidden="true"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+        onClick={handleBackdropClick}
+        aria-hidden="true"
+      />
       <div
         ref={dialogRef}
         role="dialog"
@@ -138,7 +139,7 @@ export function Dialog({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={cn(
-          'relative w-full rounded-xl border border-border bg-surface text-surface-foreground p-6 shadow-xl outline-none transition-all',
+          'relative z-10 w-full rounded-xl border border-border bg-surface text-surface-foreground p-6 shadow-xl outline-none transition-all',
           maxWidthStyles[maxWidth],
           className
         )}

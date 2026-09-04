@@ -114,11 +114,12 @@ export function Drawer({
   const isLeft = side === 'left';
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
-      onClick={handleBackdropClick}
-      aria-hidden="true"
-    >
+    <div className="fixed inset-0 z-50 flex">
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        onClick={handleBackdropClick}
+        aria-hidden="true"
+      />
       <div
         ref={drawerRef}
         role="dialog"
