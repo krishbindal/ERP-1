@@ -21,12 +21,10 @@ test.describe('Attendance Management', () => {
         curr.setDate(curr.getDate() + 1);
       }
       const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
-      let targetDate = weekdays[offset];
       for (let i = offset; i < weekdays.length; i++) {
         await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}`);
         const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
         if (isUnmarked) {
-          targetDate = weekdays[i];
           break;
         }
       }
@@ -86,12 +84,10 @@ test.describe('Attendance Management', () => {
         curr.setDate(curr.getDate() + 1);
       }
       const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
-      let targetDate = weekdays[offset];
       for (let i = offset; i < weekdays.length; i++) {
         await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}`);
         const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
         if (isUnmarked) {
-          targetDate = weekdays[i];
           break;
         }
       }
