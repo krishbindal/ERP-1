@@ -4,6 +4,7 @@ import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '../components/BranchAccessError';
 import { fetchSchedulingPageData } from '../lib/page-data';
 import { getInstructionalDay } from '@/lib/calendar/actions';
+import type { TimetableEntry } from '../timetable/components/TimetableGrid';
 
 import { SubstitutionManager } from './components/SubstitutionManager';
 
@@ -19,44 +20,44 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
 
   const { supabase, academicYearId, entriesData, periods, rooms, teachers } = await fetchSchedulingPageData(branchId);
 
-  // Calendar Context
+  // Calendar Context & active substitutions for the selected date (fetched concurrently)
   let instructionalDay = null;
-  if (selectedDate) {
-    const { data: calData, error: calError } = await getInstructionalDay(selectedDate, branchId, academicYearId);
-    if (!calError) {
-      instructionalDay = calData;
-    }
-  }
-
-  // Fetch active substitutions for the selected date
   let subsData: Array<Record<string, unknown>> = [];
+
   if (selectedDate) {
-    const { data } = await supabase
-      .from('timetable_substitutions')
-      .select(`
-        *,
-        staff_branch_profiles!fk_substitution_teacher (
-          staff ( first_name, last_name )
-        ),
-        rooms!fk_substitution_room ( name )
-      `)
-      .eq('branch_id', branchId)
-      .eq('academic_year_id', academicYearId)
-      .eq('substitution_date', selectedDate)
-      .eq('status', 'ACTIVE');
-    subsData = data || [];
+    const [calResult, subsResult] = await Promise.all([
+      getInstructionalDay(selectedDate, branchId, academicYearId),
+      supabase
+        .from('timetable_substitutions')
+        .select(`
+          *,
+          staff_branch_profiles!fk_substitution_teacher (
+            staff ( first_name, last_name )
+          ),
+          rooms!fk_substitution_room ( name )
+        `)
+        .eq('branch_id', branchId)
+        .eq('academic_year_id', academicYearId)
+        .eq('substitution_date', selectedDate)
+        .eq('status', 'ACTIVE'),
+    ]);
+
+    if (!calResult.error) {
+      instructionalDay = calResult.data;
+    }
+    subsData = subsResult.data || [];
   }
 
   // Merge substitutions over canonical entries
-  const effectiveEntries = (entriesData || []).map(entry => {
+  const effectiveEntries: TimetableEntry[] = (entriesData || []).map(entry => {
     const sub = (subsData || []).find(s => s.timetable_entry_id === entry.id);
     if (sub) {
       return {
         ...entry,
-        is_substitution: true, // Custom flag to maybe highlight it
-        substitution_id: sub.id,
-        staff_branch_profiles: sub.staff_branch_profiles || entry.staff_branch_profiles,
-        rooms: sub.rooms || entry.rooms,
+        is_substitution: true, // Custom flag to highlight substitution
+        substitution_id: sub.id as string,
+        staff_branch_profiles: (sub.staff_branch_profiles || entry.staff_branch_profiles) as TimetableEntry['staff_branch_profiles'],
+        rooms: (sub.rooms || entry.rooms) as TimetableEntry['rooms'],
       };
     }
     return entry;
@@ -64,20 +65,25 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900">Substitutions</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Substitutions</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            View and manage teacher and room substitutions for instructional dates.
+          </p>
+        </div>
         
-        <form className="flex items-center gap-2">
+        <form className="flex items-center gap-2 self-start sm:self-auto">
           <input type="hidden" name="branchId" value={branchId} />
           <input type="hidden" name="view" value={view} />
-          <label htmlFor="date" className="text-sm font-medium text-gray-700">Date:</label>
+          <label htmlFor="date" className="text-sm font-medium text-foreground">Date:</label>
           <input id="date" 
             type="date" 
             name="date" 
             defaultValue={selectedDate} 
-            className="border border-gray-300 rounded-md p-2 text-sm" 
+            className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-surface text-foreground shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
           />
-          <button type="submit" className="px-3 py-2 bg-gray-100 rounded-md hover:bg-gray-200 text-sm">
+          <button type="submit" className="px-3 py-1.5 bg-secondary hover:bg-muted text-secondary-foreground border border-border rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             View
           </button>
         </form>

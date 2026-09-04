@@ -50,7 +50,7 @@ export function TimetableManager({
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-surface rounded-lg shadow-xs border border-border">
         <TimetableGrid 
           entries={entries} 
           periods={periods} 
