@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
+import { AttendanceHistoryTable, type AttendanceHistoryRecord } from './components/AttendanceHistoryTable';
 
 export default async function AttendanceHistoryPage(props: { searchParams: Promise<{ branchId?: string }> }) {
   const searchParams = await props.searchParams;
@@ -19,8 +20,7 @@ export default async function AttendanceHistoryPage(props: { searchParams: Promi
     return <BranchAccessError errorState="ACCESS_DENIED" feature="attendance history" />;
   }
 
-
-    const isParent = context.roles.includes('parent') || context.roles.includes('guardian');
+  const isParent = context.roles.includes('parent') || context.roles.includes('guardian');
   const isStudent = context.roles.includes('student');
 
   if (!isParent && !isStudent) {
@@ -77,46 +77,7 @@ export default async function AttendanceHistoryPage(props: { searchParams: Promi
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Attendance History (Absences & Lates)</h1>
       
-      {!records || records.length === 0 ? (
-        <div className="bg-white p-6 rounded shadow text-gray-500">
-          No published absences or lates found.
-        </div>
-      ) : (
-        <div className="bg-white rounded shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {records.map((record, i) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const r = record as any;
-                return (
-                <tr key={i}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {r.attendance_sessions.date}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {r.students.first_name} {r.students.last_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${r.status === 'ABSENT' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {r.status}
-                    </span>
-                  </td>
-                </tr>
-              )})}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <AttendanceHistoryTable records={(records || []) as unknown as AttendanceHistoryRecord[]} />
     </div>
   );
 }
-
-
-

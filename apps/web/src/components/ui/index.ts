@@ -8,4 +8,5 @@ export * from './Dialog';
 export * from './ConfirmDialog';
 export * from './Drawer';
 export * from './Toast';
+export * from './Table';
 export * from './utils';
