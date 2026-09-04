@@ -38,13 +38,13 @@ type Props = Readonly<{
 }>;
 
 const DAYS = [
-  { id: 1, name: 'Monday' },
-  { id: 2, name: 'Tuesday' },
-  { id: 3, name: 'Wednesday' },
-  { id: 4, name: 'Thursday' },
-  { id: 5, name: 'Friday' },
-  { id: 6, name: 'Saturday' },
-  { id: 7, name: 'Sunday' }
+  { id: 1, name: 'Monday', shortName: 'Mon' },
+  { id: 2, name: 'Tuesday', shortName: 'Tue' },
+  { id: 3, name: 'Wednesday', shortName: 'Wed' },
+  { id: 4, name: 'Thursday', shortName: 'Thu' },
+  { id: 5, name: 'Friday', shortName: 'Fri' },
+  { id: 6, name: 'Saturday', shortName: 'Sat' },
+  { id: 7, name: 'Sunday', shortName: 'Sun' },
 ];
 
 function parseTime(timeStr: string) {
@@ -73,112 +73,241 @@ export function TimetableGrid({ entries, periods, isReadOnly, onEntryClick }: Pr
 
   const totalMinutes = maxMinutes - minMinutes;
   const PIXELS_PER_MINUTE = 1.5; // 90px per hour
-  const gridHeight = totalMinutes * PIXELS_PER_MINUTE;
+  const gridHeight = Math.max(totalMinutes * PIXELS_PER_MINUTE, 400);
 
   // Generate hour markers
-  const hours = [];
+  const hours: number[] = [];
   for (let m = minMinutes; m <= maxMinutes; m += 60) {
     hours.push(m);
   }
 
-  // Filter entries to show only ones with periods (in case of data issues)
-  const validEntries = entries.filter(e => e.periods);
+  // Filter entries to show only ones with periods
+  const validEntries = useMemo(() => entries.filter(e => e.periods), [entries]);
+
+  // Today indicator for contextual day awareness
+  const currentDayOfWeek = useMemo(() => {
+    const jsDay = new Date().getDay();
+    return jsDay === 0 ? 7 : jsDay; // Convert 0 (Sun) to 7
+  }, []);
 
   return (
-    <div className="p-4 overflow-x-auto">
-      <div className="min-w-[800px]">
-        {/* Header Days */}
-        <div className="flex border-b border-gray-200 pl-16">
-          {DAYS.map(day => (
-            <div key={day.id} className="flex-1 text-center py-2 font-medium text-sm text-gray-700 border-l border-gray-200">
-              {day.name}
-            </div>
-          ))}
-        </div>
-
-        {/* Grid Body */}
-        <div className="flex relative" style={{ height: gridHeight }}>
-          {/* Time axis */}
-          <div className="w-16 flex flex-col relative border-r border-gray-200 bg-gray-50">
-            {hours.map(m => {
-              const hourLabel = `${String(Math.floor(m / 60)).padStart(2, '0')}:00`;
+    <div className="space-y-4">
+      {/* Accessible horizontal scroll container preventing mobile blowout */}
+      <div
+        className="w-full overflow-x-auto rounded-lg border border-border bg-surface shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        role="region"
+        aria-label="Timetable Schedule Grid"
+        tabIndex={0}
+      >
+        <div className="min-w-[840px] md:min-w-[960px]">
+          {/* Header: Day columns with clear border separations and semantic tokens */}
+          <div className="flex border-b-2 border-border bg-muted/70 pl-20">
+            {DAYS.map(day => {
+              const isToday = day.id === currentDayOfWeek;
               return (
-                <div 
-                  key={m} 
-                  className="absolute w-full text-xs text-gray-500 text-right pr-2 -mt-2"
-                  style={{ top: (m - minMinutes) * PIXELS_PER_MINUTE }}
+                <div
+                  key={day.id}
+                  className={`flex-1 text-center py-3 px-2 border-l border-border transition-colors ${
+                    isToday ? 'bg-primary/5 font-bold text-primary' : 'font-semibold text-foreground'
+                  }`}
                 >
-                  {hourLabel}
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span className="text-xs sm:text-sm tracking-wide uppercase">{day.name}</span>
+                    {isToday && (
+                      <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded bg-primary text-primary-foreground leading-none">
+                        Today
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Day columns */}
-          <div className="flex flex-1 relative">
-            {/* Grid lines */}
-            {hours.map(m => (
-              <div
-                key={m}
-                className="absolute w-full border-t border-gray-100"
-                style={{ top: (m - minMinutes) * PIXELS_PER_MINUTE, zIndex: 0 }}
-              />
-            ))}
+          {/* Grid Body */}
+          <div className="flex relative" style={{ height: gridHeight }}>
+            {/* Time axis */}
+            <div className="w-20 flex flex-col relative border-r-2 border-border bg-muted/40 shrink-0">
+              {hours.map(m => {
+                const hourLabel = `${String(Math.floor(m / 60)).padStart(2, '0')}:00`;
+                return (
+                  <div
+                    key={m}
+                    className="absolute w-full text-xs font-mono text-muted-foreground text-right pr-2.5 -mt-2.5 select-none"
+                    style={{ top: (m - minMinutes) * PIXELS_PER_MINUTE }}
+                  >
+                    {hourLabel}
+                  </div>
+                );
+              })}
+            </div>
 
-            {DAYS.map(day => (
-              <div key={day.id} className="flex-1 relative border-l border-gray-200" style={{ zIndex: 10 }}>
-                {validEntries.filter(e => e.day_of_week === day.id).map(entry => {
-                  if (!entry.periods) return null;
-                  const startMin = parseTime(entry.periods.start_time);
-                  const endMin = parseTime(entry.periods.end_time);
-                  
-                  const top = (startMin - minMinutes) * PIXELS_PER_MINUTE;
-                  const height = (endMin - startMin) * PIXELS_PER_MINUTE;
+            {/* Day columns & Slots */}
+            <div className="flex flex-1 relative">
+              {/* Hour horizontal grid lines */}
+              {hours.map(m => (
+                <div
+                  key={m}
+                  className="absolute w-full border-t border-border/50 pointer-events-none"
+                  style={{ top: (m - minMinutes) * PIXELS_PER_MINUTE, zIndex: 0 }}
+                />
+              ))}
 
-                  let teacherName = 'Unassigned';
-                  if (entry.staff_branch_profiles?.staff) {
-                    const staff = entry.staff_branch_profiles.staff;
-                    if (Array.isArray(staff)) {
-                      teacherName = `${staff[0].first_name} ${staff[0].last_name}`;
-                    } else {
-                      teacherName = `${staff.first_name} ${staff.last_name}`;
-                    }
-                  }
+              {DAYS.map(day => {
+                const dayEntries = validEntries.filter(e => e.day_of_week === day.id);
+                const isToday = day.id === currentDayOfWeek;
 
-                  const isSub = entry.is_substitution;
-                  const bgClass = isSub ? 'bg-orange-50 border-orange-500 text-orange-900' : 'bg-blue-50 border-blue-500 text-blue-900';
+                return (
+                  <div
+                    key={day.id}
+                    className={`flex-1 relative border-l border-border ${
+                      isToday ? 'bg-primary/[0.015]' : ''
+                    }`}
+                    style={{ zIndex: 10 }}
+                  >
+                    {/* Empty slot indicators for configured periods without scheduled classes */}
+                    {periods.map(period => {
+                      const startMin = parseTime(period.start_time);
+                      const endMin = parseTime(period.end_time);
+                      if (endMin <= startMin) return null;
 
-                  return (
-                    <div
-                      key={entry.id}
-                      className="absolute w-full px-1 py-0.5"
-                      style={{ top, height }}
-                    >
-                      <button
-                        type="button"
-                        data-testid="timetable-entry"
-                        data-day={entry.day_of_week}
-                        onClick={() => {
-                          if (!isReadOnly && onEntryClick) onEntryClick(entry);
-                        }}
-                        className={`text-left border-l-4 h-full w-full rounded shadow-sm p-1 text-xs overflow-hidden leading-tight hover:shadow-md transition-shadow ${!isReadOnly && onEntryClick ? 'cursor-pointer' : 'cursor-default'} ${bgClass}`}
-                      >
-                        <div className="font-semibold truncate">
-                          {isSub && <span className="text-orange-600 mr-1 font-bold">[SUB]</span>}
-                          {entry.subjects?.name}
+                      // Check if any entry occupies this slot
+                      const hasEntry = dayEntries.some(e => {
+                        if (!e.periods) return false;
+                        const eStart = parseTime(e.periods.start_time);
+                        const eEnd = parseTime(e.periods.end_time);
+                        return (
+                          e.period_id === period.id ||
+                          (eStart < endMin && eEnd > startMin)
+                        );
+                      });
+
+                      if (hasEntry) return null;
+
+                      const top = (startMin - minMinutes) * PIXELS_PER_MINUTE;
+                      const height = (endMin - startMin) * PIXELS_PER_MINUTE;
+
+                      return (
+                        <div
+                          key={`empty-${day.id}-${period.id}`}
+                          className="absolute w-full px-1 py-0.5 pointer-events-none"
+                          style={{ top, height }}
+                        >
+                          <div
+                            data-testid={`empty-slot-${day.id}-${period.id}`}
+                            className="h-full w-full rounded border border-dashed border-border/60 bg-muted/15 flex items-center justify-center transition-colors"
+                          >
+                            <span className="text-[10px] font-medium text-muted-foreground/60 select-none tracking-tight">
+                              Free Slot
+                            </span>
+                          </div>
                         </div>
-                        <div className="truncate text-gray-600">{teacherName}</div>
-                        <div className="truncate text-gray-500 mt-0.5">{entry.rooms?.name}</div>
-                        <div className="truncate font-medium text-gray-600 mt-1">{entry.classes?.name} - {entry.sections?.name}</div>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+                      );
+                    })}
+
+                    {/* Scheduled Entries */}
+                    {dayEntries.map(entry => {
+                      if (!entry.periods) return null;
+                      const startMin = parseTime(entry.periods.start_time);
+                      const endMin = parseTime(entry.periods.end_time);
+
+                      const top = (startMin - minMinutes) * PIXELS_PER_MINUTE;
+                      const height = Math.max((endMin - startMin) * PIXELS_PER_MINUTE, 28);
+
+                      let teacherName = 'Unassigned';
+                      if (entry.staff_branch_profiles?.staff) {
+                        const staff = entry.staff_branch_profiles.staff;
+                        if (Array.isArray(staff)) {
+                          teacherName = `${staff[0].first_name} ${staff[0].last_name}`;
+                        } else {
+                          teacherName = `${staff.first_name} ${staff.last_name}`;
+                        }
+                      }
+
+                      const isSub = Boolean(entry.is_substitution);
+                      const bgClass = isSub
+                        ? 'bg-amber-500/15 border-amber-500 text-foreground dark:bg-amber-950/40 dark:border-amber-400'
+                        : 'bg-primary/10 border-primary text-foreground dark:bg-blue-950/40 dark:border-blue-400';
+
+                      return (
+                        <div
+                          key={entry.id}
+                          className="absolute w-full px-1 py-0.5"
+                          style={{ top, height, zIndex: 20 }}
+                        >
+                          <button
+                            type="button"
+                            data-testid="timetable-entry"
+                            data-day={entry.day_of_week}
+                            onClick={() => {
+                              if (!isReadOnly && onEntryClick) onEntryClick(entry);
+                            }}
+                            aria-label={`${entry.subjects?.name || 'Subject'}, ${day.name}, ${teacherName}, ${entry.rooms?.name || 'No room'}`}
+                            className={`text-left border-l-4 h-full w-full rounded-sm shadow-xs p-1.5 text-xs overflow-hidden leading-tight hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                              !isReadOnly && onEntryClick ? 'cursor-pointer hover:scale-[1.01]' : 'cursor-default'
+                            } ${bgClass}`}
+                          >
+                            <div className="font-semibold truncate flex items-center gap-1">
+                              {isSub && (
+                                <span className="inline-block px-1 py-0.2 text-[9px] font-bold rounded bg-amber-500/20 text-amber-700 dark:text-amber-300">
+                                  SUB
+                                </span>
+                              )}
+                              <span className="truncate">{entry.subjects?.name || 'Untitled Subject'}</span>
+                            </div>
+                            <div className="truncate text-muted-foreground text-[11px] mt-0.5 font-medium">
+                              {teacherName}
+                            </div>
+                            <div className="truncate text-muted-foreground/80 text-[10px]">
+                              {entry.rooms?.name || 'Room N/A'}
+                            </div>
+                            {(entry.classes?.name || entry.sections?.name) && (
+                              <div className="truncate text-muted-foreground text-[10px] font-medium mt-0.5">
+                                {entry.classes?.name} {entry.sections?.name ? `• ${entry.sections.name}` : ''}
+                              </div>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Global empty state indicator when timetable has 0 entries */}
+      {validEntries.length === 0 && (
+        <div
+          data-testid="timetable-empty-state"
+          className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center"
+        >
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-sm font-semibold text-foreground">No Classes Scheduled</h3>
+          <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
+            {isReadOnly
+              ? 'No classes are scheduled for this academic year yet.'
+              : 'There are no timetable entries yet. Click "Create Timetable Entry" above to schedule a class into the timetable.'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
