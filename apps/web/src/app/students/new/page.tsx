@@ -1,13 +1,18 @@
 import React from 'react';
 import Link from 'next/link';
-import { StudentsService } from '@/services/students.service'
-import { redirect } from 'next/navigation'
+import { StudentsService } from '@/services/students.service';
+import { redirect } from 'next/navigation';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
+import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
-export default async function NewStudentPage(props: { searchParams: Promise<{ branchId?: string }> }) {
+export default async function NewStudentPage(props: {
+  searchParams: Promise<{ branchId?: string; error?: string }>;
+}) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
+  const errorMessage = searchParams.error;
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
@@ -19,15 +24,15 @@ export default async function NewStudentPage(props: { searchParams: Promise<{ br
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Insufficient Permissions</h2>
-          <p className="mt-2 text-gray-600">You do not have write access to create students.</p>
+          <h2 className="text-2xl font-bold text-foreground">Insufficient Permissions</h2>
+          <p className="mt-2 text-muted-foreground">You do not have write access to create students.</p>
         </div>
       </div>
     );
   }
 
   async function createStudent(formData: FormData) {
-    'use server'
+    'use server';
 
     const appContext = await getAppContext();
     if (!appContext) throw new Error('No authentication context');
@@ -38,51 +43,157 @@ export default async function NewStudentPage(props: { searchParams: Promise<{ br
     const { getContextBranchId } = await import('@/lib/branch-context');
     const resolvedBranchId = await getContextBranchId(explicitBranchId);
 
-    const result = await StudentsService.createStudentWithPlacement(
-      orgId,
-      resolvedBranchId,
-      {
-        firstName: formData.get('firstName') as string,
-        lastName: formData.get('lastName') as string,
-        dateOfBirth: formData.get('dateOfBirth') as string || undefined,
-      }
-    )
-    
-    if ('error' in result) {
-      console.error(result.error)
-      return
+    const firstName = (formData.get('firstName') as string)?.trim();
+    const lastName = (formData.get('lastName') as string)?.trim();
+    const dateOfBirth = (formData.get('dateOfBirth') as string) || undefined;
+
+    if (!firstName || !lastName) {
+      const params = new URLSearchParams();
+      if (explicitBranchId) params.set('branchId', explicitBranchId);
+      params.set('error', 'First name and last name are required.');
+      redirect(`/students/new?${params.toString()}`);
     }
-    
-    redirect(`/students/${result.id}`)
+
+    let errorToReport: string | null = null;
+    try {
+      const result = await StudentsService.createStudentWithPlacement(
+        orgId,
+        resolvedBranchId,
+        {
+          firstName,
+          lastName,
+          dateOfBirth,
+        }
+      );
+
+      if ('error' in result) {
+        errorToReport = result.error.message || 'Failed to enroll student';
+      } else {
+        redirect(`/students/${result.id}`);
+      }
+    } catch (err: unknown) {
+      if (
+        err &&
+        typeof err === 'object' &&
+        'digest' in err &&
+        typeof (err as { digest: unknown }).digest === 'string' &&
+        (err as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+      ) {
+        throw err;
+      }
+      errorToReport = err instanceof Error ? err.message : 'Failed to enroll student';
+    }
+
+    if (errorToReport) {
+      const params = new URLSearchParams();
+      if (explicitBranchId) params.set('branchId', explicitBranchId);
+      params.set('error', errorToReport);
+      redirect(`/students/new?${params.toString()}`);
+    }
   }
 
   return (
     <div className="p-8 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Enroll New Student</h1>
-      
-      <form action={createStudent} className="space-y-4 bg-white p-6 rounded shadow">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">First Name</label>
-          <input required type="text" name="firstName" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Last Name</label>
-          <input required type="text" name="lastName" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Enroll New Student</CardTitle>
+          <CardDescription>Enter student details to register and assign a branch placement.</CardDescription>
+        </CardHeader>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
-          <input type="date" name="dateOfBirth" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
-        </div>
-        
-        <div className="pt-4 flex justify-end space-x-3">
-          <Link href="/students" className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">Cancel</Link>
-          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Create &amp; Enroll
-          </button>
-        </div>
-      </form>
+        <CardContent>
+          {errorMessage && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm font-medium text-destructive flex items-start gap-3"
+            >
+              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="flex-1">
+                <p className="font-semibold">Enrollment Failed</p>
+                <p className="mt-1 text-sm text-destructive/90">{errorMessage}</p>
+              </div>
+            </div>
+          )}
+
+          <form
+            id="enroll-student-form"
+            action={createStudent}
+            className="space-y-5"
+          >
+            <Input
+              id="firstName"
+              name="firstName"
+              label="First Name"
+              required
+              placeholder="e.g. John"
+              aria-invalid={errorMessage ? true : undefined}
+              aria-describedby={errorMessage ? 'firstName-error' : undefined}
+            />
+
+            <Input
+              id="lastName"
+              name="lastName"
+              label="Last Name"
+              required
+              placeholder="e.g. Doe"
+              aria-invalid={errorMessage ? true : undefined}
+              aria-describedby={errorMessage ? 'lastName-error' : undefined}
+            />
+
+            <Input
+              id="dateOfBirth"
+              name="dateOfBirth"
+              type="date"
+              label="Date of Birth"
+              placeholder="YYYY-MM-DD"
+              aria-invalid={errorMessage ? true : undefined}
+            />
+
+            <div className="pt-4 flex justify-end items-center gap-3">
+              <Link href="/students">
+                <Button variant="secondary" type="button">
+                  Cancel
+                </Button>
+              </Link>
+              <Button
+                id="enroll-submit-btn"
+                type="submit"
+                variant="primary"
+                className="relative"
+              >
+                <Loader2
+                  className="submit-spinner hidden mr-2 h-4 w-4 animate-spin shrink-0"
+                  aria-hidden="true"
+                />
+                <span className="submit-text">Create &amp; Enroll</span>
+              </Button>
+            </div>
+          </form>
+
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  var form = document.getElementById('enroll-student-form');
+                  if (!form) return;
+                  form.addEventListener('submit', function() {
+                    var btn = document.getElementById('enroll-submit-btn');
+                    if (btn) {
+                      btn.setAttribute('aria-busy', 'true');
+                      btn.setAttribute('aria-disabled', 'true');
+                      btn.classList.add('opacity-70', 'pointer-events-none');
+                      var spinner = btn.querySelector('.submit-spinner');
+                      if (spinner) spinner.classList.remove('hidden');
+                      var text = btn.querySelector('.submit-text');
+                      if (text) text.textContent = 'Enrolling...';
+                    }
+                  });
+                })();
+              `,
+            }}
+          />
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

@@ -1,7 +1,10 @@
 'use client';
 
+import * as React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Input, Select, toast } from '@/components/ui';
+import { AlertCircle } from 'lucide-react';
 
 export interface CommunicationTarget {
   target_type: string;
@@ -36,7 +39,9 @@ export function CommunicationForm({
     const target_id = formData.get('target_id') as string;
 
     if (selectedType !== 'BRANCH' && !target_id) {
-      setError('Please select a specific class or section.');
+      const validationError = 'Please select a specific class or section.';
+      setError(validationError);
+      toast.error(validationError);
       setLoading(false);
       return;
     }
@@ -45,69 +50,113 @@ export function CommunicationForm({
       const result = await createAction(formData);
       if ('error' in result) {
         setError(result.error);
+        toast.error(result.error);
         setLoading(false);
       } else {
+        toast.success('Message sent successfully!');
         router.push('/communication');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(msg);
+      toast.error(msg);
       setLoading(false);
     }
   };
 
+  const errorId = 'communication-form-error';
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-sm border">
-      {error && <div className="p-4 bg-red-50 text-red-600 rounded-md">{error}</div>}
+    <form onSubmit={handleSubmit} className="space-y-6 bg-surface p-6 rounded-lg shadow-sm border border-border">
+      {error && (
+        <div
+          id={errorId}
+          role="alert"
+          aria-live="assertive"
+          className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm font-medium text-destructive"
+        >
+          <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">Recipient Type</label>
-          <select
-            name="target_type"
-            className="w-full border rounded-md p-2"
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-          >
-            {uniqueTypes.map((type) => (
-              <option key={type} value={type}>
-                {type === 'BRANCH' ? 'Entire Branch' : type === 'CLASS' ? 'Class' : 'Section'}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select
+          id="target_type"
+          name="target_type"
+          label="Recipient Type"
+          required
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          options={uniqueTypes.map((type) => ({
+            value: type,
+            label: type === 'BRANCH' ? 'Entire Branch' : type === 'CLASS' ? 'Class' : 'Section',
+          }))}
+        />
 
         {selectedType !== 'BRANCH' && (
-          <div className="space-y-2">
-            <label className="block text-sm font-medium">Select {selectedType.toLowerCase()}</label>
-            <select name="target_id" className="w-full border rounded-md p-2" required>
-              <option value="">Select...</option>
-              {availableTargets.map((t) => (
-                <option key={t.target_id} value={t.target_id}>
-                  {t.target_name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            id="target_id"
+            name="target_id"
+            label={`Select ${selectedType.toLowerCase()}`}
+            required
+            placeholder="Select..."
+            error={error && !availableTargets.some(t => t.target_id) ? 'Selection required' : undefined}
+            aria-describedby={error ? errorId : undefined}
+            options={availableTargets.map((t) => ({
+              value: t.target_id,
+              label: t.target_name,
+            }))}
+          />
         )}
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">Subject</label>
-        <input type="text" name="subject" required className="w-full border rounded-md p-2" />
+      <Input
+        id="subject"
+        name="subject"
+        label="Subject"
+        required
+        placeholder="Enter message subject"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+      />
+
+      <div className="w-full">
+        <label htmlFor="content" className="block text-sm font-medium text-foreground mb-1.5">
+          Message
+          <span className="text-destructive ml-0.5" aria-hidden="true">
+            *
+          </span>
+        </label>
+        <textarea
+          id="content"
+          name="content"
+          required
+          rows={5}
+          placeholder="Type your message here..."
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          className="w-full rounded-lg border border-input bg-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus-ring hover:border-muted-foreground/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted"
+        />
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">Message</label>
-        <textarea name="content" required rows={5} className="w-full border rounded-md p-2"></textarea>
-      </div>
-
-      <div className="flex justify-end space-x-4">
-        <button type="button" onClick={() => router.push('/communication')} className="px-4 py-2 border rounded-md hover:bg-gray-50">
+      <div className="flex justify-end gap-3 pt-2">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => router.push('/communication')}
+          disabled={loading}
+        >
           Cancel
-        </button>
-        <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
-          {loading ? 'Sending...' : 'Send Message'}
-        </button>
+        </Button>
+        <Button
+          type="submit"
+          variant="primary"
+          isLoading={loading}
+          loadingText="Sending..."
+        >
+          Send Message
+        </Button>
       </div>
     </form>
   );
