@@ -128,7 +128,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
               id="student-search"
               type="search"
               aria-label="Search students"
-              placeholder="Search by student name..."
+              placeholder="Search by name or admission number..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);

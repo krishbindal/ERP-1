@@ -140,7 +140,7 @@ test.describe('Calendar UI', () => {
       await page.goto('/academic-structure/calendar');
 
       // --- Create HOLIDAY ---
-      await page.getByRole('button', { name: 'Add Event' }).click();
+      await page.getByRole('button', { name: 'Add Event' }).first().click();
       await page.locator('#event-name').fill(TEST_EVENT_HOLIDAY);
       await page.getByLabel('Start Date').fill('2026-03-10');
       // Test invalid date validation
@@ -185,7 +185,7 @@ test.describe('Calendar UI', () => {
       await expect(editedRow).toBeHidden();
 
       // --- Create MAKEUP_DAY ---
-      await page.getByRole('button', { name: 'Add Event' }).click();
+      await page.getByRole('button', { name: 'Add Event' }).first().click();
       await page.locator('#event-name').fill(TEST_EVENT_MAKEUP);
       await page.getByLabel('Start Date').fill('2026-03-12');
       await page.getByLabel('End Date').fill('2026-03-12');
