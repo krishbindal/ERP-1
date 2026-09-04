@@ -21,9 +21,15 @@ test.describe('Attendance Management', () => {
         curr.setDate(curr.getDate() + 1);
       }
       const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
-      const targetDate = weekdays[offset];
-
-      await page.goto(`/attendance?date=${targetDate}&sectionId=${sectionId}`);
+      let targetDate = weekdays[offset];
+      for (let i = offset; i < weekdays.length; i++) {
+        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}`);
+        const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
+        if (isUnmarked) {
+          targetDate = weekdays[i];
+          break;
+        }
+      }
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as ABSENT
@@ -80,9 +86,15 @@ test.describe('Attendance Management', () => {
         curr.setDate(curr.getDate() + 1);
       }
       const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
-      const targetDate = weekdays[offset];
-
-      await page.goto(`/attendance?date=${targetDate}&sectionId=${sectionId}`);
+      let targetDate = weekdays[offset];
+      for (let i = offset; i < weekdays.length; i++) {
+        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}`);
+        const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
+        if (isUnmarked) {
+          targetDate = weekdays[i];
+          break;
+        }
+      }
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as LATE

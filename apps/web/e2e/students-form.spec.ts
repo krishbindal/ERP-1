@@ -23,7 +23,7 @@ test.describe('Student Enrollment Form Submission', () => {
     await page.goto('/students/new?error=First+name+and+last+name+are+required.');
     
     // Verify accessible role="alert" container renders
-    const alertBox = page.locator('[role="alert"]');
+    const alertBox = page.getByRole('alert').filter({ hasText: 'Enrollment Failed' });
     await expect(alertBox).toBeVisible();
     await expect(alertBox).toContainText('Enrollment Failed');
     await expect(alertBox).toContainText('First name and last name are required.');
