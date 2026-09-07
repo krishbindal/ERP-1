@@ -24,6 +24,7 @@ vi.mock('lucide-react', () => {
     LogOut: createMockIcon('logout'),
     Menu: createMockIcon('menu'),
     X: createMockIcon('x'),
+    MessageSquare: createMockIcon('message-square'),
   };
 });
 

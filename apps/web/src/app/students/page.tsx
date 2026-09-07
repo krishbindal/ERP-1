@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
 import { StudentsTable } from './components/StudentsTable';
+import { Button } from '@/components/ui/Button';
 
 export default async function StudentsPage(props: { searchParams: Promise<{ branchId?: string }> }) {
   const searchParams = await props.searchParams;
@@ -26,9 +27,14 @@ export default async function StudentsPage(props: { searchParams: Promise<{ bran
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Students</h1>
         {!isReadOnly && (
-          <Link href={`/students/new${branchId ? `?branchId=${branchId}` : ''}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Add Student
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/students/bulk">
+              <Button variant="outline">Bulk Import</Button>
+            </Link>
+            <Link href={`/students/new${branchId ? `?branchId=${branchId}` : ''}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              Add Student
+            </Link>
+          </div>
         )}
       </div>
 

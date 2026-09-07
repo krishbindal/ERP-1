@@ -5,6 +5,7 @@ import {
   CalendarDays,
   CalendarSync,
   Clock,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ export const navItems: NavItem[] = [
   { href: "/scheduling/substitutions", label: "Substitutions", icon: Clock },
   { href: "/attendance", label: "Attendance", icon: Clock },
   { href: "/homework", label: "Homework", icon: BookOpen },
+  { href: "/communication", label: "Communication", icon: MessageSquare },
 ];
 
 export function isLinkActive(href: string, currentPathname: string | null): boolean {

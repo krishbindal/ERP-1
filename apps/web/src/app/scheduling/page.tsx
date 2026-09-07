@@ -3,6 +3,7 @@ import { BellSchedulesTable } from './components/BellSchedulesTable';
 import { PeriodsTable } from './components/PeriodsTable';
 import { createClient } from '@/lib/supabase/server';
 import { BranchAccessError } from './components/BranchAccessError';
+import Link from 'next/link';
 
 import {  verifyPageBranchContext } from '@/lib/branch-context';
 import { Room, BellSchedule, Period } from './components/types';
@@ -56,9 +57,10 @@ export default async function SchedulingPage(props: { searchParams: Promise<{ ta
         </p>
       </div>
       <div className="border-b border-border">
-        <nav className="-mb-px flex space-x-8">
-          <a
+        <nav className="-mb-px flex space-x-8 overflow-x-auto">
+          <Link
             href={`?tab=rooms${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`}
+            aria-current={tab === 'rooms' ? 'page' : undefined}
             className={`${
               tab === 'rooms'
                 ? 'border-primary text-primary font-semibold'
@@ -66,9 +68,10 @@ export default async function SchedulingPage(props: { searchParams: Promise<{ ta
             } whitespace-nowrap py-3 px-1 border-b-2 text-sm transition-colors`}
           >
             Rooms
-          </a>
-          <a
+          </Link>
+          <Link
             href={`?tab=schedules${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`}
+            aria-current={tab === 'schedules' ? 'page' : undefined}
             className={`${
               tab === 'schedules'
                 ? 'border-primary text-primary font-semibold'
@@ -76,9 +79,10 @@ export default async function SchedulingPage(props: { searchParams: Promise<{ ta
             } whitespace-nowrap py-3 px-1 border-b-2 text-sm transition-colors`}
           >
             Bell Schedules
-          </a>
-          <a
+          </Link>
+          <Link
             href={`?tab=periods${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`}
+            aria-current={tab === 'periods' ? 'page' : undefined}
             className={`${
               tab === 'periods'
                 ? 'border-primary text-primary font-semibold'
@@ -86,7 +90,7 @@ export default async function SchedulingPage(props: { searchParams: Promise<{ ta
             } whitespace-nowrap py-3 px-1 border-b-2 text-sm transition-colors`}
           >
             Periods
-          </a>
+          </Link>
         </nav>
       </div>
       <div>
