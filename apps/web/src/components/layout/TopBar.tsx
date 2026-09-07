@@ -14,12 +14,15 @@ export interface TopBarProps {
   userEmail?: string | null;
 }
 
-function NavigationListener({ onChange }: { onChange: () => void }) {
+function NavigationListener({ setIsDrawerOpen }: { setIsDrawerOpen: (v: boolean) => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchString = searchParams?.toString() ?? "";
+  
   useEffect(() => {
-    onChange();
-  }, [pathname, searchParams, onChange]);
+    setIsDrawerOpen(false);
+  }, [pathname, searchString, setIsDrawerOpen]);
+  
   return null;
 }
 
@@ -30,7 +33,7 @@ export function TopBar({ context, userEmail }: TopBarProps = {}) {
   return (
     <>
       <Suspense fallback={null}>
-        <NavigationListener onChange={() => setIsDrawerOpen(false)} />
+        <NavigationListener setIsDrawerOpen={setIsDrawerOpen} />
       </Suspense>
       <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
