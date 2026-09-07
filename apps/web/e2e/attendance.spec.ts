@@ -146,9 +146,10 @@ test.describe('Attendance Management', () => {
       await expect(page.getByRole('heading', { name: 'Attendance History (Absences & Lates)' })).toBeVisible();
       
       // Should see the seeded absence
-      await expect(page.locator('text=2026-08-10')).toBeVisible();
-      await expect(page.locator('text=ABSENT')).toBeVisible();
-      await expect(page.locator('text=Student E2E')).toBeVisible();
+      const row = page.locator('tr').filter({ hasText: '2026-08-10' }).first();
+      await expect(row).toBeVisible();
+      await expect(row.getByText('ABSENT', { exact: true })).toBeVisible();
+      await expect(row.getByText('Student E2E')).toBeVisible();
     });
     
     test('Guardian cannot access attendance entry page', async ({ page }) => {

@@ -46,6 +46,10 @@ test.describe('App Config Admin Tests', () => {
     await expect(page.locator('text=Please select a branch to view its app config.')).toBeVisible();
     
     // Select a branch from the global selector
+    const menuBtn = page.getByRole('button', { name: 'Open navigation menu' });
+    if (await menuBtn.isVisible()) {
+      await menuBtn.click();
+    }
     await page.getByRole('combobox', { name: 'Branch' }).selectOption({ index: 1 });
     
     // Verify page loads for that branch
@@ -53,6 +57,9 @@ test.describe('App Config Admin Tests', () => {
     await expect(page.locator('input[name="app_name"]')).toBeVisible();
 
     // Select another branch
+    if (await menuBtn.isVisible()) {
+      await menuBtn.click();
+    }
     await page.getByRole('combobox', { name: 'Branch' }).selectOption({ index: 2 });
     await expect(page.locator('input[name="app_name"]')).toBeVisible();
   });

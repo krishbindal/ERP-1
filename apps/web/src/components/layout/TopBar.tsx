@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Menu, User, LogOut } from "lucide-react";
 import { Drawer } from "@/components/ui/Drawer";
 import type { AppContext } from "@/lib/branch-context";
@@ -14,12 +14,24 @@ export interface TopBarProps {
   userEmail?: string | null;
 }
 
+function NavigationListener({ onChange }: { onChange: () => void }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    onChange();
+  }, [pathname, searchParams, onChange]);
+  return null;
+}
+
 export function TopBar({ context, userEmail }: TopBarProps = {}) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const pathname = usePathname();
 
   return (
     <>
+      <Suspense fallback={null}>
+        <NavigationListener onChange={() => setIsDrawerOpen(false)} />
+      </Suspense>
       <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
           <button
