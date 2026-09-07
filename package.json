@@ -30,8 +30,6 @@
     "supabase": "^2.115.0"
   },
   "dependencies": {
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
     "pg": "^8.23.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
