@@ -374,7 +374,7 @@ export function StudentBulkWizard({ branchId, className }: StudentBulkWizardProp
                   </p>
                   <ul className="mt-2 list-disc list-inside space-y-0.5 text-muted-foreground">
                     {validationIssues.slice(0, 5).map((iss, i) => (
-                      <li key={i}>
+                      <li key={`iss-${i}`}>
                         Row {iss.row}: {iss.field} — {iss.issue}
                       </li>
                     ))}
@@ -551,3 +551,4 @@ export function StudentBulkWizard({ branchId, className }: StudentBulkWizardProp
     </div>
   );
 }
+

@@ -55,7 +55,7 @@ export default function TimetableLoading() {
             <div className="flex flex-1 relative">
               {hours.map((_, i) => (
                 <div
-                  key={i}
+                  key={`skeleton-${i}`}
                   className="absolute w-full border-t border-border/40"
                   style={{ top: `${i * 60}px` }}
                 />
@@ -94,3 +94,4 @@ export default function TimetableLoading() {
     </div>
   );
 }
+

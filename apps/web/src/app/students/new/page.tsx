@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
 import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { SubmitButton } from './SubmitButton';
 
 export default async function NewStudentPage(props: {
   searchParams: Promise<{ branchId?: string; error?: string }>;
@@ -184,45 +185,16 @@ export default async function NewStudentPage(props: {
                   Cancel
                 </Button>
               </Link>
-              <Button
-                id="enroll-submit-btn"
-                type="submit"
-                variant="primary"
-                className="relative w-full sm:w-auto min-h-[44px] sm:min-h-0"
-              >
-                <Loader2
-                  className="submit-spinner hidden mr-2 h-4 w-4 animate-spin shrink-0"
-                  aria-hidden="true"
-                />
-                <span className="submit-text">Create &amp; Enroll</span>
-              </Button>
+              <SubmitButton />
             </div>
           </form>
 
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                (function() {
-                  var form = document.getElementById('enroll-student-form');
-                  if (!form) return;
-                  form.addEventListener('submit', function() {
-                    var btn = document.getElementById('enroll-submit-btn');
-                    if (btn) {
-                      btn.setAttribute('aria-busy', 'true');
-                      btn.setAttribute('aria-disabled', 'true');
-                      btn.classList.add('opacity-70', 'pointer-events-none');
-                      var spinner = btn.querySelector('.submit-spinner');
-                      if (spinner) spinner.classList.remove('hidden');
-                      var text = btn.querySelector('.submit-text');
-                      if (text) text.textContent = 'Enrolling...';
-                    }
-                  });
-                })();
-              `,
-            }}
-          />
+          
         </CardContent>
       </Card>
     </div>
   );
 }
+
+
+

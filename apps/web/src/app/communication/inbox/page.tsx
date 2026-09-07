@@ -67,7 +67,7 @@ export default async function InboxPage() {
                 : 'default';
 
             return (
-              <Card key={i} className="border border-border bg-surface text-surface-foreground">
+              <Card key={r.message_id || i} className="border border-border bg-surface text-surface-foreground">
                 <CardHeader className="p-6 pb-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
@@ -106,3 +106,5 @@ export default async function InboxPage() {
     </div>
   );
 }
+
+
