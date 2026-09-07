@@ -72,7 +72,7 @@ test.describe('Students/New Page Authorization', () => {
     await page.goto('/students/new');
 
     // Page should render the enrollment form
-    await expect(page.locator('h1:has-text("Enroll New Student")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Enroll New Student' })).toBeVisible({ timeout: 15000 });
     await expect(page.locator('input[name="firstName"]')).toBeVisible();
     await expect(page.locator('input[name="lastName"]')).toBeVisible();
   });

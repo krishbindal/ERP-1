@@ -41,7 +41,7 @@ test.describe('Homework E2E - Phase 5', () => {
       await page.fill('input[name="dueAt"]', toDateTimeLocal(dueDate));
       await page.fill('input[name="maxMarks"]', '100');
 
-      await page.click('button[type="submit"]');
+      await page.getByRole('button', { name: 'Save Draft' }).click();
 
       // Should redirect to details
       await expect(page).toHaveURL(/\/homework\/[a-f0-9-]{36}/, { timeout: 15000 });

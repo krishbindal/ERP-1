@@ -17,7 +17,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await page.selectOption('select[name="target_type"]', 'BRANCH');
 
     await expect(page.locator('select[name="target_id"]')).not.toBeVisible();
-    await page.click('button[type="submit"]');
+    await page.getByRole('button', { name: 'Send Message' }).click();
 
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
     await expect(page.locator('text=' + subject).first()).toBeVisible();
@@ -52,7 +52,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await page.fill('input[name="subject"]', subject);
     await page.fill('textarea[name="content"]', 'Teacher class announcement.');
 
-    await page.click('button[type="submit"]');
+    await page.getByRole('button', { name: 'Send Message' }).click();
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
     await expect(page.locator('text=' + subject).first()).toBeVisible();
     await teacher2Context.close();
@@ -83,7 +83,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await teacherPage.fill('input[name="subject"]', subject);
     await teacherPage.fill('textarea[name="content"]', 'Please check your inbox.');
 
-    await teacherPage.click('button[type="submit"]');
+    await teacherPage.getByRole('button', { name: 'Send Message' }).click();
     await expect(teacherPage).toHaveURL(/.*\/communication(?:\?.*)?$/);
     await expect(teacherPage.locator('text=' + subject).first()).toBeVisible();
     await teacherContext.close();
@@ -182,7 +182,7 @@ test.describe('Communication End-to-End Workflows', () => {
       await limitPage.fill('input[name="subject"]', subject);
       await limitPage.fill('textarea[name="content"]', `Test message body ${i}`);
 
-      await limitPage.click('button[type="submit"]');
+      await limitPage.getByRole('button', { name: 'Send Message' }).click();
 
       if (i <= 5) {
         // First 5 should succeed and redirect
