@@ -102,21 +102,20 @@ test.describe('Communication End-to-End Workflows', () => {
     expect(msgData).toBeDefined();
 
     // Invoke the worker manually in E2E since there is no cron trigger.
-    // The worker processes batches (limit 10). We must poll until our specific event is processed.
-    let isCompleted = false;
-    let workerAttempts = 0;
-    while (!isCompleted && workerAttempts < 10) {
-      const workerRes = await request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
+    // Another concurrent test might have already triggered the worker and claimed our event.
+    // We must use deterministic polling to wait for the COMPLETED state.
+    await expect.poll(async () => {
+      // Trigger worker to ensure progress (if not already running)
+      await request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
         headers: { 'Authorization': `Bearer ${serviceKey}` }
       });
-      expect(workerRes.status()).toBe(200);
       
       const { data: evt } = await adminClient.from('platform_events').select('status').eq('aggregate_id', msgData.id).single();
-      if (evt?.status === 'COMPLETED') {
-        isCompleted = true;
-      }
-      workerAttempts++;
-    }
+      return evt?.status;
+    }, {
+      message: 'Worker should process the platform event and mark it COMPLETED',
+      timeout: 15000,
+    }).toBe('COMPLETED');
 
     const { data: targetData, error: targetErr } = await adminClient.from('communication_message_targets').select('*').eq('message_id', msgData.id);
     expect(targetErr).toBeNull();
