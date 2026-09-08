@@ -13,6 +13,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
   const view = searchParams.view || 'section';
+  
   const selectedDate = searchParams.date || ''; // Default to empty to prevent SSR timezone skew
   const sessionId = searchParams.session || '';
 
@@ -137,6 +138,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
     </div>
   );
 }
+
 
 
 

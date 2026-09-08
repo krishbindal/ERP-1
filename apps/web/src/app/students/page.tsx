@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { StudentsService } from '@/services/students.service';
 import Link from 'next/link';
 import { verifyPageBranchContext } from '@/lib/branch-context';
@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/server';
 export default async function StudentsPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
-  const sessionId = searchParams.session;
+  let sessionId = searchParams.session;
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
@@ -32,6 +32,7 @@ export default async function StudentsPage(props: { searchParams: Promise<{ bran
     return <div className="p-4 text-red-500">Error loading academic sessions: {yearsError.message}</div>;
   }
 
+  if (!sessionId && years && years.length > 0) { sessionId = years[0].id; }
   let students: import('./components/StudentsTable').StudentItem[] = [];
   if (sessionId) {
     const { data, error } = await StudentsService.listStudents(branchId, sessionId);
@@ -70,5 +71,6 @@ export default async function StudentsPage(props: { searchParams: Promise<{ bran
     </div>
   );
 }
+
 
 

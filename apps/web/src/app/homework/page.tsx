@@ -9,7 +9,7 @@ import { AcademicSessionSelector } from '@/components/AcademicSessionSelector';
 export default async function HomeworkPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
-  const sessionId = searchParams.session;
+  let sessionId = searchParams.session;
 
   const supabase = await createClient();
   const context = await getAppContext();
@@ -36,6 +36,7 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
 
   if (yrErr) throw new Error(yrErr.message);
 
+  
   let assignments: { id: string; title: string; due_date: string; status: string; sections?: { name: string } | { name: string }[] | undefined; subjects?: { name: string } | { name: string }[] | undefined; }[] = [];
   
   if (sessionId) {
@@ -71,6 +72,8 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
     </div>
   );
 }
+
+
 
 
 

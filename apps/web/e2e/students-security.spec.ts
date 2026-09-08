@@ -28,6 +28,7 @@ test.describe('Students Page Authorization', () => {
     await expect(page.locator('a:has-text("Add Student")')).toBeVisible();
 
     // The table should render (even if empty)
+    await page.locator('select#academic-session').selectOption({ index: 1 });
     await expect(page.locator('table')).toBeVisible();
     await expect(page.locator('text=Student E2E')).toBeVisible();
   });
@@ -46,6 +47,7 @@ test.describe('Students Page Authorization', () => {
     await expect(page.locator('a:has-text("Add Student")')).not.toBeVisible();
 
     // The table should render
+    await page.locator('select#academic-session').selectOption({ index: 1 });
     await expect(page.locator('table')).toBeVisible();
   });
 

@@ -10,7 +10,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
   const explicitBranchId = searchParams.branchId;
   const date = searchParams.date || new Date().toISOString().split('T')[0];
   const sectionId = searchParams.sectionId || null;
-  const sessionId = searchParams.session;
+  let sessionId = searchParams.session;
 
   const supabase = await createClient();
   const context = await getAppContext();
@@ -124,6 +124,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     </div>
   );
 }
+
 
 
 
