@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useDataTable } from '@/hooks/useDataTable';
 import Link from 'next/link';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, User } from 'lucide-react';
 import {
@@ -32,33 +33,38 @@ type SortField = 'name' | 'status';
 type SortOrder = 'asc' | 'desc';
 
 export function StudentsTable({ students }: StudentsTableProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
 
-  // Filter
-  const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
+    const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortOrder,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedData: paginatedItems,
+    handleSort,
+    totalItems,
+    startIndex,
+    pageSize,
+    sortedData: sortedItems
+  } = useDataTable<any, SortField>(
+    students,
+    (student: any, query: string) => {
       const fullName = `${student.first_name} ${student.last_name}`.toLowerCase();
       const matchesSearch =
-        !searchQuery.trim() ||
-        fullName.includes(searchQuery.trim().toLowerCase()) ||
-        student.id.toLowerCase().includes(searchQuery.trim().toLowerCase());
+        !query.trim() ||
+        fullName.includes(query.trim().toLowerCase()) ||
+        student.id.toLowerCase().includes(query.trim().toLowerCase());
 
       const matchesStatus =
         statusFilter === 'ALL' ||
         student.status?.toUpperCase() === statusFilter.toUpperCase();
 
       return matchesSearch && matchesStatus;
-    });
-  }, [students, searchQuery, statusFilter]);
-
-  // Sort
-  const sortedStudents = useMemo(() => {
-    return [...filteredStudents].sort((a, b) => {
+    },
+    (a: any, b: any, sortField: any, sortOrder: any) => {
       let comparison = 0;
       if (sortField === 'name') {
         const nameA = `${a.last_name}, ${a.first_name}`.toLowerCase();
@@ -68,24 +74,9 @@ export function StudentsTable({ students }: StudentsTableProps) {
         comparison = (a.status || '').localeCompare(b.status || '');
       }
       return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [filteredStudents, sortField, sortOrder]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(sortedStudents.length / pageSize));
-  const validCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (validCurrentPage - 1) * pageSize;
-  const paginatedStudents = sortedStudents.slice(startIndex, startIndex + pageSize);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-    setCurrentPage(1);
-  };
+    },
+    'name' as SortField
+  );
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -174,9 +165,9 @@ export function StudentsTable({ students }: StudentsTableProps) {
             </Button>
           )}
           <span className="text-xs text-muted-foreground font-medium">
-            {sortedStudents.length === 0
+            {sortedItems.length === 0
               ? '0 students'
-              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedStudents.length)} of ${sortedStudents.length} students`}
+              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedItems.length)} of ${sortedItems.length} students`}
           </span>
         </div>
       </div>
@@ -212,7 +203,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedStudents.length === 0 ? (
+          {sortedItems.length === 0 ? (
             <TableEmptyRow
               colSpan={3}
               icon={<User className="h-8 w-8 text-muted-foreground" aria-hidden="true" />}
@@ -243,7 +234,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
               }
             />
           ) : (
-            paginatedStudents.map((student) => (
+            paginatedItems.map((student) => (
               <TableRow key={student.id}>
                 <TableCell className="font-medium text-foreground">
                   {student.first_name} {student.last_name}
@@ -272,7 +263,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
-            Page {validCurrentPage} of {totalPages}
+            Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -280,7 +271,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={validCurrentPage <= 1}
+              disabled={currentPage <= 1}
             >
               Previous
             </Button>
@@ -289,7 +280,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={validCurrentPage >= totalPages}
+              disabled={currentPage >= totalPages}
             >
               Next
             </Button>
@@ -299,3 +290,5 @@ export function StudentsTable({ students }: StudentsTableProps) {
     </div>
   );
 }
+
+

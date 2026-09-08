@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import { useDataTable } from '@/hooks/useDataTable';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
 import {
@@ -33,11 +34,7 @@ type SortOrder = 'asc' | 'desc';
 
 export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: PeriodsTableProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<SortField>('start_time');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  
 
   // Drawer / modal states
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -48,24 +45,31 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
   const [isDeleting, setIsDeleting] = useState(false);
   const [resetFiltersConfirmOpen, setResetFiltersConfirmOpen] = useState(false);
 
-  // Filtering
-  const filteredData = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return data;
-
-    return data.filter((period) => {
+    const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortOrder,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedData: paginatedItems,
+    handleSort,
+    totalItems,
+    startIndex,
+    pageSize,
+    sortedData: sortedItems
+  } = useDataTable<any, SortField>(
+    data,
+    (period: any, query: string) => {
       const nameMatch = period.name?.toLowerCase().includes(query);
       const scheduleMatch = period.bell_schedules?.name?.toLowerCase().includes(query);
       const startMatch = period.start_time?.toLowerCase().includes(query);
       const endMatch = period.end_time?.toLowerCase().includes(query);
       const statusMatch = period.status?.toLowerCase().includes(query);
       return nameMatch || scheduleMatch || startMatch || endMatch || statusMatch;
-    });
-  }, [data, searchQuery]);
-
-  // Sorting
-  const sortedData = useMemo(() => {
-    return [...filteredData].sort((a, b) => {
+    },
+    (a: any, b: any, sortField: any, sortOrder: any) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -81,24 +85,9 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
         comparison = (a.status || '').localeCompare(b.status || '');
       }
       return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [filteredData, sortField, sortOrder]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
-  const validCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (validCurrentPage - 1) * pageSize;
-  const paginatedData = sortedData.slice(startIndex, startIndex + pageSize);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-    setCurrentPage(1);
-  };
+    },
+    'start_time' as SortField
+  );
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -202,9 +191,9 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
             </Button>
           )}
           <span className="text-xs text-muted-foreground font-medium">
-            {sortedData.length === 0
+            {sortedItems.length === 0
               ? '0 periods'
-              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedData.length)} of ${sortedData.length} periods`}
+              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedItems.length)} of ${sortedItems.length} periods`}
           </span>
         </div>
       </div>
@@ -272,7 +261,7 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedData.length === 0 ? (
+          {sortedItems.length === 0 ? (
             <TableEmptyRow
               colSpan={isReadOnly ? 5 : 6}
               title={searchQuery ? 'No matching periods found' : 'No periods configured'}
@@ -308,7 +297,7 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
               }
             />
           ) : (
-            paginatedData.map((period) => (
+            paginatedItems.map((period) => (
               <TableRow key={period.id}>
                 <TableCell className="font-medium text-foreground">{period.name}</TableCell>
                 <TableCell className="text-muted-foreground">{period.bell_schedules?.name || '-'}</TableCell>
@@ -356,7 +345,7 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
-            Page {validCurrentPage} of {totalPages}
+            Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -364,7 +353,7 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={validCurrentPage <= 1}
+              disabled={currentPage <= 1}
             >
               Previous
             </Button>
@@ -373,7 +362,7 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={validCurrentPage >= totalPages}
+              disabled={currentPage >= totalPages}
             >
               Next
             </Button>

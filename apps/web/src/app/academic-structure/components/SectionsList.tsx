@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import { useDataTable } from '@/hooks/useDataTable';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
 import {
   Table,
@@ -29,11 +30,7 @@ type SortField = 'name' | 'class' | 'capacity';
 type SortOrder = 'asc' | 'desc';
 
 export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  
 
   // Drawer / modal states
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -44,22 +41,29 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
   const [isDeleting, setIsDeleting] = useState(false);
   const [resetFiltersConfirmOpen, setResetFiltersConfirmOpen] = useState(false);
 
-  // Filtering
-  const filteredData = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return data;
-
-    return data.filter((sec) => {
+    const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortOrder,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedData: paginatedItems,
+    handleSort,
+    totalItems,
+    startIndex,
+    pageSize,
+    sortedData: sortedItems
+  } = useDataTable<any, SortField>(
+    data,
+    (sec: any, query: string) => {
       const nameMatch = sec.name?.toLowerCase().includes(query);
       const classMatch = sec.classes?.name?.toLowerCase().includes(query);
       const capacityMatch = sec.capacity?.toString().includes(query);
       return nameMatch || classMatch || capacityMatch;
-    });
-  }, [data, searchQuery]);
-
-  // Sorting
-  const sortedData = useMemo(() => {
-    return [...filteredData].sort((a, b) => {
+    },
+    (a: any, b: any, sortField: any, sortOrder: any) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -71,24 +75,9 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
         comparison = (a.capacity ?? 0) - (b.capacity ?? 0);
       }
       return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [filteredData, sortField, sortOrder]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
-  const validCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (validCurrentPage - 1) * pageSize;
-  const paginatedData = sortedData.slice(startIndex, startIndex + pageSize);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-    setCurrentPage(1);
-  };
+    },
+    'name' as SortField
+  );
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -191,9 +180,9 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
             </Button>
           )}
           <span className="text-xs text-muted-foreground font-medium">
-            {sortedData.length === 0
+            {sortedItems.length === 0
               ? '0 sections'
-              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedData.length)} of ${sortedData.length} sections`}
+              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedItems.length)} of ${sortedItems.length} sections`}
           </span>
         </div>
       </div>
@@ -241,7 +230,7 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedData.length === 0 ? (
+          {sortedItems.length === 0 ? (
             <TableEmptyRow
               colSpan={isReadOnly ? 3 : 4}
               title={searchQuery ? 'No matching sections found' : 'No sections configured'}
@@ -277,7 +266,7 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
               }
             />
           ) : (
-            paginatedData.map((sec) => (
+            paginatedItems.map((sec) => (
               <TableRow key={sec.id}>
                 <TableCell className="font-medium text-foreground">{sec.name}</TableCell>
                 <TableCell className="text-muted-foreground">{sec.classes?.name || '-'}</TableCell>
@@ -319,7 +308,7 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
-            Page {validCurrentPage} of {totalPages}
+            Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -327,7 +316,7 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={validCurrentPage <= 1}
+              disabled={currentPage <= 1}
             >
               Previous
             </Button>
@@ -336,7 +325,7 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={validCurrentPage >= totalPages}
+              disabled={currentPage >= totalPages}
             >
               Next
             </Button>

@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useDataTable } from '@/hooks/useDataTable';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
 import {
   Table,
@@ -37,21 +38,29 @@ type SortField = 'date' | 'name' | 'status';
 type SortOrder = 'asc' | 'desc';
 
 export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
 
-  // Filtering
-  const filteredRecords = useMemo(() => {
-    return records.filter((r) => {
+    const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortOrder,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedData: paginatedItems,
+    handleSort,
+    totalItems,
+    startIndex,
+    pageSize,
+    sortedData: sortedItems
+  } = useDataTable<any, SortField>(
+    records,
+    (r: any, query: string) => {
       const studentName = `${r.students.first_name} ${r.students.last_name}`.toLowerCase();
       const dateStr = r.attendance_sessions.date.toLowerCase();
       const notesStr = (r.notes || '').toLowerCase();
-      const query = searchQuery.trim().toLowerCase();
-
+      
       const matchesSearch =
         !query ||
         studentName.includes(query) ||
@@ -62,12 +71,8 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
         statusFilter === 'ALL' || r.status.toUpperCase() === statusFilter.toUpperCase();
 
       return matchesSearch && matchesStatus;
-    });
-  }, [records, searchQuery, statusFilter]);
-
-  // Sorting
-  const sortedRecords = useMemo(() => {
-    return [...filteredRecords].sort((a, b) => {
+    },
+    (a: any, b: any, sortField: any, sortOrder: any) => {
       let comparison = 0;
       if (sortField === 'date') {
         comparison = a.attendance_sessions.date.localeCompare(b.attendance_sessions.date);
@@ -79,24 +84,9 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
         comparison = a.status.localeCompare(b.status);
       }
       return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [filteredRecords, sortField, sortOrder]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
-  const validCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (validCurrentPage - 1) * pageSize;
-  const paginatedRecords = sortedRecords.slice(startIndex, startIndex + pageSize);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-    setCurrentPage(1);
-  };
+    },
+    'date' as SortField
+  );
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -169,9 +159,9 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
             </Button>
           )}
           <span className="text-xs text-muted-foreground font-medium">
-            {sortedRecords.length === 0
+            {sortedItems.length === 0
               ? '0 incidents'
-              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedRecords.length)} of ${sortedRecords.length} records`}
+              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedItems.length)} of ${sortedItems.length} records`}
           </span>
         </div>
       </div>
@@ -213,7 +203,7 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedRecords.length === 0 ? (
+          {sortedItems.length === 0 ? (
             <TableEmptyRow
               colSpan={3}
               icon={<Calendar className="h-8 w-8 text-muted-foreground" aria-hidden="true" />}
@@ -244,7 +234,7 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
               }
             />
           ) : (
-            paginatedRecords.map((record, index) => (
+            paginatedItems.map((record, index) => (
               <TableRow key={`${record.attendance_sessions.date}-${index}`}>
                 <TableCell className="font-mono text-xs text-foreground">
                   {record.attendance_sessions.date}
@@ -267,7 +257,7 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
-            Page {validCurrentPage} of {totalPages}
+            Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -275,7 +265,7 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={validCurrentPage <= 1}
+              disabled={currentPage <= 1}
             >
               Previous
             </Button>
@@ -284,7 +274,7 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={validCurrentPage >= totalPages}
+              disabled={currentPage >= totalPages}
             >
               Next
             </Button>
@@ -294,3 +284,4 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
     </div>
   );
 }
+

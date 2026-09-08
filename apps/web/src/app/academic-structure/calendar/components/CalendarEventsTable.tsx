@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useMemo, useTransition } from 'react';
+import { useDataTable } from '@/hooks/useDataTable';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
 import { CalendarEvent } from '@/lib/calendar/resolver';
@@ -39,41 +40,37 @@ export function CalendarEventsTable({
 }: CalendarEventsTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  // Search & Sorting & Pagination state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortField, setSortField] = useState<SortField>('start_date');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
-
-  // Drawer / Modal state
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-
-  // ConfirmDialog states (2 distinct confirmation flows)
-  const [eventToArchive, setEventToArchive] = useState<CalendarEvent | null>(null);
+  const [eventToArchive, setEventToArchive] = useState<any | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [resetFiltersConfirmOpen, setResetFiltersConfirmOpen] = useState(false);
 
-  // Filter
-  const filteredEvents = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return events;
-
-    return events.filter((event) => {
+    const {
+    searchQuery,
+    setSearchQuery,
+    sortField,
+    sortOrder,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedData: paginatedItems,
+    handleSort,
+    totalItems,
+    startIndex,
+    pageSize,
+    sortedData: sortedItems
+  } = useDataTable<any, SortField>(
+    events,
+    (event: any, query: string) => {
       const nameMatch = event.name.toLowerCase().includes(query);
       const typeMatch = event.type.toLowerCase().includes(query);
       const dateMatch =
         event.start_date.toLowerCase().includes(query) ||
         event.end_date.toLowerCase().includes(query);
       return nameMatch || typeMatch || dateMatch;
-    });
-  }, [events, searchQuery]);
-
-  // Sort
-  const sortedEvents = useMemo(() => {
-    return [...filteredEvents].sort((a, b) => {
+    },
+    (a: any, b: any, sortField: any, sortOrder: any) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = a.name.localeCompare(b.name);
@@ -85,24 +82,9 @@ export function CalendarEventsTable({
         comparison = (a.is_instructional ? 1 : 0) - (b.is_instructional ? 1 : 0);
       }
       return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  }, [filteredEvents, sortField, sortOrder]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(sortedEvents.length / pageSize));
-  const validCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (validCurrentPage - 1) * pageSize;
-  const paginatedEvents = sortedEvents.slice(startIndex, startIndex + pageSize);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-    setCurrentPage(1);
-  };
+    },
+    'start_date' as SortField
+  );
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) {
@@ -211,9 +193,9 @@ export function CalendarEventsTable({
             </Button>
           )}
           <span className="text-xs text-muted-foreground font-medium">
-            {sortedEvents.length === 0
+            {sortedItems.length === 0
               ? '0 events'
-              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedEvents.length)} of ${sortedEvents.length} events`}
+              : `Showing ${startIndex + 1}-${Math.min(startIndex + pageSize, sortedItems.length)} of ${sortedItems.length} events`}
           </span>
         </div>
       </div>
@@ -271,7 +253,7 @@ export function CalendarEventsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedEvents.length === 0 ? (
+          {sortedItems.length === 0 ? (
             <TableEmptyRow
               colSpan={isReadOnly ? 4 : 5}
               title={searchQuery ? 'No matching events found' : 'No calendar events'}
@@ -307,7 +289,7 @@ export function CalendarEventsTable({
               }
             />
           ) : (
-            paginatedEvents.map((event) => {
+            paginatedItems.map((event) => {
               const dateText =
                 event.start_date === event.end_date
                   ? event.start_date
@@ -369,7 +351,7 @@ export function CalendarEventsTable({
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
-            Page {validCurrentPage} of {totalPages}
+            Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -377,7 +359,7 @@ export function CalendarEventsTable({
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={validCurrentPage <= 1}
+              disabled={currentPage <= 1}
             >
               Previous
             </Button>
@@ -386,7 +368,7 @@ export function CalendarEventsTable({
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={validCurrentPage >= totalPages}
+              disabled={currentPage >= totalPages}
             >
               Next
             </Button>
@@ -433,3 +415,5 @@ export function CalendarEventsTable({
     </div>
   );
 }
+
+

@@ -13,6 +13,11 @@ vi.mock('lucide-react', () => {
     return MockIcon;
   };
   return {
+    AlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
+    CheckCircle: () => <svg data-testid="icon-check-circle" />,
+    AlertCircle: () => <svg data-testid="icon-alert-circle" />,
+    Info: () => <svg data-testid="icon-info" />,
+    X: () => <svg data-testid="icon-x" />,
     AlertCircle: createMockIcon('alert-circle'),
     Loader2: createMockIcon('loader2'),
   };
