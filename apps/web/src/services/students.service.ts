@@ -77,7 +77,7 @@ export class StudentsService {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from('enrollments')
-      .select('students!inner(*)')
+      .select('students!enrollments_student_id_fkey!inner(*)')
       .eq('branch_id', branchId)
       .eq('academic_year_id', academicYearId)
       .eq('status', 'ACTIVE')
