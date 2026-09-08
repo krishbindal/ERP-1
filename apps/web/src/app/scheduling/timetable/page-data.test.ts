@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as serverSupabase from '@/lib/supabase/server';
 import { fetchSchedulingPageData, fetchTimetablePageData } from './page-data';
 
@@ -87,7 +87,7 @@ describe('scheduling page-data - query parallelization', () => {
     // @ts-expect-error test mock override
     serverSupabase.createClient.mockResolvedValue({ from: mockFrom });
 
-    const result = await fetchSchedulingPageData('branch-123');
+    const result = await fetchSchedulingPageData('branch-123', 'year-1');
 
     expect(result.academicYearId).toBe('year-2026');
     expect(result.periods).toHaveLength(1);
@@ -221,7 +221,7 @@ describe('scheduling page-data - query parallelization', () => {
     // @ts-expect-error test mock override
     serverSupabase.createClient.mockResolvedValue({ from: mockFrom });
 
-    const data = await fetchTimetablePageData('branch-123');
+    const data = await fetchTimetablePageData('branch-123', 'year-1');
 
     expect(data.academicYearId).toBe('year-2026');
     expect(data.periods).toHaveLength(1);
@@ -273,10 +273,12 @@ describe('scheduling page-data - query parallelization', () => {
     // @ts-expect-error test mock override
     serverSupabase.createClient.mockResolvedValue({ from: mockFrom });
 
-    const data = await fetchTimetablePageData('branch-123');
+    const data = await fetchTimetablePageData('branch-123', 'year-1');
     expect(data.academicYearId).toBeUndefined();
     expect(data.entriesData).toEqual([]);
     expect(data.classes).toEqual([]);
     expect(data.sections).toEqual([]);
   });
 });
+
+

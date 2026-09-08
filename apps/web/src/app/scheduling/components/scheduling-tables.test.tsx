@@ -1,4 +1,4 @@
-import React, { act } from 'react';
+﻿import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
@@ -304,7 +304,7 @@ describe('Scheduling secondary tables and timetable form', () => {
       await act(async () => {
         root.render(
           <TimetableEntryForm
-            branchId="b-1"
+            academicYearId="year-1" branchId="b-1"
             periods={[]}
             rooms={[]}
             classes={[]}
@@ -337,3 +337,7 @@ describe('Scheduling secondary tables and timetable form', () => {
     });
   });
 });
+
+
+
+

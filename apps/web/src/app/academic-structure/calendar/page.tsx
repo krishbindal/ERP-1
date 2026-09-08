@@ -1,16 +1,16 @@
-import { createClient } from '@/lib/supabase/server';
+﻿import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
 import { AcademicStructureNav } from '../components/AcademicStructureNav';
 import { OperatingDaysEditor } from './components/OperatingDaysEditor';
 import { CalendarEventsTable } from './components/CalendarEventsTable';
 import { getCalendarEvents } from '@/lib/calendar/actions';
-import { getActiveAcademicYearId } from '@/app/scheduling/lib/scheduling-context';
+import { AcademicSessionSelector } from '@/components/AcademicSessionSelector';
 
-export default async function CalendarPage(props: { searchParams: Promise<{ branchId?: string; academicYearId?: string }> }) {
+export default async function CalendarPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
-  const explicitAcademicYearId = searchParams.academicYearId;
+  const sessionId = searchParams.session;
 
   const supabase = await createClient();
   
@@ -24,47 +24,67 @@ export default async function CalendarPage(props: { searchParams: Promise<{ bran
     return <BranchAccessError errorState="ACCESS_DENIED" feature="academic structure" />;
   }
 
-  // Fetch active academic year if not provided
-  const activeYearId = explicitAcademicYearId || await getActiveAcademicYearId(supabase, branchId);
-  
-  const { data: yearData, error: yearError } = await supabase
+  // Fetch all years for the selector
+  const { data: years } = await supabase
     .from('academic_years')
-    .select('operating_days')
-    .eq('id', activeYearId)
+    .select('*')
     .eq('branch_id', branchId)
-    .single();
+    .order('start_date', { ascending: false });
 
-  if (yearError) {
-    throw new Error('Failed to load active academic year context.');
-  }
+  let yearData = null;
+  let events: any[] = [];
 
-  // Fetch calendar events
-  const { data: events, error: eventsError } = await getCalendarEvents(branchId, true, explicitAcademicYearId);
-  
-  if (eventsError) {
-    throw new Error('Failed to load calendar events.');
+  if (sessionId) {
+    const { data: yr, error: yearError } = await supabase
+      .from('academic_years')
+      .select('operating_days')
+      .eq('id', sessionId)
+      .eq('branch_id', branchId)
+      .single();
+
+    if (yearError) {
+      throw new Error('Failed to load active academic year context.');
+    }
+    yearData = yr;
+
+    const { data: evts, error: eventsError } = await getCalendarEvents(branchId, true, sessionId);
+    if (eventsError) {
+      throw new Error('Failed to load calendar events.');
+    }
+    events = evts || [];
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Academic Structure</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Academic Structure</h1>
+        <AcademicSessionSelector years={years || []} currentSessionId={sessionId} branchId={branchId} />
+      </div>
+      
       <AcademicStructureNav currentTab="calendar" explicitBranchId={explicitBranchId} />
       
-      <div className="space-y-6">
-        <OperatingDaysEditor 
-          initialDays={yearData.operating_days || []} 
-          isReadOnly={isReadOnly} 
-          explicitBranchId={branchId}
-          explicitAcademicYearId={explicitAcademicYearId}
-        />
-        
-        <CalendarEventsTable 
-          events={events || []} 
-          isReadOnly={isReadOnly} 
-          explicitBranchId={branchId}
-          explicitAcademicYearId={explicitAcademicYearId}
-        />
-      </div>
+      {!sessionId ? (
+        <div className="p-12 text-center text-gray-500 bg-gray-50 rounded border border-gray-200">
+          Please select an Academic Session above to view the calendar.
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <OperatingDaysEditor 
+            initialDays={yearData?.operating_days || []} 
+            isReadOnly={isReadOnly} 
+            explicitBranchId={branchId}
+            explicitAcademicYearId={sessionId}
+          />
+          
+          <CalendarEventsTable 
+            events={events} 
+            isReadOnly={isReadOnly} 
+            explicitBranchId={branchId}
+            explicitAcademicYearId={sessionId}
+          />
+        </div>
+      )}
     </div>
   );
 }
+

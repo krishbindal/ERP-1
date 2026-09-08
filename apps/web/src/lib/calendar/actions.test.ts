@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getInstructionalDay, getInstructionalDaysForRangeAction } from './actions';
 
 // Create a mock Supabase client
@@ -56,7 +56,7 @@ describe('Calendar Actions API Contract', () => {
       _chain.single.mockResolvedValueOnce({ data: { operating_days: [1, 2, 3] }, error: null }); // academic_years
       _chain.then.mockImplementationOnce((cb: (res: { data: unknown[]; error: null }) => void) => cb({ data: [], error: null })); // calendar_events
       
-      await getInstructionalDay('2026-08-05');
+      await getInstructionalDay('2026-08-05', undefined, 'year-1');
       
       // Should fetch academic_years with active-year-id
       expect(mockSupabase.from).toHaveBeenCalledWith('academic_years');
@@ -122,3 +122,4 @@ describe('Calendar Actions API Contract', () => {
     });
   });
 });
+

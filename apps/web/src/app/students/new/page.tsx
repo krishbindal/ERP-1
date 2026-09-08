@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import { StudentsService } from '@/services/students.service';
 import { createClient } from '@/lib/supabase/server';
@@ -78,26 +78,7 @@ export default async function NewStudentPage(props: {
           .eq('student_id', result.id)
           .single();
 
-        const { data: section } = await supabase
-          .from('sections')
-          .select('id, class_id, academic_year_id')
-          .eq('branch_id', resolvedBranchId)
-          .limit(1)
-          .maybeSingle();
-
-        if (profile && section) {
-          await supabase.from('enrollments').insert({
-            organization_id: orgId,
-            branch_id: resolvedBranchId,
-            student_id: result.id,
-            student_branch_profile_id: profile.id,
-            academic_year_id: section.academic_year_id,
-            class_id: section.class_id,
-            section_id: section.id,
-            status: 'ACTIVE',
-            effective_from: new Date().toISOString().split('T')[0],
-          });
-        }
+        // No auto-enrollment
 
         redirect(`/students/${result.id}`);
       }
@@ -195,6 +176,7 @@ export default async function NewStudentPage(props: {
     </div>
   );
 }
+
 
 
 

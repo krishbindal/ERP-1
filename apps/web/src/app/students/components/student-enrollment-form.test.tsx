@@ -1,4 +1,4 @@
-import React, { act } from 'react';
+﻿import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
@@ -15,8 +15,7 @@ vi.mock('lucide-react', () => {
   return {
     AlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
     CheckCircle: () => <svg data-testid="icon-check-circle" />,
-    AlertCircle: () => <svg data-testid="icon-alert-circle" />,
-    Info: () => <svg data-testid="icon-info" />,
+        Info: () => <svg data-testid="icon-info" />,
     X: () => <svg data-testid="icon-x" />,
     AlertCircle: createMockIcon('alert-circle'),
     Loader2: createMockIcon('loader2'),
@@ -176,3 +175,4 @@ describe('StudentEnrollmentFormView component', () => {
     expect(onSubmit).toHaveBeenCalled();
   });
 });
+

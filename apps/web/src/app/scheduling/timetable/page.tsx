@@ -1,81 +1,77 @@
-export const dynamic = 'force-dynamic';
+﻿export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { verifyPageBranchContext } from '@/lib/branch-context';
-import { BranchAccessError } from '../components/BranchAccessError';
+import { BranchAccessError } from '@/components/BranchAccessError';
 import { fetchTimetablePageData } from './page-data';
 import { TimetableManager } from './components/TimetableManager';
+import { AcademicSessionSelector } from '@/components/AcademicSessionSelector';
+import { createClient } from '@/lib/supabase/server';
 
-export default async function TimetablePage(props: Readonly<{ searchParams: Promise<{ branchId?: string; view?: string }> }>) {
+export default async function TimetablePage(props: Readonly<{ searchParams: Promise<{ branchId?: string; view?: string; session?: string }> }>) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
   const view = searchParams.view || 'section';
+  const sessionId = searchParams.session || '';
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
   if (errorState || !branchId || !isAuthorized) {
-    return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} />;
+    return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} feature="timetable" />;
   }
 
-  // All 8 queries executed in 2 parallel waves via fetchTimetablePageData
-  const {
-    entriesData,
-    periods,
-    rooms,
-    teachers,
-    classes,
-    sections,
-    subjects,
-  } = await fetchTimetablePageData(branchId);
+  const supabase = await createClient();
+  const { data: years, error: yrErr } = await supabase
+    .from('academic_years')
+    .select('*')
+    .eq('branch_id', branchId)
+    .order('start_date', { ascending: false });
+
+  if (yrErr) throw new Error(yrErr.message);
+
+  let timetableProps: any = null;
+
+  if (sessionId) {
+    // All queries executed in 2 parallel waves via fetchTimetablePageData
+    const {
+      entriesData,
+      periods,
+      rooms,
+      teachers,
+      classes,
+      sections,
+      subjects,
+    } = await fetchTimetablePageData(branchId, sessionId);
+    
+    timetableProps = { entriesData, periods, rooms, teachers, classes, sections, subjects };
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Timetable</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Manage and view weekly scheduled periods across sections, teachers, and rooms.
-          </p>
-        </div>
-
-        <form className="flex items-center gap-2 self-start sm:self-auto">
-          <input type="hidden" name="branchId" value={branchId} />
-          <label htmlFor="view" className="text-sm font-medium text-foreground">
-            View:
-          </label>
-          <select
-            id="view"
-            name="view"
-            defaultValue={view}
-            className="border border-input rounded-md px-2.5 py-1.5 text-sm bg-surface text-foreground shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <option value="section">By Section</option>
-            <option value="teacher">By Teacher</option>
-            <option value="room">By Room</option>
-          </select>
-          <button
-            type="submit"
-            className="px-3 py-1.5 bg-secondary hover:bg-muted text-secondary-foreground border border-border rounded-md text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            Apply
-          </button>
-        </form>
+    <div className="space-y-6 p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Timetable Management</h1>
+        <AcademicSessionSelector years={years || []} currentSessionId={sessionId} branchId={branchId} />
       </div>
 
-      {/* Timetable manager and grid rendered within an accessible container */}
-      <div className="w-full">
+      {!sessionId ? (
+        <div className="p-12 text-center text-gray-500 bg-gray-50 rounded border border-gray-200">
+          Please select an Academic Session above to view the timetable.
+        </div>
+      ) : (
         <TimetableManager
+          academicYearId={sessionId}
           branchId={branchId}
-          entries={entriesData}
-          periods={periods}
-          rooms={rooms}
-          classes={classes}
-          sections={sections}
-          subjects={subjects}
-          teachers={teachers}
+          entries={timetableProps.entriesData}
+          periods={timetableProps.periods}
+          rooms={timetableProps.rooms}
+          teachers={timetableProps.teachers}
+          classes={timetableProps.classes}
+          sections={timetableProps.sections}
+          subjects={timetableProps.subjects}
           isReadOnly={isReadOnly}
         />
-      </div>
+      )}
     </div>
   );
 }
+

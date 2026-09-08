@@ -70,17 +70,24 @@ export class StudentsService {
   }
 
   /**
-   * List all visible students. RLS restricts this to students enrolled in our active branches.
+   * List all visible students for a specific academic session.
+   * We query the enrollments table to ensure the student is actively placed in this session.
    */
-  static async listStudents(): Promise<{ data?: Student[], error?: Error }> {
+  static async listStudents(branchId: string, academicYearId: string): Promise<{ data?: Student[], error?: Error }> {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .from('students')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .from('enrollments')
+      .select('students!inner(*)')
+      .eq('branch_id', branchId)
+      .eq('academic_year_id', academicYearId)
+      .eq('status', 'ACTIVE')
+      .order('students(last_name)', { ascending: true });
       
-    if (error) return { error }
-    return { data }
+    if (error) return { error };
+    
+    // Flatten the enrollments->students structure
+    const studentsData = data.map((e: any) => e.students) as Student[];
+    return { data: studentsData };
   }
 
   /**

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from 'react';
 import { createTimetableEntry, updateTimetableEntry } from '../actions';
@@ -8,6 +8,7 @@ import { Button, ConfirmDialog, toast } from '@/components/ui';
 import { TimetableEntry, Period } from './TimetableGrid';
 
 interface Props {
+  academicYearId: string;
   branchId: string;
   periods: Period[];
   rooms: { id: string; name: string }[];
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function TimetableEntryForm({
+  academicYearId,
   branchId,
   periods,
   rooms,
@@ -77,7 +79,8 @@ export function TimetableEntryForm({
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      class_id: formData.get('class_id') as string,
+      academic_year_id: academicYearId,
+        class_id: formData.get('class_id') as string,
       section_id: formData.get('section_id') as string,
       subject_id: formData.get('subject_id') as string,
       period_id: formData.get('period_id') as string,
@@ -238,3 +241,4 @@ export function TimetableEntryForm({
     </>
   );
 }
+

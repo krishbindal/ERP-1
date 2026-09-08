@@ -28,20 +28,13 @@ export interface TimetablePageData extends SchedulingPageData {
 
 /**
  * Fetches the active academic year, periods, rooms, teachers, and timetable entries in parallel.
- * Replaces the sequential 5-query waterfall with 2 parallelized stages (Stage 1: independent entities,
- * Stage 2: academic-year-scoped entries).
+ * Requires an explicit academicYearId to avoid singleton assumptions.
  */
-export async function fetchSchedulingPageData(branchId: string): Promise<SchedulingPageData> {
+export async function fetchSchedulingPageData(branchId: string, academicYearId: string): Promise<SchedulingPageData> {
   const supabase = await createClient();
 
   // Wave 1: Fetch independent branch-scoped datasets concurrently
-  const [activeYearRes, periodsRes, roomsRes, teachersRes] = await Promise.all([
-    supabase
-      .from('academic_years')
-      .select('id')
-      .eq('branch_id', branchId)
-      .eq('status', 'ACTIVE')
-      .maybeSingle(),
+  const [periodsRes, roomsRes, teachersRes] = await Promise.all([
     supabase
       .from('periods')
       .select('*')
@@ -64,9 +57,7 @@ export async function fetchSchedulingPageData(branchId: string): Promise<Schedul
       .eq('status', 'ACTIVE'),
   ]);
 
-  const academicYearId = activeYearRes.data?.id;
-
-  // Wave 2: Fetch timetable entries once academic year is resolved
+  // Wave 2: Fetch timetable entries scoped to the provided academicYearId
   let entriesData: TimetableEntry[] = [];
   if (academicYearId) {
     const { data } = await supabase
@@ -100,21 +91,13 @@ export async function fetchSchedulingPageData(branchId: string): Promise<Schedul
 
 /**
  * Fetches all timetable page datasets with maximum query parallelization.
- * Collapses an 8-query sequential waterfall into 2 parallel waves:
- * Wave 1 (5 parallel queries): academic year, periods, rooms, teachers, subjects
- * Wave 2 (3 parallel queries): timetable entries, classes, sections (scoped to academic year)
+ * Requires an explicit academicYearId to avoid singleton assumptions.
  */
-export async function fetchTimetablePageData(branchId: string): Promise<TimetablePageData> {
+export async function fetchTimetablePageData(branchId: string, academicYearId: string): Promise<TimetablePageData> {
   const supabase = await createClient();
 
   // Wave 1: Fetch all queries that do NOT depend on academicYearId concurrently
-  const [activeYearRes, periodsRes, roomsRes, teachersRes, subjectsRes] = await Promise.all([
-    supabase
-      .from('academic_years')
-      .select('id')
-      .eq('branch_id', branchId)
-      .eq('status', 'ACTIVE')
-      .maybeSingle(),
+  const [periodsRes, roomsRes, teachersRes, subjectsRes] = await Promise.all([
     supabase
       .from('periods')
       .select('*')
@@ -142,8 +125,6 @@ export async function fetchTimetablePageData(branchId: string): Promise<Timetabl
       .eq('status', 'ACTIVE')
       .order('name'),
   ]);
-
-  const academicYearId = activeYearRes.data?.id;
 
   // Wave 2: Concurrently fetch all datasets that require the resolved academicYearId
   let entriesData: TimetableEntry[] = [];

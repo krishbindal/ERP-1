@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+﻿import { test, expect } from '@playwright/test';
 import { execSync } from 'child_process';
 
 test.describe('Academic Structure Role Tests', () => {
@@ -16,6 +16,7 @@ test.describe('Academic Structure Role Tests', () => {
     await expect(page.locator('button:has-text("Create Academic Year")')).not.toBeVisible();
     
     await page.goto('/academic-structure?tab=classes');
+    await page.locator('#academic-session').selectOption({ index: 1 });
     await expect(page.locator('button:has-text("Create Class")')).not.toBeVisible();
   });
 
@@ -71,6 +72,7 @@ test.describe('Academic Structure Role Tests', () => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/academic-structure?tab=classes');
+    await page.locator('#academic-session').selectOption({ index: 1 });
     await expect(page.locator('table')).toBeVisible();
 
     // Create Class
@@ -124,6 +126,7 @@ test.describe('Academic Structure Role Tests', () => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
     await page.goto('/academic-structure?tab=sections');
+    await page.locator('#academic-session').selectOption({ index: 1 });
     await expect(page.locator('table')).toBeVisible();
 
     // Create Section
@@ -235,3 +238,4 @@ test.describe('Academic Structure Role Tests', () => {
 
   });
 });
+

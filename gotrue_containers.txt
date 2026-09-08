@@ -1,0 +1,10 @@
+d1f7ea3bae3e   public.ecr.aws/supabase/gotrue:v2.195.0       "auth"                    Less than a second ago   Created                                                                                    supabase_auth_ERP_1
+d1f7ea3bae3e   public.ecr.aws/supabase/gotrue:v2.195.0       "auth"                    About a minute ago   Up About a minute (healthy)   9999/tcp                                        supabase_auth_ERP_1
+d1f7ea3bae3e   public.ecr.aws/supabase/gotrue:v2.195.0       "auth"                    About a minute ago   Up About a minute (healthy)   9999/tcp                                        supabase_auth_ERP_1
+d1f7ea3bae3e   public.ecr.aws/supabase/gotrue:v2.195.0       "auth"                    About a minute ago   Up About a minute (healthy)   9999/tcp                                        supabase_auth_ERP_1
+d1f7ea3bae3e   public.ecr.aws/supabase/gotrue:v2.195.0       "auth"                    About a minute ago   Exited (0) 1 second ago                                                       supabase_auth_ERP_1
+4b518d5cff7e   public.ecr.aws/supabase/gotrue:v2.195.0       "gotrue migrate"          1 second ago     Created                                                                   quirky_morse
+1077cb795b95   public.ecr.aws/supabase/gotrue:v2.195.0       "auth"                    Less than a second ago   Created                                                                                    supabase_auth_ERP_1
+1077cb795b95   public.ecr.aws/supabase/gotrue:v2.195.0        "auth"                    2 seconds ago    Up 1 second (health: starting)    9999/tcp                                        supabase_auth_ERP_1
+1077cb795b95   public.ecr.aws/supabase/gotrue:v2.195.0        "auth"                    3 seconds ago            Up 2 seconds (health: starting)   9999/tcp                                        supabase_auth_ERP_1
+1077cb795b95   public.ecr.aws/supabase/gotrue:v2.195.0        "auth"                    4 seconds ago    Up 3 seconds (health: starting)   9999/tcp                                        supabase_auth_ERP_1

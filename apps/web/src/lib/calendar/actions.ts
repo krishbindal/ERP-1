@@ -1,7 +1,6 @@
-"use server";
+﻿"use server";
 
 import { branchAction } from '@/lib/server-actions';
-import { getActiveAcademicYearId } from '@/app/scheduling/lib/scheduling-context';
 import { CalendarEvent, CalendarEventType, resolveInstructionalDay, getInstructionalDaysForRange } from './resolver';
 import { SupabaseClient } from '@supabase/supabase-js';
 
@@ -17,7 +16,7 @@ const ROUTE_CALENDAR = '/academic-structure/calendar';
 
 export async function getCalendarEvents(explicitBranchId?: string, activeOnly = true, explicitAcademicYearId?: string) {
   return branchAction(explicitBranchId, async (ctx) => {
-    const academic_year_id = explicitAcademicYearId || await getActiveAcademicYearId(ctx.supabase, ctx.branchId);
+    const academic_year_id = explicitAcademicYearId; if (!academic_year_id) { throw new Error('academicYearId is required'); }
     let query = ctx.supabase
       .from(TABLE_CALENDAR_EVENTS)
       .select('*')
@@ -166,9 +165,7 @@ async function resolveAcademicYearId(
   branchId: string,
   explicitAcademicYearId?: string
 ): Promise<string> {
-  if (!explicitAcademicYearId) {
-    return getActiveAcademicYearId(supabase, branchId);
-  }
+  if (!explicitAcademicYearId) { throw new Error('academicYearId is required'); }
 
   // Verify the explicit ID belongs to this branch
   const { data, error } = await supabase
@@ -271,4 +268,6 @@ export async function updateOperatingDays(operatingDays: number[], explicitBranc
       .eq(COL_BRANCH_ID, ctx.branchId);
   }, ROUTE_CALENDAR);
 }
+
+
 

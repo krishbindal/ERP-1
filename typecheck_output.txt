@@ -1,0 +1,233 @@
+
+> mobile@1.0.0 typecheck
+> tsc --noEmit
+
+app.config.ts(1,10): error TS2305: Module '"expo/config"' has no exported member 'ExpoConfig'.
+app.config.ts(1,22): error TS2305: Module '"expo/config"' has no exported member 'ConfigContext'.
+app.config.ts(4,17): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app.config.ts(4,60): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app.config.ts(6,20): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app.config.ts(7,19): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app.config.ts(8,19): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app.config.ts(9,26): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+app.config.ts(10,21): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/app/_layout.tsx(1,56): error TS2307: Cannot find module 'expo-router' or its corresponding type declarations.
+src/app/_layout.tsx(2,31): error TS2307: Cannot find module 'expo-splash-screen' or its corresponding type declarations.
+src/app/_layout.tsx(3,32): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/app/_layout.tsx(5,39): error TS6142: Module '@/components/animated-icon' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/animated-icon.tsx', but '--jsx' is not set.
+src/app/_layout.tsx(6,21): error TS6142: Module '@/components/app-tabs' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/app-tabs.tsx', but '--jsx' is not set.
+src/app/_layout.tsx(13,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/_layout.tsx(14,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/_layout.tsx(15,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(1,23): error TS2307: Cannot find module 'expo-image' or its corresponding type declarations.
+src/app/explore.tsx(2,28): error TS2307: Cannot find module 'expo-symbols' or its corresponding type declarations.
+src/app/explore.tsx(3,61): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/app/explore.tsx(4,35): error TS2307: Cannot find module 'react-native-safe-area-context' or its corresponding type declarations.
+src/app/explore.tsx(6,30): error TS6142: Module '@/components/external-link' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/external-link.tsx', but '--jsx' is not set.
+src/app/explore.tsx(7,28): error TS6142: Module '@/components/themed-text' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-text.tsx', but '--jsx' is not set.
+src/app/explore.tsx(8,28): error TS6142: Module '@/components/themed-view' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-view.tsx', but '--jsx' is not set.
+src/app/explore.tsx(9,29): error TS6142: Module '@/components/ui/collapsible' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/ui/collapsible.tsx', but '--jsx' is not set.
+src/app/explore.tsx(10,26): error TS6142: Module '@/components/web-badge' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/web-badge.tsx', but '--jsx' is not set.
+src/app/explore.tsx(36,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(40,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(41,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(42,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(43,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(47,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(48,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(48,34): error TS7031: Binding element 'pressed' implicitly has an 'any' type.
+src/app/explore.tsx(49,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(50,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(51,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(61,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(62,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(63,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(64,41): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(65,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(67,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(68,34): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(71,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(72,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(76,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(77,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(78,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(80,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(83,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(84,25): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/app/explore.tsx(90,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(91,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(92,50): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(93,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(96,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(96,28): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/app/explore.tsx(97,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(98,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(102,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(103,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(105,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(108,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(109,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(113,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(114,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(116,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(117,28): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/explore.tsx(122,35): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(1,25): error TS2307: Cannot find module 'expo-device' or its corresponding type declarations.
+src/app/index.tsx(2,38): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/app/index.tsx(3,30): error TS2307: Cannot find module 'react-native-safe-area-context' or its corresponding type declarations.
+src/app/index.tsx(5,30): error TS6142: Module '@/components/animated-icon' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/animated-icon.tsx', but '--jsx' is not set.
+src/app/index.tsx(6,25): error TS6142: Module '@/components/hint-row' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/hint-row.tsx', but '--jsx' is not set.
+src/app/index.tsx(7,28): error TS6142: Module '@/components/themed-text' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-text.tsx', but '--jsx' is not set.
+src/app/index.tsx(8,28): error TS6142: Module '@/components/themed-view' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-view.tsx', but '--jsx' is not set.
+src/app/index.tsx(9,26): error TS6142: Module '@/components/web-badge' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/web-badge.tsx', but '--jsx' is not set.
+src/app/index.tsx(14,12): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(18,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(19,31): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(25,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(26,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(33,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(34,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(35,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(36,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(37,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(42,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(46,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(47,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(49,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(51,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(52,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(54,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/app/index.tsx(58,35): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(1,23): error TS2307: Cannot find module 'expo-image' or its corresponding type declarations.
+src/components/animated-icon.tsx(2,31): error TS2307: Cannot find module 'expo-splash-screen' or its corresponding type declarations.
+src/components/animated-icon.tsx(3,26): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/components/animated-icon.tsx(4,46): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/animated-icon.tsx(5,44): error TS2307: Cannot find module 'react-native-reanimated' or its corresponding type declarations.
+src/components/animated-icon.tsx(6,30): error TS2307: Cannot find module 'react-native-worklets' or its corresponding type declarations.
+src/components/animated-icon.tsx(36,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(36,53): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/animated-icon.tsx(39,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(40,65): error TS7006: Parameter 'finished' implicitly has an 'any' type.
+src/components/animated-icon.tsx(50,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(100,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(101,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(102,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(102,44): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/animated-icon.tsx(105,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(106,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(107,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.tsx(107,45): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/animated-icon.web.tsx(1,23): error TS2307: Cannot find module 'expo-image' or its corresponding type declarations.
+src/components/animated-icon.web.tsx(2,34): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/animated-icon.web.tsx(3,44): error TS2307: Cannot find module 'react-native-reanimated' or its corresponding type declarations.
+src/components/animated-icon.web.tsx(59,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.web.tsx(60,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.web.tsx(61,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.web.tsx(61,44): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/animated-icon.web.tsx(64,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.web.tsx(65,9): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/components/animated-icon.web.tsx(65,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.web.tsx(68,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.web.tsx(69,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/animated-icon.web.tsx(69,45): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/app-tabs.tsx(1,28): error TS2307: Cannot find module 'expo-router/unstable-native-tabs' or its corresponding type declarations.
+src/components/app-tabs.tsx(2,32): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/app-tabs.tsx(8,18): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ readonly light: { readonly text: "#000000"; readonly background: "#ffffff"; readonly backgroundElement: "#F0F0F3"; readonly backgroundSelected: "#E0E1E6"; readonly textSecondary: "#60646C"; }; readonly dark: { ...; }; }'.
+src/components/app-tabs.tsx(11,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.tsx(15,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.tsx(16,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.tsx(17,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.tsx(18,16): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/app-tabs.tsx(23,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.tsx(24,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.tsx(25,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.tsx(26,16): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/app-tabs.web.tsx(8,8): error TS2307: Cannot find module 'expo-router/ui' or its corresponding type declarations.
+src/components/app-tabs.web.tsx(9,28): error TS2307: Cannot find module 'expo-symbols' or its corresponding type declarations.
+src/components/app-tabs.web.tsx(10,61): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/app-tabs.web.tsx(12,30): error TS6142: Module './external-link' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/external-link.tsx', but '--jsx' is not set.
+src/components/app-tabs.web.tsx(13,28): error TS6142: Module './themed-text' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-text.tsx', but '--jsx' is not set.
+src/components/app-tabs.web.tsx(14,28): error TS6142: Module './themed-view' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-view.tsx', but '--jsx' is not set.
+src/components/app-tabs.web.tsx(20,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(21,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(22,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(23,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(24,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(25,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(27,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(28,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(38,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(38,37): error TS7031: Binding element 'pressed' implicitly has an 'any' type.
+src/components/app-tabs.web.tsx(39,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(42,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(52,18): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ readonly light: { readonly text: "#000000"; readonly background: "#ffffff"; readonly backgroundElement: "#F0F0F3"; readonly backgroundSelected: "#E0E1E6"; readonly textSecondary: "#60646C"; }; readonly dark: { ...; }; }'.
+src/components/app-tabs.web.tsx(55,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(56,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(57,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(63,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(64,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(65,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/app-tabs.web.tsx(66,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/external-link.tsx(1,28): error TS2307: Cannot find module 'expo-router' or its corresponding type declarations.
+src/components/external-link.tsx(2,63): error TS2307: Cannot find module 'expo-web-browser' or its corresponding type declarations.
+src/components/external-link.tsx(3,37): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/components/external-link.tsx(9,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/external-link.tsx(13,23): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/components/external-link.tsx(14,13): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/hint-row.tsx(1,32): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/components/hint-row.tsx(2,34): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/hint-row.tsx(4,28): error TS6142: Module './themed-text' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-text.tsx', but '--jsx' is not set.
+src/components/hint-row.tsx(5,28): error TS6142: Module './themed-view' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-view.tsx', but '--jsx' is not set.
+src/components/hint-row.tsx(16,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/hint-row.tsx(17,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/hint-row.tsx(18,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/hint-row.tsx(19,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/themed-text.tsx(1,60): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/themed-text.tsx(15,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/themed-view.tsx(1,38): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/themed-view.tsx(15,10): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/ui/collapsible.tsx(1,28): error TS2307: Cannot find module 'expo-symbols' or its corresponding type declarations.
+src/components/ui/collapsible.tsx(2,45): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/components/ui/collapsible.tsx(3,39): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/ui/collapsible.tsx(4,34): error TS2307: Cannot find module 'react-native-reanimated' or its corresponding type declarations.
+src/components/ui/collapsible.tsx(6,28): error TS6142: Module '@/components/themed-text' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-text.tsx', but '--jsx' is not set.
+src/components/ui/collapsible.tsx(7,28): error TS6142: Module '@/components/themed-view' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-view.tsx', but '--jsx' is not set.
+src/components/ui/collapsible.tsx(16,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/ui/collapsible.tsx(17,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/ui/collapsible.tsx(18,19): error TS7031: Binding element 'pressed' implicitly has an 'any' type.
+src/components/ui/collapsible.tsx(19,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/components/ui/collapsible.tsx(20,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/ui/collapsible.tsx(21,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/ui/collapsible.tsx(30,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/ui/collapsible.tsx(33,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/ui/collapsible.tsx(34,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/web-badge.tsx(1,25): error TS2307: Cannot find module 'expo/package.json' or its corresponding type declarations.
+src/components/web-badge.tsx(2,23): error TS2307: Cannot find module 'expo-image' or its corresponding type declarations.
+src/components/web-badge.tsx(3,44): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/components/web-badge.tsx(5,28): error TS6142: Module './themed-text' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-text.tsx', but '--jsx' is not set.
+src/components/web-badge.tsx(6,28): error TS6142: Module './themed-view' was resolved to '/mnt/c/Users/krish/Desktop/ERP 1/apps/mobile/src/components/themed-view.tsx', but '--jsx' is not set.
+src/components/web-badge.tsx(14,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/web-badge.tsx(15,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/web-badge.tsx(18,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/web-badge.tsx(21,15): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/components/web-badge.tsx(22,15): error TS2591: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/constants/theme.ts(8,26): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/hooks/use-color-scheme.ts(1,32): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/hooks/use-color-scheme.web.ts(1,37): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/hooks/use-color-scheme.web.ts(2,52): error TS2307: Cannot find module 'react-native' or its corresponding type declarations.
+src/hooks/use-theme.ts(13,10): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ readonly light: { readonly text: "#000000"; readonly background: "#ffffff"; readonly backgroundElement: "#F0F0F3"; readonly backgroundSelected: "#E0E1E6"; readonly textSecondary: "#60646C"; }; readonly dark: { ...; }; }'.
+tsconfig.json(2,14): error TS6053: File 'expo/tsconfig.base' not found.
+../../node_modules/expo/config/index.d.ts(1,15): error TS2307: Cannot find module '@expo/config' or its corresponding type declarations.
+npm ERR! Lifecycle script `typecheck` failed with error: 
+npm ERR! Error: command failed 
+npm ERR!   in workspace: mobile@1.0.0 
+npm ERR!   at location: /mnt/c/Users/krish/Desktop/ERP 1/apps/mobile 
+
+> web@0.1.0 typecheck
+> tsc --noEmit
+
+sh: 1: tsc: not found
+npm ERR! Lifecycle script `typecheck` failed with error: 
+npm ERR! Error: command failed 
+npm ERR!   in workspace: web@0.1.0 
+npm ERR!   at location: /mnt/c/Users/krish/Desktop/ERP 1/apps/web 
