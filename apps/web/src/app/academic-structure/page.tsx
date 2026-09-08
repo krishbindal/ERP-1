@@ -1,4 +1,4 @@
-﻿import { AcademicYearsTable } from './components/AcademicYearsTable';
+import { AcademicYearsTable } from './components/AcademicYearsTable';
 import { ClassesTable } from './components/ClassesTable';
 import { SectionsTable } from './components/SectionsTable';
 import { createClient } from '@/lib/supabase/server';
@@ -12,7 +12,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   const searchParams = await props.searchParams;
   const tab = (searchParams.tab || 'years') as 'years' | 'classes' | 'sections';
   const explicitBranchId = searchParams.branchId;
-  const sessionId = searchParams.session;
+  let sessionId = searchParams.session;
 
   const supabase = await createClient();
   
@@ -26,14 +26,13 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
     return <BranchAccessError errorState="ACCESS_DENIED" feature="academic structure" />;
   }
 
-  // Fetch all years for the selector
-  const { data: allYears } = await supabase
-    .from('academic_years')
-    .select('*')
-    .eq('branch_id', branchId)
-    .order('start_date', { ascending: false });
+  const { data: years, error: yrErr } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
+  if (yrErr) throw new Error(yrErr.message);
 
-  const years: AcademicYear[] = (allYears as AcademicYear[]) || [];
+  if (!sessionId && years && years.length > 0) {
+    sessionId = years[0].id;
+  }
+
   let classes: ClassWithYear[] = [];
   let sections: SectionWithClass[] = [];
 

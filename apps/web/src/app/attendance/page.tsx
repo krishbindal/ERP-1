@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
@@ -62,7 +62,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     // 3a. Fetch Enrollments
     const { data: enrollments, error: enrErr } = await supabase
       .from('enrollments')
-      .select('roll_number, students!inner(id, first_name, last_name)')
+      .select('roll_number, students!enrollments_student_id_fkey!inner(id, first_name, last_name)')
       .eq('section_id', sectionId)
       .eq('academic_year_id', sessionId)
       .eq('status', 'ACTIVE')

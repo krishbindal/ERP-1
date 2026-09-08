@@ -80,14 +80,28 @@ export class StudentsService {
       .select('students!enrollments_student_id_fkey!inner(*)')
       .eq('branch_id', branchId)
       .eq('academic_year_id', academicYearId)
-      .eq('status', 'ACTIVE')
-      .order('students(last_name)', { ascending: true });
-      
-    if (error) return { error };
-    
+      .eq('status', 'ACTIVE');
+
+    if (error) {
+      console.error('StudentsService.listStudents Error:', error);
+      return { data: [], error };
+    }
+
     // Flatten the enrollments->students structure
-    const studentsData = data.map((e: { students: unknown }) => e.students) as Student[];
-    return { data: studentsData };
+    const studentsData = data
+      .map(enrollment => {
+        // Since we used !inner, students will be present, but due to types it might be array or single object.
+        const student = Array.isArray(enrollment.students) ? enrollment.students[0] : enrollment.students;
+        return student;
+      })
+      .filter(student => student != null)
+      .sort((a, b) => {
+        const nameA = (a.last_name || '').toLowerCase();
+        const nameB = (b.last_name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+    return { data: studentsData, error: undefined };
   }
 
   /**

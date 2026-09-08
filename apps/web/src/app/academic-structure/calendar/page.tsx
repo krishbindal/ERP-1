@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
 import { AcademicStructureNav } from '../components/AcademicStructureNav';
@@ -10,7 +10,7 @@ import { AcademicSessionSelector } from '@/components/AcademicSessionSelector';
 export default async function CalendarPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
-  const sessionId = searchParams.session;
+  let sessionId = searchParams.session;
 
   const supabase = await createClient();
   
@@ -30,6 +30,10 @@ export default async function CalendarPage(props: { searchParams: Promise<{ bran
     .select('*')
     .eq('branch_id', branchId)
     .order('start_date', { ascending: false });
+
+  if (!sessionId && years && years.length > 0) {
+    sessionId = years[0].id;
+  }
 
   let yearData = null;
   let events: { id: string; name: string; type: string; start_date: string; end_date: string; is_instructional?: boolean; status?: string }[] = [];

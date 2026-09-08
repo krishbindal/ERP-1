@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '../components/BranchAccessError';
@@ -15,7 +15,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
   const view = searchParams.view || 'section';
   
   const selectedDate = searchParams.date || ''; // Default to empty to prevent SSR timezone skew
-  const sessionId = searchParams.session || '';
+  let sessionId = searchParams.session || '';
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
@@ -29,6 +29,10 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
     .order('start_date', { ascending: false });
 
   if (yrErr) throw new Error(yrErr.message);
+
+  if (!sessionId && years && years.length > 0) {
+    sessionId = years[0].id;
+  }
 
   let entriesData: import('../timetable/components/TimetableGrid').TimetableEntry[] = [];
   let periods: { id: string; name?: string; start_time?: string; end_time?: string; bell_schedule_id?: string; status?: string }[] = [];
