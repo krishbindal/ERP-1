@@ -1,7 +1,6 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { StudentsService } from '@/services/students.service';
-import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
@@ -71,13 +70,6 @@ export default async function NewStudentPage(props: {
       if ('error' in result) {
         errorToReport = result.error.message || 'Failed to enroll student';
       } else {
-        const supabase = await createClient();
-        const { data: profile } = await supabase
-          .from('student_branch_profiles')
-          .select('id')
-          .eq('student_id', result.id)
-          .single();
-
         // No auto-enrollment
 
         redirect(`/students/${result.id}`);
@@ -176,6 +168,8 @@ export default async function NewStudentPage(props: {
     </div>
   );
 }
+
+
 
 
 

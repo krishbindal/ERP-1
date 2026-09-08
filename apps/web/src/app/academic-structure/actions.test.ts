@@ -7,22 +7,22 @@ vi.mock('@/lib/server-actions', () => ({
     try {
       const result = await action({
         branchId: 'test-branch-id',
-        supabase: (globalThis as any).mockSupabase,
+                supabase: (globalThis as unknown as { mockSupabase: unknown }).mockSupabase,
       });
       return { success: !result.error, data: result.data, error: result.error?.message };
-    } catch (e: any) {
-      return { success: false, error: e.message };
+    } catch (e) {
+      return { success: false, error: (e as Error).message };
     }
   })
 }));
 
 describe('academic-structure actions', () => {
-  let mockSingle: any;
-  let mockEq1: any;
-  let mockEq2: any;
-  let mockSelect: any;
-  let mockFrom: any;
-  let mockInsert: any;
+  let mockSingle: ReturnType<typeof vi.fn>;
+  let mockEq1: ReturnType<typeof vi.fn>;
+  let mockEq2: ReturnType<typeof vi.fn>;
+  let mockSelect: ReturnType<typeof vi.fn>;
+  let mockFrom: ReturnType<typeof vi.fn>;
+  let mockInsert: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     mockSingle = vi.fn();
@@ -34,7 +34,7 @@ describe('academic-structure actions', () => {
       if (table === 'classes') return { select: mockSelect };
       if (table === 'sections') return { insert: mockInsert };
     });
-    (globalThis as any).mockSupabase = { from: mockFrom };
+    (globalThis as unknown as { mockSupabase: unknown }).mockSupabase = { from: mockFrom };
   });
 
   describe('createSection', () => {
@@ -69,3 +69,19 @@ describe('academic-structure actions', () => {
     });
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,6 +1,6 @@
-﻿import React, { act } from 'react';
+import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach} from 'vitest';
 import { Toaster, toast, clearToasts } from './Toast';
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -33,3 +33,5 @@ describe('Toaster', () => {
     expect(bodyContent).toContain('This is a success message!');
   });
 });
+
+

@@ -33,7 +33,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
     .eq('branch_id', branchId)
     .order('start_date', { ascending: false });
 
-  let years: AcademicYear[] = (allYears as AcademicYear[]) || [];
+  const years: AcademicYear[] = (allYears as AcademicYear[]) || [];
   let classes: ClassWithYear[] = [];
   let sections: SectionWithClass[] = [];
 
@@ -79,3 +79,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
     </div>
   );
 }
+
+
+
+

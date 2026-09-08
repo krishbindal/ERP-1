@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
@@ -58,14 +58,14 @@ export function BellSchedulesTable({ data, isReadOnly, explicitBranchId }: BellS
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<BellSchedule, SortField>(
     data,
-    (schedule: any, query: string) => {
+    (schedule: BellSchedule, query: string) => {
       const nameMatch = schedule.name?.toLowerCase().includes(query);
       const statusMatch = schedule.status?.toLowerCase().includes(query);
       return nameMatch || statusMatch;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: BellSchedule, b: BellSchedule, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -366,3 +366,6 @@ export function BellSchedulesTable({ data, isReadOnly, explicitBranchId }: BellS
 
 // Alias export for backward compatibility
 export const BellSchedulesList = BellSchedulesTable;
+
+
+

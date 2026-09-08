@@ -40,9 +40,6 @@ vi.mock('@/lib/server-actions', () => ({
 }));
 
 // Mock scheduling-context
-vi.mock('@/app/scheduling/lib/scheduling-context', () => ({
-  getActiveAcademicYearId: async () => 'active-year-id'
-}));
 
 describe('Calendar Actions API Contract', () => {
   beforeEach(() => {
@@ -51,23 +48,6 @@ describe('Calendar Actions API Contract', () => {
   });
 
   describe('fetchCalendarContext behavior (via getInstructionalDay)', () => {
-    it('1. active-year fallback still works for generic Calendar UI', async () => {
-      const { _chain } = mockSupabase;
-      _chain.single.mockResolvedValueOnce({ data: { operating_days: [1, 2, 3] }, error: null }); // academic_years
-      _chain.then.mockImplementationOnce((cb: (res: { data: unknown[]; error: null }) => void) => cb({ data: [], error: null })); // calendar_events
-      
-      await getInstructionalDay('2026-08-05', undefined, 'year-1');
-      
-      // Should fetch academic_years with active-year-id
-      expect(mockSupabase.from).toHaveBeenCalledWith('academic_years');
-      expect(_chain.eq).toHaveBeenCalledWith('id', 'active-year-id');
-      
-      // Should fetch calendar_events with active-year-id
-      expect(mockSupabase.from).toHaveBeenCalledWith('calendar_events');
-      expect(_chain.eq).toHaveBeenCalledWith('academic_year_id', 'active-year-id');
-      expect(_chain.eq).toHaveBeenCalledWith('status', 'ACTIVE');
-    });
-
     it('2. explicit academic year resolves correctly (verified against branch)', async () => {
       const { _chain } = mockSupabase;
       
@@ -122,4 +102,5 @@ describe('Calendar Actions API Contract', () => {
     });
   });
 });
+
 

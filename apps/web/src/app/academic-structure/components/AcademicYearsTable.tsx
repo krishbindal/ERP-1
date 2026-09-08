@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
@@ -58,16 +58,16 @@ export function AcademicYearsTable({ data, isReadOnly, explicitBranchId }: Acade
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<AcademicYear, SortField>(
     data,
-    (year: any, query: string) => {
+    (year: AcademicYear, query: string) => {
       const nameMatch = year.name?.toLowerCase().includes(query);
       const startMatch = year.start_date?.toLowerCase().includes(query);
       const endMatch = year.end_date?.toLowerCase().includes(query);
       const statusMatch = year.status?.toLowerCase().includes(query);
       return nameMatch || startMatch || endMatch || statusMatch;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: AcademicYear, b: AcademicYear, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -394,4 +394,6 @@ export function AcademicYearsTable({ data, isReadOnly, explicitBranchId }: Acade
 
 // Alias export for backward compatibility
 export const AcademicYearsList = AcademicYearsTable;
+
+
 

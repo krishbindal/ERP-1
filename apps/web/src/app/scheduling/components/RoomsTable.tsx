@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
@@ -58,15 +58,15 @@ export function RoomsTable({ data, isReadOnly, explicitBranchId }: RoomsTablePro
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<Room, SortField>(
     data,
-    (room: any, query: string) => {
+    (room: Room, query: string) => {
       const nameMatch = room.name?.toLowerCase().includes(query);
       const capacityMatch = room.capacity?.toString().includes(query);
       const statusMatch = room.status?.toLowerCase().includes(query);
       return nameMatch || capacityMatch || statusMatch;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: Room, b: Room, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -380,3 +380,6 @@ export function RoomsTable({ data, isReadOnly, explicitBranchId }: RoomsTablePro
 
 // Alias export for backward compatibility
 export const RoomsList = RoomsTable;
+
+
+

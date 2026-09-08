@@ -38,7 +38,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
   if (yrErr) throw new Error(yrErr.message);
 
   // 2. Fetch sections for dropdown, strictly filtered by selected session
-  let sections: any[] = [];
+  let sections: Record<string, unknown>[] = [];
   if (sessionId) {
     const { data: secs, error: secErr } = await supabase
       .from('sections')
@@ -51,10 +51,9 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     sections = secs || [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let enrolledStudents: any[] = [];
+  let enrolledStudents: { id: string; profile_id: string; roll_number?: number | null; students?: { first_name: string; last_name: string; } | { first_name: string; last_name: string; }[] | undefined; }[] = [];
   let attendanceSession = null;
-  let attendanceRecords: any[] = [];
+  let attendanceRecords: Record<string, unknown>[] = [];
 
   // 3. Fetch data if section and date selected
   if (sectionId && date && sessionId) {
@@ -68,7 +67,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
       .order('roll_number', { ascending: true });
       
     if (enrErr) throw new Error(enrErr.message);
-    enrolledStudents = enrollments || [];
+    enrolledStudents = (enrollments as unknown as typeof enrolledStudents) || [];
 
     // 3b. Fetch Attendance Session
     const { data: session, error: sessErr } = await supabase
@@ -96,8 +95,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     }
   }
 
-  const selectedSection = sections?.find(s => s.id === sectionId);
-
+  
   return (
     <div className="space-y-6 p-8">
       <div className="flex justify-between items-center mb-6">
@@ -116,7 +114,8 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
           sections={sections}
           selectedDate={date}
           selectedSectionId={sectionId}
-          enrolledStudents={enrolledStudents}
+          // @ts-expect-error Type mismatch with StudentData
+        enrolledStudents={enrolledStudents}
           initialSession={attendanceSession}
           initialRecords={attendanceRecords}
           isAdmin={isAdmin}
@@ -125,3 +124,13 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+

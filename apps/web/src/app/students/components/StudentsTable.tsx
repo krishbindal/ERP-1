@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import Link from 'next/link';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, User } from 'lucide-react';
@@ -49,9 +49,9 @@ export function StudentsTable({ students }: StudentsTableProps) {
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<StudentItem, SortField>(
     students,
-    (student: any, query: string) => {
+    (student: StudentItem, query: string) => {
       const fullName = `${student.first_name} ${student.last_name}`.toLowerCase();
       const matchesSearch =
         !query.trim() ||
@@ -64,7 +64,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
 
       return matchesSearch && matchesStatus;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: StudentItem, b: StudentItem, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         const nameA = `${a.last_name}, ${a.first_name}`.toLowerCase();
@@ -290,5 +290,9 @@ export function StudentsTable({ students }: StudentsTableProps) {
     </div>
   );
 }
+
+
+
+
 
 

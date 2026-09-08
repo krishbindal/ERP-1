@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo, useTransition } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
@@ -40,9 +40,9 @@ export function CalendarEventsTable({
 }: CalendarEventsTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [eventToArchive, setEventToArchive] = useState<any | null>(null);
+  const [eventToArchive, setEventToArchive] = useState<CalendarEvent | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [resetFiltersConfirmOpen, setResetFiltersConfirmOpen] = useState(false);
 
@@ -60,9 +60,9 @@ export function CalendarEventsTable({
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<CalendarEvent, SortField>(
     events,
-    (event: any, query: string) => {
+    (event: CalendarEvent, query: string) => {
       const nameMatch = event.name.toLowerCase().includes(query);
       const typeMatch = event.type.toLowerCase().includes(query);
       const dateMatch =
@@ -70,7 +70,7 @@ export function CalendarEventsTable({
         event.end_date.toLowerCase().includes(query);
       return nameMatch || typeMatch || dateMatch;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: CalendarEvent, b: CalendarEvent, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = a.name.localeCompare(b.name);
@@ -415,5 +415,7 @@ export function CalendarEventsTable({
     </div>
   );
 }
+
+
 
 

@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';

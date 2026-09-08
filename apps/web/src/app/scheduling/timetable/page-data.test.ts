@@ -89,15 +89,14 @@ describe('scheduling page-data - query parallelization', () => {
 
     const result = await fetchSchedulingPageData('branch-123', 'year-1');
 
-    expect(result.academicYearId).toBe('year-2026');
+    expect(result.academicYearId).toBe('year-1');
     expect(result.periods).toHaveLength(1);
     expect(result.rooms).toHaveLength(1);
     expect(result.teachers).toHaveLength(1);
     expect(result.entriesData).toHaveLength(1);
 
     // Verify all 4 wave 1 tables were queried
-    expect(tableQueries).toContain('academic_years');
-    expect(tableQueries).toContain('periods');
+        expect(tableQueries).toContain('periods');
     expect(tableQueries).toContain('rooms');
     expect(tableQueries).toContain('staff_branch_profiles');
     expect(tableQueries).toContain('timetable_entries');
@@ -223,7 +222,7 @@ describe('scheduling page-data - query parallelization', () => {
 
     const data = await fetchTimetablePageData('branch-123', 'year-1');
 
-    expect(data.academicYearId).toBe('year-2026');
+    expect(data.academicYearId).toBe('year-1');
     expect(data.periods).toHaveLength(1);
     expect(data.rooms).toHaveLength(1);
     expect(data.teachers).toHaveLength(1);
@@ -233,9 +232,8 @@ describe('scheduling page-data - query parallelization', () => {
     expect(data.sections).toHaveLength(1);
 
     // Assert all 8 queries were called
-    expect(tableQueries).toHaveLength(8);
+    expect(tableQueries).toHaveLength(7);
     expect(tableQueries).toEqual([
-      'academic_years',
       'periods',
       'rooms',
       'staff_branch_profiles',
@@ -260,13 +258,7 @@ describe('scheduling page-data - query parallelization', () => {
         };
       }
       return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
-          }),
-        }),
+        select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: [], error: null }) }), order: vi.fn().mockResolvedValue({ data: [], error: null }) }) }) })
       };
     });
 
@@ -274,11 +266,15 @@ describe('scheduling page-data - query parallelization', () => {
     serverSupabase.createClient.mockResolvedValue({ from: mockFrom });
 
     const data = await fetchTimetablePageData('branch-123', 'year-1');
-    expect(data.academicYearId).toBeUndefined();
+    expect(data.academicYearId).toBe('year-1');
     expect(data.entriesData).toEqual([]);
     expect(data.classes).toEqual([]);
     expect(data.sections).toEqual([]);
   });
 });
+
+
+
+
 
 

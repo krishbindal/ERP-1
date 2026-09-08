@@ -86,7 +86,7 @@ export class StudentsService {
     if (error) return { error };
     
     // Flatten the enrollments->students structure
-    const studentsData = data.map((e: any) => e.students) as Student[];
+    const studentsData = data.map((e: { students: unknown }) => e.students) as Student[];
     return { data: studentsData };
   }
 
@@ -134,3 +134,4 @@ export class StudentsService {
     return {}
   }
 }
+

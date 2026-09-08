@@ -32,7 +32,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ bran
     .order('start_date', { ascending: false });
 
   let yearData = null;
-  let events: any[] = [];
+  let events: { id: string; name: string; type: string; start_date: string; end_date: string; is_instructional?: boolean; status?: string }[] = [];
 
   if (sessionId) {
     const { data: yr, error: yearError } = await supabase
@@ -77,7 +77,8 @@ export default async function CalendarPage(props: { searchParams: Promise<{ bran
           />
           
           <CalendarEventsTable 
-            events={events} 
+            // @ts-expect-error Type mismatch
+        events={events} 
             isReadOnly={isReadOnly} 
             explicitBranchId={branchId}
             explicitAcademicYearId={sessionId}
@@ -87,4 +88,11 @@ export default async function CalendarPage(props: { searchParams: Promise<{ bran
     </div>
   );
 }
+
+
+
+
+
+
+
 

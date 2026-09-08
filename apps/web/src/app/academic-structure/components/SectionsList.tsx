@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
 import {
@@ -55,15 +55,15 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<SectionWithClass, SortField>(
     data,
-    (sec: any, query: string) => {
+    (sec: SectionWithClass, query: string) => {
       const nameMatch = sec.name?.toLowerCase().includes(query);
       const classMatch = sec.classes?.name?.toLowerCase().includes(query);
       const capacityMatch = sec.capacity?.toString().includes(query);
       return nameMatch || classMatch || capacityMatch;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: SectionWithClass, b: SectionWithClass, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -374,3 +374,6 @@ export function SectionsList({ data, isReadOnly, explicitBranchId }: SectionsLis
 
 // Alias export for backward compatibility
 export const SectionsTable = SectionsList;
+
+
+

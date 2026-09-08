@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/components/ui', async (importOriginal) => {
-  const actual = await importOriginal<any>();
+  const actual = await importOriginal<Record<string, unknown>>();
   return {
     ...actual,
     toast: { error: vi.fn(), success: vi.fn() }
@@ -40,7 +40,7 @@ describe('CommunicationForm', () => {
   it('BRANCH type does not require target_id', async () => {
     const createAction = vi.fn().mockResolvedValue({ success: true });
     act(() => {
-      root.render(<CommunicationForm targets={mockTargets} createAction={createAction as any} />);
+      root.render(<CommunicationForm targets={mockTargets} createAction={createAction as never} />);
     });
     
     const form = document.querySelector('form');
@@ -55,7 +55,7 @@ describe('CommunicationForm', () => {
     // If validation fails (or if mock returns the validation error), it should render the required state
     const createAction = vi.fn().mockResolvedValue({ error: 'Please select a specific class or section.' });
     act(() => {
-      root.render(<CommunicationForm targets={mockTargets} createAction={createAction as any} />);
+      root.render(<CommunicationForm targets={mockTargets} createAction={createAction as never} />);
     });
     
     const form = document.querySelector('form');
@@ -66,3 +66,4 @@ describe('CommunicationForm', () => {
     expect(document.body.innerHTML).toContain('Please select a specific class or section.');
   });
 });
+

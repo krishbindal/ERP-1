@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
 import {
@@ -55,15 +55,15 @@ export function ClassesList({ data, isReadOnly, explicitBranchId }: ClassesListP
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<ClassWithYear, SortField>(
     data,
-    (cls: any, query: string) => {
+    (cls: ClassWithYear, query: string) => {
       const nameMatch = cls.name?.toLowerCase().includes(query);
       const yearMatch = cls.academic_years?.name?.toLowerCase().includes(query);
       const levelMatch = cls.level?.toString().includes(query);
       return nameMatch || yearMatch || levelMatch;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: ClassWithYear, b: ClassWithYear, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -374,3 +374,6 @@ export function ClassesList({ data, isReadOnly, explicitBranchId }: ClassesListP
 
 // Alias export for backward compatibility
 export const ClassesTable = ClassesList;
+
+
+

@@ -36,7 +36,7 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
 
   if (yrErr) throw new Error(yrErr.message);
 
-  let assignments: any[] = [];
+  let assignments: { id: string; title: string; due_date: string; status: string; sections?: { name: string } | { name: string }[] | undefined; subjects?: { name: string } | { name: string }[] | undefined; }[] = [];
   
   if (sessionId) {
     const { data: fetchedAssignments, error: assignErr } = await supabase
@@ -71,3 +71,7 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
     </div>
   );
 }
+
+
+
+

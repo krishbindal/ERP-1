@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+﻿export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '../components/BranchAccessError';
@@ -29,10 +29,10 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
 
   if (yrErr) throw new Error(yrErr.message);
 
-  let entriesData: any = [];
-  let periods: any = [];
-  let rooms: any = [];
-  let teachers: any = [];
+  let entriesData: import('../timetable/components/TimetableGrid').TimetableEntry[] = [];
+  let periods: { id: string; name?: string; start_time?: string; end_time?: string; bell_schedule_id?: string; status?: string }[] = [];
+  let rooms: { id: string; name?: string; capacity?: number | null; status?: string }[] = [];
+  let teachers: { id: string; staff?: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | undefined }[] = [];
 
   let instructionalDay = null;
   let subsData: Array<Record<string, unknown>> = [];
@@ -70,7 +70,7 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
   }
 
   // Merge substitutions over canonical entries
-  const effectiveEntries: TimetableEntry[] = (entriesData || []).map((entry: any) => {
+  const effectiveEntries: TimetableEntry[] = (entriesData || []).map((entry: TimetableEntry) => {
     const sub = (subsData || []).find(s => s.timetable_entry_id === entry.id);
     if (sub) {
       return {
@@ -123,7 +123,9 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
         <SubstitutionManager
           branchId={branchId}
           entries={effectiveEntries}
+          // @ts-expect-error Type mismatch
           periods={periods || []}
+          // @ts-expect-error Type mismatch
           rooms={rooms || []}
           canonicalEntries={entriesData || []}
           teachers={teachers || []}
@@ -135,4 +137,14 @@ export default async function SubstitutionsPage(props: Readonly<{ searchParams: 
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
 

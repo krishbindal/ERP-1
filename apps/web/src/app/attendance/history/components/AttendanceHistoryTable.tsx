@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
 import {
@@ -54,9 +54,9 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<AttendanceHistoryRecord, SortField>(
     records,
-    (r: any, query: string) => {
+    (r: AttendanceHistoryRecord, query: string) => {
       const studentName = `${r.students.first_name} ${r.students.last_name}`.toLowerCase();
       const dateStr = r.attendance_sessions.date.toLowerCase();
       const notesStr = (r.notes || '').toLowerCase();
@@ -72,7 +72,7 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
 
       return matchesSearch && matchesStatus;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: AttendanceHistoryRecord, b: AttendanceHistoryRecord, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'date') {
         comparison = a.attendance_sessions.date.localeCompare(b.attendance_sessions.date);
@@ -284,4 +284,5 @@ export function AttendanceHistoryTable({ records }: AttendanceHistoryTableProps)
     </div>
   );
 }
+
 

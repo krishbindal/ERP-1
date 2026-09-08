@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useDataTable } from '@/hooks/useDataTable';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowUpDown, ArrowUp, ArrowDown, Plus, RotateCcw } from 'lucide-react';
@@ -59,9 +59,9 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
     startIndex,
     pageSize,
     sortedData: sortedItems
-  } = useDataTable<any, SortField>(
+  } = useDataTable<Period, SortField>(
     data,
-    (period: any, query: string) => {
+    (period: Period, query: string) => {
       const nameMatch = period.name?.toLowerCase().includes(query);
       const scheduleMatch = period.bell_schedules?.name?.toLowerCase().includes(query);
       const startMatch = period.start_time?.toLowerCase().includes(query);
@@ -69,7 +69,7 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
       const statusMatch = period.status?.toLowerCase().includes(query);
       return nameMatch || scheduleMatch || startMatch || endMatch || statusMatch;
     },
-    (a: any, b: any, sortField: any, sortOrder: any) => {
+    (a: Period, b: Period, sortField: SortField, sortOrder: string) => {
       let comparison = 0;
       if (sortField === 'name') {
         comparison = (a.name || '').localeCompare(b.name || '');
@@ -412,3 +412,6 @@ export function PeriodsTable({ data, schedules, isReadOnly, explicitBranchId }: 
 
 // Alias export for backward compatibility
 export const PeriodsList = PeriodsTable;
+
+
+

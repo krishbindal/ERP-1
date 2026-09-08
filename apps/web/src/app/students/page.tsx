@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { StudentsService } from '@/services/students.service';
 import Link from 'next/link';
 import { verifyPageBranchContext } from '@/lib/branch-context';
@@ -32,7 +32,7 @@ export default async function StudentsPage(props: { searchParams: Promise<{ bran
     return <div className="p-4 text-red-500">Error loading academic sessions: {yearsError.message}</div>;
   }
 
-  let students: any[] = [];
+  let students: import('./components/StudentsTable').StudentItem[] = [];
   if (sessionId) {
     const { data, error } = await StudentsService.listStudents(branchId, sessionId);
     if (error) {
@@ -70,4 +70,5 @@ export default async function StudentsPage(props: { searchParams: Promise<{ bran
     </div>
   );
 }
+
 
