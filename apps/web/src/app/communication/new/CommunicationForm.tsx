@@ -101,7 +101,7 @@ export function CommunicationForm({
             label={`Select ${selectedType.toLowerCase()}`}
             required
             placeholder="Select..."
-            error={error && !availableTargets.some(t => t.target_id) ? 'Selection required' : undefined}
+            error={error === 'Please select a specific class or section.' ? 'Selection required' : undefined}
             aria-describedby={error ? errorId : undefined}
             options={availableTargets.map((t) => ({
               value: t.target_id,

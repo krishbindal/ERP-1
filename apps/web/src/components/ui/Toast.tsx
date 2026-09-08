@@ -40,7 +40,7 @@ function getServerSnapshot(): ToastItem[] {
 }
 
 function addToast(message: string, type: ToastType = 'info', duration = 5000): string {
-  const id = Math.random().toString(36).substring(2, 9);
+  const id = crypto.randomUUID();
   const newToast: ToastItem = { id, message, type, duration };
   toasts = [...toasts, newToast];
   notifyListeners();
@@ -56,6 +56,11 @@ function addToast(message: string, type: ToastType = 'info', duration = 5000): s
 
 function dismissToast(id: string) {
   toasts = toasts.filter((t) => t.id !== id);
+  notifyListeners();
+}
+
+export function clearToasts() {
+  toasts = [];
   notifyListeners();
 }
 
