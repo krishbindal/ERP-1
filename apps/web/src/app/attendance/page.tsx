@@ -37,6 +37,8 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
 
   if (yrErr) throw new Error(yrErr.message);
 
+  if (!sessionId && years && years.length > 0) { sessionId = years[0].id; }
+
   // 2. Fetch sections for dropdown, strictly filtered by selected session
   let sections: Record<string, unknown>[] = [];
   if (sessionId) {
@@ -124,6 +126,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     </div>
   );
 }
+
 
 
 

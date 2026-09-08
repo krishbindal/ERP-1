@@ -36,6 +36,8 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
 
   if (yrErr) throw new Error(yrErr.message);
 
+  if (!sessionId && years && years.length > 0) { sessionId = years[0].id; }
+
   
   let assignments: { id: string; title: string; due_date: string; status: string; sections?: { name: string } | { name: string }[] | undefined; subjects?: { name: string } | { name: string }[] | undefined; }[] = [];
   
@@ -72,6 +74,7 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
     </div>
   );
 }
+
 
 
 
