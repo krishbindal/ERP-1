@@ -24,10 +24,10 @@ test.describe('Homework E2E - Phase 5', () => {
       
       // Select the first valid section and subject
       const sectionSelect = page.locator('select[name="sectionId"]');
-      await sectionSelect.selectOption({ value: 'aaaaaaaa-1111-1111-1111-111111111111' });
+      await sectionSelect.selectOption({ value: 'aaaaaaaa-3333-3333-3333-333333333333' });
 
       const subjectSelect = page.locator('select[name="subjectId"]');
-      await subjectSelect.selectOption({ value: 'aaaaaaaa-1111-1111-1111-111111111111' });
+      await subjectSelect.selectOption({ value: 'aaaaaaaa-4444-4444-4444-444444444444' });
 
       // Dates
       const issueDate = new Date();

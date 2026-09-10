@@ -21,8 +21,9 @@ export type Guardian = {
 
 export class StudentsService {
   /**
-   * Atomics creation of a student and initial enrollment
-   * Calls the security invoker RPC function to respect RLS natively
+   * Atomic creation of a student identity and branch profile.
+   * Note: Academic enrollment is handled separately.
+   * Calls the security definer RPC function to respect branch permissions.
    */
   static async createStudentWithPlacement(
     organizationId: string,
@@ -55,7 +56,7 @@ export class StudentsService {
   }
 
   /**
-   * Fetch a single student. RLS will ensure we only see them if they have an active enrollment in a branch we can access.
+   * Fetch a single student. RLS will ensure we only see them if they have a branch profile in a branch we can access.
    */
   static async getStudent(id: string): Promise<{ data?: Student, error?: Error }> {
     const supabase = await createClient();

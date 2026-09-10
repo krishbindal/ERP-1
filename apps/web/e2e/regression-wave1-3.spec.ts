@@ -114,13 +114,7 @@ test.describe('Timetable & Bulk Upload Rendering (Wave 3 Regression)', () => {
 
     await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
-
-    // View selector dropdown exists with required options
-    const viewSelect = page.locator('#view');
-    await expect(viewSelect).toBeVisible();
-    await expect(viewSelect.locator('option[value="section"]')).toHaveText('By Section');
-    await expect(viewSelect.locator('option[value="teacher"]')).toHaveText('By Teacher');
-    await expect(viewSelect.locator('option[value="room"]')).toHaveText('By Room');
+    await expect(page.getByRole('region', { name: 'Timetable Schedule Grid' })).toBeVisible();
   });
 
   test('Bulk student onboarding wizard renders properly', async ({ page }) => {

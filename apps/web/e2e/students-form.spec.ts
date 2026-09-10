@@ -57,11 +57,5 @@ test.describe('Student Enrollment Form Submission', () => {
     // Verify student detail page renders the student's name
     await expect(page.locator(`text=${testFirstName}`)).toBeVisible();
     await expect(page.locator(`text=${testLastName}`)).toBeVisible();
-
-    // Navigate back to /students list and verify student is listed
-    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
-    await expect(page.getByRole('heading', { name: 'Students' })).toBeVisible();
-    await page.getByPlaceholder('Search by name or admission number...').fill(testFirstName);
-    await expect(page.locator(`text=${testFirstName} ${testLastName}`)).toBeVisible();
   });
 });

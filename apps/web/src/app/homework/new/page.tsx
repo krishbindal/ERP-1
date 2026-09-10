@@ -54,9 +54,9 @@ export default async function NewHomeworkPage(props: { searchParams: Promise<{ b
 
     if (profile) {
       const { data: assignments } = await supabase
-        .from('timetable_entries')
+        .from('teacher_subject_assignments')
         .select('section_id, subject_id, sections!inner(id, name, class_id), subjects!inner(id, name)')
-        .eq('teacher_id', profile.id)
+        .eq('staff_branch_profile_id', profile.id)
         .eq('branch_id', branchId)
         .eq('academic_year_id', sessionId)
         .eq('status', 'ACTIVE');
