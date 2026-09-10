@@ -25,7 +25,7 @@ test.describe('Calendar UI', () => {
     const meta = test.info().project.metadata as { role?: string };
     if (meta?.role !== 'teacher') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
 
-    await page.goto('/academic-structure/calendar');
+    await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Academic Structure' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Operating Days' })).toBeVisible();
 
@@ -55,7 +55,7 @@ test.describe('Calendar UI', () => {
       if (testInfo.project.name !== 'chromium-branchadmin') return;
 
       try {
-        await page.goto('/academic-structure/calendar');
+        await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
 
         const testEventNames = [TEST_EVENT_HOLIDAY, TEST_EVENT_EDITED, TEST_EVENT_MAKEUP];
         for (const eventName of testEventNames) {
@@ -79,7 +79,7 @@ test.describe('Calendar UI', () => {
     });
 
     test('Branch Admin can manage operating days', async ({ page }) => {
-      await page.goto('/academic-structure/calendar');
+      await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Operating Days' })).toBeVisible();
 
       // Record original state
@@ -137,7 +137,7 @@ test.describe('Calendar UI', () => {
     });
 
     test('Branch Admin can create, edit, and archive calendar events', async ({ page }) => {
-      await page.goto('/academic-structure/calendar');
+      await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
 
       // --- Create HOLIDAY ---
       await page.getByRole('button', { name: 'Add Event' }).first().click();

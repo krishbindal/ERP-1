@@ -10,7 +10,7 @@ import { AcademicSessionSelector } from '@/components/AcademicSessionSelector';
 export default async function CalendarPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
-  let sessionId = searchParams.session;
+  const sessionId = searchParams.session;
 
   const supabase = await createClient();
   
@@ -31,8 +31,10 @@ export default async function CalendarPage(props: { searchParams: Promise<{ bran
     .eq('branch_id', branchId)
     .order('start_date', { ascending: false });
 
-  if (!sessionId && years && years.length > 0) {
-    sessionId = years[0].id;
+  if (sessionId && years) {
+    if (!years.some(y => y.id === sessionId)) {
+      return <div className="p-4 text-red-500">Invalid or cross-branch academic session selected.</div>;
+    }
   }
 
   let yearData = null;
@@ -65,7 +67,7 @@ export default async function CalendarPage(props: { searchParams: Promise<{ bran
         <AcademicSessionSelector years={years || []} currentSessionId={sessionId} branchId={branchId} />
       </div>
       
-      <AcademicStructureNav currentTab="calendar" explicitBranchId={explicitBranchId} />
+      <AcademicStructureNav currentTab="calendar" explicitBranchId={explicitBranchId} sessionId={sessionId} />
       
       {!sessionId ? (
         <div className="p-12 text-center text-gray-500 bg-gray-50 rounded border border-gray-200">

@@ -5,17 +5,19 @@ import Link from 'next/link';
 
 export function TeacherDashboard({ 
   branchId, 
-  assignments 
+  assignments,
+  sessionId
 }: { 
   branchId: string; 
-  assignments: any[]; 
+  assignments: any[];
+  sessionId?: string;
 }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Your Assignments</h2>
         <Link
-          href={`/homework/new?branchId=${branchId}`}
+          href={`/homework/new?branchId=${branchId}${sessionId ? `&session=${sessionId}` : ''}`}
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
         >
           Create Assignment

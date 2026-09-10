@@ -25,7 +25,7 @@ test.describe('Timetable Management', () => {
     });
 
     test('should manage timetable entries and handle conflicts', async ({ page }) => {
-      await page.goto('/scheduling/timetable');
+      await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
 
       // ─── FIXTURE CLEANUP (retry resilience) ───
@@ -149,12 +149,12 @@ test.describe('Timetable Management', () => {
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 8. Cross-branch rejection ───
-      await page.goto('/scheduling/timetable?branchId=00000000-0000-0000-0000-000000000000');
+      await page.goto('/scheduling/timetable?branchId=00000000-0000-0000-0000-000000000000&session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.locator('text=Access Denied')).toBeVisible();
 
       // ─── FIXTURE CLEANUP: archive the remaining Tuesday entry ───
       {
-        await page.goto('/scheduling/timetable');
+        await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
         await page.locator('[data-testid="timetable-entry"][data-day="2"]').click();
         const editDialog = page.getByLabel('Edit Timetable Entry');
         await expect(editDialog).toBeVisible();
@@ -178,7 +178,7 @@ test.describe('Timetable Management', () => {
     });
 
     test('should view timetable but cannot create entries', async ({ page }) => {
-      await page.goto('/scheduling/timetable');
+      await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
       const createBtn = page.getByRole('button', { name: 'Create Timetable Entry' });
       await expect(createBtn).not.toBeVisible();

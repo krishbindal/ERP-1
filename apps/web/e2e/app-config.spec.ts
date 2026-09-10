@@ -5,7 +5,7 @@ test.describe('App Config Admin Tests', () => {
   test('Teacher gets Access Denied when trying to access app config', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'teacher') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
-    await page.goto('/admin/app-config');
+    await page.goto('/admin/app-config?session=aaaaaaaa-1111-1111-1111-111111111111');
     
     // Verify Access Denied
     await expect(page.locator('text=Access Denied')).toBeVisible();
@@ -15,7 +15,7 @@ test.describe('App Config Admin Tests', () => {
   test('Branch Admin can view and edit their branch app config', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
-    await page.goto('/admin/app-config');
+    await page.goto('/admin/app-config?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Verify page loads
     await expect(page.locator('h1', { hasText: 'Branch App Configuration' })).toBeVisible();
@@ -40,7 +40,7 @@ test.describe('App Config Admin Tests', () => {
   test('Super Admin can view and edit app configs across branches', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'superadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
-    await page.goto('/admin/app-config');
+    await page.goto('/admin/app-config?session=aaaaaaaa-1111-1111-1111-111111111111');
     
     // Initial state: super admin has no branch selected
     await expect(page.locator('text=Please select a branch to view its app config.')).toBeVisible();

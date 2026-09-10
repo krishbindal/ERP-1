@@ -35,7 +35,7 @@ test.describe('Substitutions Management', () => {
       // 🛠️ FIXTURE CLEANUP (retry resilience) 🛠️
       // Cancel any leftover substitutions from previous failed runs
       for (const date of ['2026-08-19', '2026-08-20', '2026-08-21']) {
-        await page.goto(`/scheduling/substitutions?date=${date}`);
+        await page.goto(`/scheduling/substitutions?date=${date}&session=aaaaaaaa-1111-1111-1111-111111111111`);
         let attempts = 0;
         while (attempts < 5) {
           const orangeCards = page.locator('[data-testid="timetable-entry"]:has-text("SUB")');
@@ -61,7 +61,7 @@ test.describe('Substitutions Management', () => {
       }
 
       // Archive any leftover timetable entries on our owned days (1-5)
-      await page.goto('/scheduling/timetable');
+      await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
       for (const day of ['1', '2', '3', '4', '5']) {
         let count = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
@@ -79,7 +79,7 @@ test.describe('Substitutions Management', () => {
       }
 
       // Archive any leftover E2E Holiday calendar events
-      await page.goto('/academic-structure/calendar');
+      await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Calendar Events', exact: true })).toBeVisible();
       let holidayCount = await page.locator('tr').filter({ hasText: 'E2E Holiday' }).count();
       while (holidayCount > 0) {
@@ -92,7 +92,7 @@ test.describe('Substitutions Management', () => {
       }
 
       // ─── 0a. CREATE prerequisite timetable entry (Wednesday) ───
-      await page.goto('/scheduling/timetable');
+      await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
       // Class 11, Section B, Science, Branch Admin, Room 102, Period 1, Wednesday
       await page.getByRole('button', { name: 'Create Timetable Entry' }).click();
@@ -128,7 +128,7 @@ test.describe('Substitutions Management', () => {
       await expect(page.locator('[data-testid="timetable-entry"][data-day="5"]')).toHaveCount(1);
 
       // --- CALENDAR INTEGRATION: CREATE HOLIDAY ---
-      await page.goto('/academic-structure/calendar');
+      await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
       await page.getByRole('button', { name: 'Add Event' }).first().click();
       await page.getByRole('textbox', { name: 'Name', exact: true }).fill('E2E Holiday');
       await page.getByLabel('Start Date').fill('2026-08-19');
@@ -139,7 +139,7 @@ test.describe('Substitutions Management', () => {
       await expect(page.getByRole('heading', { name: 'Add Event' })).not.toBeVisible();
 
       // --- CALENDAR INTEGRATION: VERIFY SUBSTITUTION BLOCKED ---
-      await page.goto('/scheduling/substitutions?date=2026-08-19');
+      await page.goto('/scheduling/substitutions?date=2026-08-19&session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
       
       // Verify Non-instructional Banner
@@ -150,7 +150,7 @@ test.describe('Substitutions Management', () => {
       await expect(page.getByRole('button', { name: 'New Substitution' })).not.toBeVisible();
 
       // --- CALENDAR INTEGRATION: ARCHIVE HOLIDAY ---
-      await page.goto('/academic-structure/calendar');
+      await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
       const eventRow = page.locator('tr').filter({ hasText: 'E2E Holiday' }).first();
       await eventRow.getByRole('button', { name: 'Archive' }).click();
       const confirmDialog = page.getByRole('dialog', { name: 'Archive Calendar Event' });
@@ -158,7 +158,7 @@ test.describe('Substitutions Management', () => {
       await page.reload();
       await expect(eventRow).toBeHidden({ timeout: 15000 });
       // ─── 1. CREATE a substitution for Wednesday ───
-      await page.goto('/scheduling/substitutions?date=2026-08-19');
+      await page.goto('/scheduling/substitutions?date=2026-08-19&session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
 
       await page.getByRole('button', { name: 'New Substitution' }).click();
@@ -200,11 +200,11 @@ test.describe('Substitutions Management', () => {
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 5. Cross-branch rejection ───
-      await page.goto('/scheduling/substitutions?branchId=invalid-branch-id');
+      await page.goto('/scheduling/substitutions?branchId=invalid-branch-id&session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.locator('text=Access Denied')).toBeVisible();
 
       // ─── 6. CANCEL the Wednesday substitution ───
-      await page.goto('/scheduling/substitutions?date=2026-08-19');
+      await page.goto('/scheduling/substitutions?date=2026-08-19&session=aaaaaaaa-1111-1111-1111-111111111111');
       const orangeCard = page.locator('[data-testid="timetable-entry"]:has-text("SUB")').first();
       await orangeCard.click();
       const cancelBtn = page.getByRole('button', { name: 'Cancel Substitution' });
@@ -222,7 +222,7 @@ test.describe('Substitutions Management', () => {
 
       // ─── FIXTURE CLEANUP: archive prerequisite timetable entries ───
       // Cancel remaining Friday substitution first (if still active)
-      await page.goto('/scheduling/substitutions?date=2026-08-21');
+      await page.goto('/scheduling/substitutions?date=2026-08-21&session=aaaaaaaa-1111-1111-1111-111111111111');
       let attempts = 0;
       while (attempts < 5) {
         const remainingSubs = page.locator('[data-testid="timetable-entry"]:has-text("SUB")');
@@ -242,7 +242,7 @@ test.describe('Substitutions Management', () => {
       }
 
       // Archive timetable entries on our owned days (1-5)
-      await page.goto('/scheduling/timetable');
+      await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
       for (const day of ['1', '2', '3', '4', '5']) {
         let count = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
@@ -272,7 +272,7 @@ test.describe('Substitutions Management', () => {
     });
 
     test('should view substitutions but cannot create', async ({ page }) => {
-      await page.goto('/scheduling/substitutions?date=2026-08-19');
+      await page.goto('/scheduling/substitutions?date=2026-08-19&session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Substitutions' })).toBeVisible();
 
       const createBtn = page.getByRole('button', { name: 'New Substitution' });

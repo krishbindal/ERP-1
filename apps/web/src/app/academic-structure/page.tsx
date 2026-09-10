@@ -12,7 +12,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   const searchParams = await props.searchParams;
   const tab = (searchParams.tab || 'years') as 'years' | 'classes' | 'sections';
   const explicitBranchId = searchParams.branchId;
-  let sessionId = searchParams.session;
+  const sessionId = searchParams.session;
 
   const supabase = await createClient();
   
@@ -29,8 +29,10 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
   const { data: years, error: yrErr } = await supabase.from('academic_years').select('*').eq('branch_id', branchId).order('start_date', { ascending: false });
   if (yrErr) throw new Error(yrErr.message);
 
-  if (!sessionId && years && years.length > 0) {
-    sessionId = years[0].id;
+  if (sessionId && years) {
+    if (!years.some(y => y.id === sessionId)) {
+      return <div className="p-4 text-red-500">Invalid or cross-branch academic session selected.</div>;
+    }
   }
 
   let classes: ClassWithYear[] = [];
@@ -59,7 +61,7 @@ export default async function AcademicStructurePage(props: { searchParams: Promi
         )}
       </div>
       
-      <AcademicStructureNav currentTab={tab} explicitBranchId={explicitBranchId} />
+      <AcademicStructureNav currentTab={tab} explicitBranchId={explicitBranchId} sessionId={sessionId} />
       
       <div>
         {tab === 'years' && <AcademicYearsTable data={years} isReadOnly={isReadOnly} explicitBranchId={branchId} />}

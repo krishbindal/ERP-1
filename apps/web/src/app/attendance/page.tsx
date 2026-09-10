@@ -10,7 +10,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
   const explicitBranchId = searchParams.branchId;
   const date = searchParams.date || new Date().toISOString().split('T')[0];
   const sectionId = searchParams.sectionId || null;
-  let sessionId = searchParams.session;
+  const sessionId = searchParams.session;
 
   const supabase = await createClient();
   const context = await getAppContext();
@@ -37,7 +37,11 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
 
   if (yrErr) throw new Error(yrErr.message);
 
-  if (!sessionId && years && years.length > 0) { sessionId = years[0].id; }
+  if (sessionId && years) {
+    if (!years.some(y => y.id === sessionId)) {
+      return <div className="p-4 text-red-500">Invalid or cross-branch academic session selected.</div>;
+    }
+  }
 
   // 2. Fetch sections for dropdown, strictly filtered by selected session
   let sections: Record<string, unknown>[] = [];
@@ -53,17 +57,23 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     sections = secs || [];
   }
 
+  // Verify sectionId exists in this session's sections
+  let validSectionId = sectionId;
+  if (validSectionId && !sections.some(s => s.id === validSectionId)) {
+    validSectionId = null;
+  }
+
   let enrolledStudents: { id: string; profile_id: string; roll_number?: number | null; students?: { first_name: string; last_name: string; } | { first_name: string; last_name: string; }[] | undefined; }[] = [];
   let attendanceSession = null;
   let attendanceRecords: Record<string, unknown>[] = [];
 
   // 3. Fetch data if section and date selected
-  if (sectionId && date && sessionId) {
+  if (validSectionId && date && sessionId) {
     // 3a. Fetch Enrollments
     const { data: enrollments, error: enrErr } = await supabase
       .from('enrollments')
       .select('roll_number, students!enrollments_student_id_fkey!inner(id, first_name, last_name)')
-      .eq('section_id', sectionId)
+      .eq('section_id', validSectionId)
       .eq('academic_year_id', sessionId)
       .eq('status', 'ACTIVE')
       .order('roll_number', { ascending: true });
@@ -75,7 +85,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
     const { data: session, error: sessErr } = await supabase
       .from('attendance_sessions')
       .select('*')
-      .eq('section_id', sectionId)
+      .eq('section_id', validSectionId)
       .eq('date', date)
       .single();
 
@@ -115,7 +125,7 @@ export default async function AttendancePage(props: { searchParams: Promise<{ br
           branchId={branchId}
           sections={sections}
           selectedDate={date}
-          selectedSectionId={sectionId}
+          selectedSectionId={validSectionId}
           // @ts-expect-error Type mismatch with StudentData
         enrolledStudents={enrolledStudents}
           initialSession={attendanceSession}

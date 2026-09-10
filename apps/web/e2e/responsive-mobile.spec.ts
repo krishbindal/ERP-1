@@ -62,7 +62,7 @@ test.describe('Responsive Mobile Behavior & Navigation Drawer', () => {
     // Set mobile viewport to 390x844 (iPhone 12/13/14 standard)
     await page.setViewportSize({ width: 390, height: 844 });
 
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Students' })).toBeVisible();
 
     // Verify page does not suffer horizontal body blowout
@@ -76,7 +76,7 @@ test.describe('Responsive Mobile Behavior & Navigation Drawer', () => {
     await expect(tableContainer).toBeVisible();
 
     // Navigate to academic structure classes tab
-    await page.goto('/academic-structure?tab=classes');
+    await page.goto('/academic-structure?tab=classes&session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.locator('table')).toBeVisible();
 
     const isClassesBodyClipped = await page.evaluate(() => {

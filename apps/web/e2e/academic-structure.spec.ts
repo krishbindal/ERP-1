@@ -6,7 +6,7 @@ test.describe('Academic Structure Role Tests', () => {
   test('Teacher gets Access Denied when trying to create and sees branch identity without switching', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'teacher') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
-    await page.goto('/academic-structure');
+    await page.goto('/academic-structure?session=aaaaaaaa-1111-1111-1111-111111111111');
     
     // Verify branch identity and no selector
     await expect(page.locator('text=Test Branch')).toBeVisible();
@@ -15,15 +15,15 @@ test.describe('Academic Structure Role Tests', () => {
     await expect(page.getByRole('heading', { name: 'Academic Years' })).toBeVisible();
     await expect(page.locator('button:has-text("Create Academic Year")')).not.toBeVisible();
     
-    await page.goto('/academic-structure?tab=classes');
-    await page.locator('#academic-session').selectOption({ index: 1 });
+    await page.goto('/academic-structure?tab=classes&session=aaaaaaaa-1111-1111-1111-111111111111');
+    await page.locator('#academic-session').selectOption({ value: 'aaaaaaaa-1111-1111-1111-111111111111' });
     await expect(page.locator('button:has-text("Create Class")')).not.toBeVisible();
   });
 
   test('Branch Admin can create, edit, and delete an Academic Year with ConfirmDialog', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
-    await page.goto('/academic-structure');
+    await page.goto('/academic-structure?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Verify branch identity and no selector
     await expect(page.locator('text=Test Branch')).toBeVisible();
@@ -71,8 +71,8 @@ test.describe('Academic Structure Role Tests', () => {
   test('Branch Admin can create, edit, and delete a Class with ConfirmDialog', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
-    await page.goto('/academic-structure?tab=classes');
-    await page.locator('#academic-session').selectOption({ index: 1 });
+    await page.goto('/academic-structure?tab=classes&session=aaaaaaaa-1111-1111-1111-111111111111');
+    await page.locator('#academic-session').selectOption({ value: 'aaaaaaaa-1111-1111-1111-111111111111' });
     await expect(page.locator('table')).toBeVisible();
 
     // Create Class
@@ -125,8 +125,8 @@ test.describe('Academic Structure Role Tests', () => {
   test('Branch Admin can create, edit, and delete a Section with ConfirmDialog', async ({ page }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     
-    await page.goto('/academic-structure?tab=sections');
-    await page.locator('#academic-session').selectOption({ index: 1 });
+    await page.goto('/academic-structure?tab=sections&session=aaaaaaaa-1111-1111-1111-111111111111');
+    await page.locator('#academic-session').selectOption({ value: 'aaaaaaaa-1111-1111-1111-111111111111' });
     await expect(page.locator('table')).toBeVisible();
 
     // Create Section
@@ -179,7 +179,7 @@ test.describe('Academic Structure Role Tests', () => {
   test('Branch Admin attempting to access another branch resource is denied', async ({ page, request }) => {
     if (test.info().project.metadata?.role !== 'branchadmin') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
 
-    await page.goto('/academic-structure');
+    await page.goto('/academic-structure?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Get auth token from cookies
     const cookies = await page.context().cookies();

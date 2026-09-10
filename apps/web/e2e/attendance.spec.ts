@@ -21,8 +21,13 @@ test.describe('Attendance Management', () => {
         curr.setDate(curr.getDate() + 1);
       }
       const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
+
+      // Check empty state
+      await page.goto('/attendance');
+      await expect(page.locator('text=Please select an Academic Session above to view attendance.')).toBeVisible();
+
       for (let i = offset; i < weekdays.length; i++) {
-        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}`);
+        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}&session=aaaaaaaa-1111-1111-1111-111111111111`);
         const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
         if (isUnmarked) {
           break;
@@ -61,7 +66,7 @@ test.describe('Attendance Management', () => {
     
     test('Teacher cannot bypass authorization for another branch', async ({ page }) => {
        // Just a simple navigation check
-       await page.goto('/attendance?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01'); // different branch
+       await page.goto('/attendance?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01&session=aaaaaaaa-1111-1111-1111-111111111111'); // different branch
        await expect(page.locator('text=Access Denied')).toBeVisible();
     });
   });
@@ -85,7 +90,7 @@ test.describe('Attendance Management', () => {
       }
       const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
       for (let i = offset; i < weekdays.length; i++) {
-        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}`);
+        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}&session=aaaaaaaa-1111-1111-1111-111111111111`);
         const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
         if (isUnmarked) {
           break;
@@ -142,7 +147,7 @@ test.describe('Attendance Management', () => {
     });
 
     test('Guardian can view published absences', async ({ page }) => {
-      await page.goto('/attendance/history');
+      await page.goto('/attendance/history?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Attendance History (Absences & Lates)' })).toBeVisible();
       
       // Should see the seeded absence
@@ -153,7 +158,7 @@ test.describe('Attendance Management', () => {
     });
     
     test('Guardian cannot access attendance entry page', async ({ page }) => {
-      await page.goto('/attendance');
+      await page.goto('/attendance?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.locator('text=Access Denied')).toBeVisible();
     });
   });

@@ -10,7 +10,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
     const context = await browser.newContext({ storageState: undefined });
     const page = await context.newPage();
     
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
     // Should be redirected by proxy.ts to login
     await expect(page).toHaveURL(/.*\/login/);
     await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
@@ -19,7 +19,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
 
   test('Normal authenticated user is not incorrectly redirected', async ({ page }) => {
     // Assuming this runs as 'chromium-teacher' or another valid authenticated role (via storageState)
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
     // Should NOT redirect
     await expect(page).toHaveURL(/.*\/students/);
     await expect(page.locator('h1:has-text("Students")')).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 
     // Navigate to a page
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.locator('h1:has-text("Students")')).toBeVisible();
     
     // Perform logout by navigating to the auth/logout route
@@ -48,7 +48,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
     await expect(page).toHaveURL(/.*\/login/);
     
     // Verify session is actually destroyed
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page).toHaveURL(/.*\/login/);
 
     await context.close();
@@ -77,7 +77,7 @@ test.describe('Proxy / Middleware Runtime Security', () => {
       await expect(page.getByRole('heading', { name: 'Update Password' })).toBeVisible();
 
       // Trying to navigate to a protected page directly should still redirect
-      await page.goto('/students');
+      await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page).toHaveURL(/.*\/auth\/update-password/);
 
       await context.close();

@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
@@ -9,7 +9,7 @@ import { AcademicSessionSelector } from '@/components/AcademicSessionSelector';
 export default async function HomeworkPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
-  let sessionId = searchParams.session;
+  const sessionId = searchParams.session;
 
   const supabase = await createClient();
   const context = await getAppContext();
@@ -36,7 +36,11 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
 
   if (yrErr) throw new Error(yrErr.message);
 
-  if (!sessionId && years && years.length > 0) { sessionId = years[0].id; }
+  if (sessionId && years) {
+    if (!years.some(y => y.id === sessionId)) {
+      return <div className="p-4 text-red-500">Invalid or cross-branch academic session selected.</div>;
+    }
+  }
 
   
   let assignments: { id: string; title: string; due_date: string; status: string; sections?: { name: string } | { name: string }[] | undefined; subjects?: { name: string } | { name: string }[] | undefined; }[] = [];
@@ -66,18 +70,19 @@ export default async function HomeworkPage(props: { searchParams: Promise<{ bran
         </div>
       ) : (
         isStaff ? (
-          <TeacherDashboard branchId={branchId} assignments={assignments} />
+          <TeacherDashboard branchId={branchId} assignments={assignments} sessionId={sessionId} />
         ) : (
           <StudentDashboard branchId={branchId} assignments={assignments} />
         )
       )}
     </div>
   );
+
+
+
+
+
+
+
 }
-
-
-
-
-
-
 

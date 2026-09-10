@@ -7,7 +7,7 @@ test.describe('Student Enrollment Form Submission', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students/new');
+    await page.goto('/students/new?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Enroll New Student' })).toBeVisible();
 
     const firstNameInput = page.locator('input[name="firstName"]');
@@ -20,7 +20,7 @@ test.describe('Student Enrollment Form Submission', () => {
     expect(await lastNameInput.getAttribute('required')).not.toBeNull();
 
     // Directly test server-action validation error display via error query state
-    await page.goto('/students/new?error=First+name+and+last+name+are+required.');
+    await page.goto('/students/new?error=First+name+and+last+name+are+required.&session=aaaaaaaa-1111-1111-1111-111111111111');
     
     // Verify accessible role="alert" container renders
     const alertBox = page.getByRole('alert').filter({ hasText: 'Enrollment Failed' });
@@ -34,7 +34,7 @@ test.describe('Student Enrollment Form Submission', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students/new');
+    await page.goto('/students/new?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Enroll New Student' })).toBeVisible();
 
     const uniqueTimestamp = Date.now();
@@ -59,7 +59,7 @@ test.describe('Student Enrollment Form Submission', () => {
     await expect(page.locator(`text=${testLastName}`)).toBeVisible();
 
     // Navigate back to /students list and verify student is listed
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Students' })).toBeVisible();
     await page.getByPlaceholder('Search by name or admission number...').fill(testFirstName);
     await expect(page.locator(`text=${testFirstName} ${testLastName}`)).toBeVisible();

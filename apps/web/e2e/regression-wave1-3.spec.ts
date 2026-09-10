@@ -38,7 +38,7 @@ test.describe('Data Table Enhancements & Primitives (Wave 3 Regression)', () => 
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Students' })).toBeVisible();
 
     const searchInput = page.locator('#student-search');
@@ -71,7 +71,7 @@ test.describe('Data Table Enhancements & Primitives (Wave 3 Regression)', () => 
     });
 
     // 1. Classes Table
-    await page.goto('/academic-structure?tab=classes');
+    await page.goto('/academic-structure?tab=classes&session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.locator('table')).toBeVisible();
 
     const classSearchInput = page.locator('#class-search');
@@ -94,7 +94,7 @@ test.describe('Data Table Enhancements & Primitives (Wave 3 Regression)', () => 
     }
 
     // 2. Sections Table
-    await page.goto('/academic-structure?tab=sections');
+    await page.goto('/academic-structure?tab=sections&session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.locator('table')).toBeVisible();
 
     const sectionSearchInput = page.locator('#section-search');
@@ -112,7 +112,7 @@ test.describe('Timetable & Bulk Upload Rendering (Wave 3 Regression)', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/scheduling/timetable');
+    await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
 
     // View selector dropdown exists with required options
@@ -128,7 +128,7 @@ test.describe('Timetable & Bulk Upload Rendering (Wave 3 Regression)', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students/bulk');
+    await page.goto('/students/bulk?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Bulk Student Onboarding' })).toBeVisible();
 
     // Wizard interface (dropzone and file browsing)

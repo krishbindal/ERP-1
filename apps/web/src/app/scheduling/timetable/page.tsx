@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/server';
 export default async function TimetablePage(props: Readonly<{ searchParams: Promise<{ branchId?: string; view?: string; session?: string }> }>) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
-  let sessionId = searchParams.session || '';
+  const sessionId = searchParams.session || '';
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
@@ -28,8 +28,10 @@ export default async function TimetablePage(props: Readonly<{ searchParams: Prom
 
   if (yrErr) throw new Error(yrErr.message);
 
-  if (!sessionId && years && years.length > 0) {
-    sessionId = years[0].id;
+  if (sessionId && years) {
+    if (!years.some(y => y.id === sessionId)) {
+      return <div className="p-4 text-red-500">Invalid or cross-branch academic session selected.</div>;
+    }
   }
 
   let timetableProps: { entriesData: import('./components/TimetableGrid').TimetableEntry[]; periods: import('./components/TimetableGrid').Period[]; rooms: { id: string; name: string }[]; classes: { id: string; name: string }[]; sections: { id: string; name: string; class_id: string }[]; subjects: { id: string; name: string }[]; teachers: { id: string; staff?: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | undefined; }[] } | null = null;
