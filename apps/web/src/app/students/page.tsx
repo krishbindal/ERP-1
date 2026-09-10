@@ -1,12 +1,17 @@
 import React from 'react';
-import { StudentsService } from '@/services/students.service'
-import Link from 'next/link'
+import { StudentsService } from '@/services/students.service';
+import Link from 'next/link';
 import { verifyPageBranchContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
+import { StudentsTable } from './components/StudentsTable';
+import { Button } from '@/components/ui/Button';
+import { AcademicSessionSelector } from '@/components/AcademicSessionSelector';
+import { createClient } from '@/lib/supabase/server';
 
-export default async function StudentsPage(props: { searchParams: Promise<{ branchId?: string }> }) {
+export default async function StudentsPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
+  const sessionId = searchParams.session;
 
   const { branchId, isAuthorized, isReadOnly, errorState } = await verifyPageBranchContext(explicitBranchId);
 
@@ -14,58 +19,63 @@ export default async function StudentsPage(props: { searchParams: Promise<{ bran
     return <BranchAccessError errorState={errorState || 'ACCESS_DENIED'} feature="students" />;
   }
 
-  const { data: students, error } = await StudentsService.listStudents()
+  const supabase = await createClient();
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error loading students: {error.message}</div>
+  // Fetch all years for the selector
+  const { data: years, error: yearsError } = await supabase
+    .from('academic_years')
+    .select('*')
+    .eq('branch_id', branchId)
+    .order('start_date', { ascending: false });
+
+  if (yearsError) {
+    return <div className="p-4 text-red-500">Error loading academic sessions: {yearsError.message}</div>;
+  }
+
+  if (sessionId && years) {
+    if (!years.some(y => y.id === sessionId)) {
+      return <div className="p-4 text-red-500">Invalid or cross-branch academic session selected.</div>;
+    }
+  }
+
+  let students: import('./components/StudentsTable').StudentItem[] = [];
+  if (sessionId) {
+    const { data, error } = await StudentsService.listStudents(branchId, sessionId);
+    if (error) {
+      return <div className="p-4 text-red-500">Error loading students: {error.message}</div>;
+    }
+    students = data || [];
   }
 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Students</h1>
+        
+        <AcademicSessionSelector years={years || []} currentSessionId={sessionId} branchId={branchId} />
+        
         {!isReadOnly && (
-          <Link href={`/students/new${branchId ? `?branchId=${branchId}` : ''}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Add Student
-          </Link>
+          <div className="flex items-center gap-3 ml-4">
+            <Link href={'/students/bulk' + (branchId ? '?branchId='+branchId : '')}>
+              <Button variant="outline">Bulk Import</Button>
+            </Link>
+            <Link href={'/students/new' + (branchId ? '?branchId='+branchId : '')} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              Add Student
+            </Link>
+          </div>
         )}
       </div>
 
-      <div className="bg-white rounded shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {students?.map(student => (
-              <tr key={student.id}>
-                <td className="px-6 py-4">
-                  {student.first_name} {student.last_name}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    {student.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <Link href={`/students/${student.id}`} className="text-blue-600 hover:text-blue-900">View</Link>
-                </td>
-              </tr>
-            ))}
-            {(!students || students.length === 0) && (
-              <tr>
-                <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
-                  No students found in your active branches.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {!sessionId ? (
+        <div className="p-12 text-center text-gray-500 bg-gray-50 rounded border border-gray-200">
+          Please select an Academic Session above to view enrolled students.
+        </div>
+      ) : (
+        <StudentsTable students={students} />
+      )}
     </div>
-  )
+  );
 }
+
+
+

@@ -15,24 +15,24 @@ test.describe('Attendance Management', () => {
       const offset = (pIdx * 2) + testIdx;
       
       const weekdays = [];
-      const curr = new Date('2026-08-11T00:00:00Z');
+      const curr = new Date('2026-09-01T00:00:00Z');
       while(weekdays.length < 100) {
         if (curr.getDay() !== 0 && curr.getDay() !== 6) weekdays.push(curr.toISOString().split('T')[0]);
         curr.setDate(curr.getDate() + 1);
       }
-      const targetDate = weekdays[offset];
+      const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
 
+      // Check empty state
       await page.goto('/attendance');
-      await expect(page.getByRole('heading', { name: 'Attendance' })).toBeVisible();
-      
-      // Select Date
-      await page.fill('input[type="date"]', targetDate);
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
-      
-      // Select Section
-      await page.locator('select[aria-label="Section"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
+      await expect(page.locator('text=Please select an Academic Session above to view attendance.')).toBeVisible();
 
+      for (let i = offset; i < weekdays.length; i++) {
+        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}&session=aaaaaaaa-1111-1111-1111-111111111111`);
+        const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
+        if (isUnmarked) {
+          break;
+        }
+      }
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as ABSENT
@@ -48,6 +48,9 @@ test.describe('Attendance Management', () => {
 
       // Lock
       await page.getByRole('button', { name: 'Lock' }).click();
+      const lockConfirmBtn = page.getByRole('button', { name: 'Lock Attendance' });
+      await expect(lockConfirmBtn).toBeVisible();
+      await lockConfirmBtn.click();
       await expect(page.locator('text=Attendance locked successfully')).toBeVisible();
 
       // Status should update to Locked
@@ -63,7 +66,7 @@ test.describe('Attendance Management', () => {
     
     test('Teacher cannot bypass authorization for another branch', async ({ page }) => {
        // Just a simple navigation check
-       await page.goto('/attendance?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01'); // different branch
+       await page.goto('/attendance?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01&session=aaaaaaaa-1111-1111-1111-111111111111'); // different branch
        await expect(page.locator('text=Access Denied')).toBeVisible();
     });
   });
@@ -80,24 +83,19 @@ test.describe('Attendance Management', () => {
       const offset = (pIdx * 2) + testIdx;
       
       const weekdays = [];
-      const curr = new Date('2026-08-11T00:00:00Z');
+      const curr = new Date('2026-09-01T00:00:00Z');
       while(weekdays.length < 100) {
         if (curr.getDay() !== 0 && curr.getDay() !== 6) weekdays.push(curr.toISOString().split('T')[0]);
         curr.setDate(curr.getDate() + 1);
       }
-      const targetDate = weekdays[offset];
-
-      await page.goto('/attendance');
-      
-      // Select Date
-      await page.fill('input[type="date"]', targetDate);
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
-      
-      // Select Section
-      await page.locator('select[aria-label="Section"]').selectOption('aaaaaaaa-3333-3333-3333-333333333333');
-      await page.waitForTimeout(500); // Wait for Next.js soft navigation
-
-      // Ensure it's unmarked
+      const sectionId = 'aaaaaaaa-3333-3333-3333-333333333333';
+      for (let i = offset; i < weekdays.length; i++) {
+        await page.goto(`/attendance?date=${weekdays[i]}&sectionId=${sectionId}&session=aaaaaaaa-1111-1111-1111-111111111111`);
+        const isUnmarked = await page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' }).isVisible();
+        if (isUnmarked) {
+          break;
+        }
+      }
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Unmarked' })).toBeVisible();
 
       // Mark first student as LATE
@@ -108,10 +106,16 @@ test.describe('Attendance Management', () => {
       await page.getByRole('button', { name: 'Save Attendance' }).click();
       await expect(page.locator('text=Attendance saved successfully')).toBeVisible();
       await page.getByRole('button', { name: 'Lock' }).click();
+      const lockConfirmBtn = page.getByRole('button', { name: 'Lock Attendance' });
+      await expect(lockConfirmBtn).toBeVisible();
+      await lockConfirmBtn.click();
       await expect(page.locator('text=Attendance locked successfully')).toBeVisible();
 
       // Admin CAN publish
       await page.getByRole('button', { name: 'Publish' }).click();
+      const publishConfirmBtn = page.getByRole('button', { name: 'Publish Attendance' });
+      await expect(publishConfirmBtn).toBeVisible();
+      await publishConfirmBtn.click();
       await expect(page.locator('text=Attendance published successfully')).toBeVisible();
       await expect(page.getByLabel('Status Indicator').filter({ hasText: 'Status: Published' })).toBeVisible();
 
@@ -143,17 +147,18 @@ test.describe('Attendance Management', () => {
     });
 
     test('Guardian can view published absences', async ({ page }) => {
-      await page.goto('/attendance/history');
+      await page.goto('/attendance/history?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Attendance History (Absences & Lates)' })).toBeVisible();
       
       // Should see the seeded absence
-      await expect(page.locator('text=2026-08-10')).toBeVisible();
-      await expect(page.locator('text=ABSENT')).toBeVisible();
-      await expect(page.locator('text=Student E2E')).toBeVisible();
+      const row = page.locator('tr').filter({ hasText: '2026-08-10' }).first();
+      await expect(row).toBeVisible();
+      await expect(row.getByText('ABSENT', { exact: true })).toBeVisible();
+      await expect(row.getByText('Student E2E')).toBeVisible();
     });
     
     test('Guardian cannot access attendance entry page', async ({ page }) => {
-      await page.goto('/attendance');
+      await page.goto('/attendance?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.locator('text=Access Denied')).toBeVisible();
     });
   });

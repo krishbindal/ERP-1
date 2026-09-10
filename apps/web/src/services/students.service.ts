@@ -21,8 +21,9 @@ export type Guardian = {
 
 export class StudentsService {
   /**
-   * Atomics creation of a student and initial enrollment
-   * Calls the security invoker RPC function to respect RLS natively
+   * Atomic creation of a student identity and branch profile.
+   * Note: Academic enrollment is handled separately.
+   * Calls the security definer RPC function to respect branch permissions.
    */
   static async createStudentWithPlacement(
     organizationId: string,
@@ -55,7 +56,7 @@ export class StudentsService {
   }
 
   /**
-   * Fetch a single student. RLS will ensure we only see them if they have an active enrollment in a branch we can access.
+   * Fetch a single student. RLS will ensure we only see them if they have a branch profile in a branch we can access.
    */
   static async getStudent(id: string): Promise<{ data?: Student, error?: Error }> {
     const supabase = await createClient();
@@ -70,17 +71,38 @@ export class StudentsService {
   }
 
   /**
-   * List all visible students. RLS restricts this to students enrolled in our active branches.
+   * List all visible students for a specific academic session.
+   * We query the enrollments table to ensure the student is actively placed in this session.
    */
-  static async listStudents(): Promise<{ data?: Student[], error?: Error }> {
+  static async listStudents(branchId: string, academicYearId: string): Promise<{ data?: Student[], error?: Error }> {
     const supabase = await createClient();
     const { data, error } = await supabase
-      .from('students')
-      .select('*')
-      .order('created_at', { ascending: false })
-      
-    if (error) return { error }
-    return { data }
+      .from('enrollments')
+      .select('students!enrollments_student_id_fkey!inner(*)')
+      .eq('branch_id', branchId)
+      .eq('academic_year_id', academicYearId)
+      .eq('status', 'ACTIVE');
+
+    if (error) {
+      console.error('StudentsService.listStudents Error:', error);
+      return { data: [], error };
+    }
+
+    // Flatten the enrollments->students structure
+    const studentsData = data
+      .map(enrollment => {
+        // Since we used !inner, students will be present, but due to types it might be array or single object.
+        const student = Array.isArray(enrollment.students) ? enrollment.students[0] : enrollment.students;
+        return student;
+      })
+      .filter(student => student != null)
+      .sort((a, b) => {
+        const nameA = (a.last_name || '').toLowerCase();
+        const nameB = (b.last_name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+
+    return { data: studentsData, error: undefined };
   }
 
   /**
@@ -127,3 +149,4 @@ export class StudentsService {
     return {}
   }
 }
+

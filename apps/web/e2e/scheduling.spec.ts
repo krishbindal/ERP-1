@@ -12,7 +12,7 @@ test.describe('Scheduling Management', () => {
 
   test('Branch Admin can manage rooms, bell schedules, and periods', async ({ page }) => {
     // 1. Branch Admin opens Scheduling.
-    await page.goto('/scheduling');
+    await page.goto('/scheduling?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Scheduling' })).toBeVisible();
     
     // Check tabs
@@ -97,7 +97,7 @@ test.describe('Scheduling Security - Teacher Role', () => {
   });
 
   test('Teacher cannot perform administrative mutations', async ({ page }) => {
-    await page.goto('/scheduling');
+    await page.goto('/scheduling?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Scheduling' })).toBeVisible();
     
     // Create buttons should not be visible

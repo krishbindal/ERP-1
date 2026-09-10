@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createClient } from './supabase/server';
 
 export type UserRole = 'superadmin' | 'branchadmin' | 'teacher' | 'parent' | 'guardian' | 'student' | 'unknown';
@@ -20,7 +21,7 @@ export interface SuperAdminContext {
 
 export type AppContext = NormalUserContext | SuperAdminContext;
 
-export async function getAppContext(): Promise<AppContext | null> {
+export const getAppContext = cache(async (): Promise<AppContext | null> => {
   const supabase = await createClient();
   const { data: user, error: authError } = await supabase.auth.getUser();
 
@@ -107,7 +108,7 @@ export async function getAppContext(): Promise<AppContext | null> {
     branchName: branchData.name || 'Unknown Branch',
     roles,
   };
-}
+});
 
 // Deprecated: use getAppContext instead where possible
 export async function getCurrentAppBranch(): Promise<{ id: string, name: string } | null> {

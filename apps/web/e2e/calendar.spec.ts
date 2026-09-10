@@ -25,7 +25,7 @@ test.describe('Calendar UI', () => {
     const meta = test.info().project.metadata as { role?: string };
     if (meta?.role !== 'teacher') test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
 
-    await page.goto('/academic-structure/calendar');
+    await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
     await expect(page.getByRole('heading', { name: 'Academic Structure' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Operating Days' })).toBeVisible();
 
@@ -55,19 +55,21 @@ test.describe('Calendar UI', () => {
       if (testInfo.project.name !== 'chromium-branchadmin') return;
 
       try {
-        await page.goto('/academic-structure/calendar');
-        page.removeAllListeners('dialog');
-        page.on('dialog', dialog => dialog.accept().catch(() => {}));
+        await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
 
         const testEventNames = [TEST_EVENT_HOLIDAY, TEST_EVENT_EDITED, TEST_EVENT_MAKEUP];
         for (const eventName of testEventNames) {
           const row = page.locator('tr', { hasText: eventName }).first();
-          if (await row.isVisible({ timeout: 2000 }).catch(() => false)) {
+          if (await row.isVisible({ timeout: 1500 }).catch(() => false)) {
             const archiveBtn = row.getByRole('button', { name: 'Archive' });
             if (await archiveBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
               await archiveBtn.click();
+              const confirmBtn = page.getByRole('button', { name: 'Archive Event' });
+              if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+                await confirmBtn.click();
+              }
               // Wait for the row to disappear after archive
-              await expect(row).toBeHidden({ timeout: 5000 }).catch(() => {});
+              await expect(row).toBeHidden({ timeout: 4000 }).catch(() => {});
             }
           }
         }
@@ -77,7 +79,7 @@ test.describe('Calendar UI', () => {
     });
 
     test('Branch Admin can manage operating days', async ({ page }) => {
-      await page.goto('/academic-structure/calendar');
+      await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Operating Days' })).toBeVisible();
 
       // Record original state
@@ -90,15 +92,22 @@ test.describe('Calendar UI', () => {
       }
       if (originalChecked.length === 0) return; // Safety: no operating days to test
 
-      // Check all 7 days
-      for (let i = 1; i <= 7; i++) {
-        const cb = page.locator(`input[name="operating-day-${i}"]`);
-        if (!(await cb.isChecked())) {
-          await cb.check();
+      const saveBtn = page.getByRole('button', { name: 'Save Changes' });
+      if (originalChecked.length === 7) {
+        await page.locator('input[name="operating-day-7"]').uncheck();
+        await saveBtn.click();
+        await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
+        await page.locator('input[name="operating-day-7"]').check();
+        await saveBtn.click();
+        await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
+      } else {
+        for (let i = 1; i <= 7; i++) {
+          const cb = page.locator(`input[name="operating-day-${i}"]`);
+          if (!(await cb.isChecked())) await cb.check();
         }
+        await saveBtn.click();
+        await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
       }
-      await page.getByRole('button', { name: 'Save Changes' }).click();
-      await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
 
       // Uncheck days 1-6, leaving only day 7
       for (let i = 1; i <= 6; i++) {
@@ -121,16 +130,18 @@ test.describe('Calendar UI', () => {
           if (await cb.isChecked()) await cb.uncheck();
         }
       }
-      await page.getByRole('button', { name: 'Save Changes' }).click();
-      await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
+      if (await saveBtn.isEnabled()) {
+        await saveBtn.click();
+        await expect(page.getByText('Operating days updated successfully.')).toBeVisible();
+      }
     });
 
     test('Branch Admin can create, edit, and archive calendar events', async ({ page }) => {
-      await page.goto('/academic-structure/calendar');
+      await page.goto('/academic-structure/calendar?session=aaaaaaaa-1111-1111-1111-111111111111');
 
       // --- Create HOLIDAY ---
-      await page.getByRole('button', { name: 'Add Event' }).click();
-      await page.getByLabel('Name').fill(TEST_EVENT_HOLIDAY);
+      await page.getByRole('button', { name: 'Add Event' }).first().click();
+      await page.locator('#event-name').fill(TEST_EVENT_HOLIDAY);
       await page.getByLabel('Start Date').fill('2026-03-10');
       // Test invalid date validation
       await page.getByLabel('End Date').fill('2026-03-09');
@@ -139,7 +150,7 @@ test.describe('Calendar UI', () => {
 
       // Fix the date
       await page.getByLabel('End Date').fill('2026-03-11');
-      await page.getByLabel('Type').selectOption('HOLIDAY');
+      await page.locator('#event-type').selectOption('HOLIDAY');
 
       // Instructional checkbox should be unchecked and disabled for HOLIDAY
       const instructionalCheckbox = page.getByLabel('Is Instructional Day');
@@ -155,8 +166,8 @@ test.describe('Calendar UI', () => {
 
       // --- Edit to OTHER with instructional=true ---
       await holidayRow.getByRole('button', { name: 'Edit' }).click();
-      await page.getByLabel('Name').fill(TEST_EVENT_EDITED);
-      await page.getByLabel('Type').selectOption('OTHER');
+      await page.locator('#event-name').fill(TEST_EVENT_EDITED);
+      await page.locator('#event-type').selectOption('OTHER');
       // For OTHER type, instructional checkbox should be enabled
       await expect(page.getByLabel('Is Instructional Day')).toBeEnabled();
       await page.getByLabel('Is Instructional Day').check();
@@ -166,18 +177,19 @@ test.describe('Calendar UI', () => {
       await expect(editedRow).toBeVisible();
       await expect(editedRow.locator('td').nth(3)).toContainText('Yes');
 
-      // --- Archive the edited event ---
-      page.removeAllListeners('dialog');
-      page.on('dialog', dialog => dialog.accept().catch(() => {}));
+      // --- Archive the edited event using ConfirmDialog ---
       await editedRow.getByRole('button', { name: 'Archive' }).click();
+      const confirmArchiveBtn = page.getByRole('button', { name: 'Archive Event' });
+      await expect(confirmArchiveBtn).toBeVisible();
+      await confirmArchiveBtn.click();
       await expect(editedRow).toBeHidden();
 
       // --- Create MAKEUP_DAY ---
-      await page.getByRole('button', { name: 'Add Event' }).click();
-      await page.getByLabel('Name').fill(TEST_EVENT_MAKEUP);
+      await page.getByRole('button', { name: 'Add Event' }).first().click();
+      await page.locator('#event-name').fill(TEST_EVENT_MAKEUP);
       await page.getByLabel('Start Date').fill('2026-03-12');
       await page.getByLabel('End Date').fill('2026-03-12');
-      await page.getByLabel('Type').selectOption('MAKEUP_DAY');
+      await page.locator('#event-type').selectOption('MAKEUP_DAY');
 
       // For MAKEUP_DAY, instructional should be checked and disabled
       await expect(page.getByLabel('Is Instructional Day')).toBeChecked();

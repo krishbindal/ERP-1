@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { createClass, updateClass, getAcademicYears } from '../actions';
 import { ClassWithYear } from './types';
 import { DrawerForm } from './DrawerForm';
+import { Input, Select } from '@/components/ui';
 
 export function ClassForm({ onClose, initialData, explicitBranchId }: { onClose: () => void, explicitBranchId?: string | null, initialData?: ClassWithYear | null }) {
   const [error, setError] = useState<string | null>(null);
@@ -67,30 +68,35 @@ export function ClassForm({ onClose, initialData, explicitBranchId }: { onClose:
       loading={loading}
       error={error}
     >
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-900">Name</label>
-        <div className="mt-1">
-          <input required defaultValue={initialData?.name} type="text" name="name" id="name" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
-        </div>
+      <div className="space-y-4">
+        <Input
+          required
+          defaultValue={initialData?.name}
+          type="text"
+          name="name"
+          id="name"
+          label="Name"
+          placeholder="e.g. Grade 1"
+        />
+        <Input
+          required
+          defaultValue={initialData?.level}
+          type="number"
+          name="level"
+          id="level"
+          label="Level (Integer)"
+          placeholder="e.g. 1"
+        />
+        {!initialData && (
+          <Select
+            required
+            name="academic_year_id"
+            id="academic_year_id"
+            label="Academic Year"
+            options={academicYears.map(ay => ({ value: ay.id, label: ay.name }))}
+          />
+        )}
       </div>
-      <div>
-        <label htmlFor="level" className="block text-sm font-medium text-gray-900">Level (Integer)</label>
-        <div className="mt-1">
-          <input required defaultValue={initialData?.level} type="number" name="level" id="level" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
-        </div>
-      </div>
-      {!initialData && (
-        <div>
-          <label htmlFor="academic_year_id" className="block text-sm font-medium text-gray-900">Academic Year</label>
-          <div className="mt-1">
-            <select required name="academic_year_id" id="academic_year_id" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md">
-              {academicYears.map(ay => (
-                <option key={ay.id} value={ay.id}>{ay.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
     </DrawerForm>
   );
 }

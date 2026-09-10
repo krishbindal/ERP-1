@@ -5,9 +5,10 @@ import { verifyPageBranchContext, getAppContext } from '@/lib/branch-context';
 import { BranchAccessError } from '@/components/BranchAccessError';
 import { HomeworkForm } from '../components/HomeworkForm';
 
-export default async function NewHomeworkPage(props: { searchParams: Promise<{ branchId?: string }> }) {
+export default async function NewHomeworkPage(props: { searchParams: Promise<{ branchId?: string; session?: string }> }) {
   const searchParams = await props.searchParams;
   const explicitBranchId = searchParams.branchId;
+  const sessionId = searchParams.session;
 
   const supabase = await createClient();
   const context = await getAppContext();
@@ -28,23 +29,17 @@ export default async function NewHomeworkPage(props: { searchParams: Promise<{ b
     return <BranchAccessError errorState="ACCESS_DENIED" feature="homework" />;
   }
 
-  // Fetch current academic year
-  const { data: years, error: yrErr } = await supabase
-    .from('academic_years')
-    .select('*')
-    .eq('branch_id', branchId)
-    .order('start_date', { ascending: false });
-
-  if (yrErr || !years || years.length === 0) {
-    throw new Error('No academic years found.');
+  if (!sessionId) {
+    return <div className="p-12 text-center text-gray-500 bg-gray-50 rounded border border-gray-200">
+      Please select an Academic Session in the Homework dashboard before creating a new assignment.
+    </div>;
   }
-  const currentYear = years[0];
 
   let availableSections: any[] = [];
   let availableSubjects: any[] = [];
 
   if (isAdmin) {
-    const { data: sections } = await supabase.from('sections').select('id, name, class_id').eq('branch_id', branchId);
+    const { data: sections } = await supabase.from('sections').select('id, name, class_id').eq('branch_id', branchId).eq('academic_year_id', sessionId);
     const { data: subjects } = await supabase.from('subjects').select('id, name');
     availableSections = sections || [];
     availableSubjects = subjects || [];
@@ -60,35 +55,34 @@ export default async function NewHomeworkPage(props: { searchParams: Promise<{ b
     if (profile) {
       const { data: assignments } = await supabase
         .from('teacher_subject_assignments')
-        .select('section_id, subject_id, sections(name, class_id), subjects(name)')
+        .select('section_id, subject_id, sections!inner(id, name, class_id), subjects!inner(id, name)')
         .eq('staff_branch_profile_id', profile.id)
+        .eq('branch_id', branchId)
+        .eq('academic_year_id', sessionId)
         .eq('status', 'ACTIVE');
-      
+        
       if (assignments) {
-        // deduplicate
-        const secMap = new Map();
-        const subMap = new Map();
+        const uniqueSecs = new Map();
+        const uniqueSubs = new Map();
         assignments.forEach(a => {
-          if (a.sections && !secMap.has(a.section_id)) secMap.set(a.section_id, { id: a.section_id, name: (a.sections as any).name, class_id: (a.sections as any).class_id });
-          if (a.subjects && !subMap.has(a.subject_id)) subMap.set(a.subject_id, { id: a.subject_id, name: (a.subjects as any).name });
+          if (!uniqueSecs.has(a.section_id) && a.sections) uniqueSecs.set(a.section_id, a.sections);
+          if (!uniqueSubs.has(a.subject_id) && a.subjects) uniqueSubs.set(a.subject_id, a.subjects);
         });
-        availableSections = Array.from(secMap.values());
-        availableSubjects = Array.from(subMap.values());
+        availableSections = Array.from(uniqueSecs.values());
+        availableSubjects = Array.from(uniqueSubs.values());
       }
     }
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold">Create Homework Assignment</h1>
-      <div className="bg-white p-6 rounded-lg shadow">
-        <HomeworkForm 
-          branchId={branchId}
-          academicYearId={currentYear.id}
-          sections={availableSections}
-          subjects={availableSubjects}
-        />
-      </div>
+      <HomeworkForm 
+        branchId={branchId}
+        academicYearId={sessionId}
+        sections={availableSections}
+        subjects={availableSubjects}
+      />
     </div>
   );
 }

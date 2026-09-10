@@ -43,7 +43,25 @@ export async function deleteClass(id: string, explicitBranchId?: string) {
 // Sections
 export async function createSection(data: { class_id: string; name: string; capacity: number }, explicitBranchId?: string) {
   return branchAction(explicitBranchId, async (ctx) => {
-    return ctx.supabase.from('sections').insert({ ...data, branch_id: ctx.branchId });
+    const { data: cls, error: clsError } = await ctx.supabase
+      .from('classes')
+      .select('academic_year_id')
+      .eq('id', data.class_id)
+      .eq('branch_id', ctx.branchId)
+      .single();
+
+    if (clsError || !cls?.academic_year_id) {
+      return { 
+        data: null, 
+        error: { message: "Invalid class or class not found in current branch" } 
+      };
+    }
+
+    return ctx.supabase.from('sections').insert({ 
+      ...data, 
+      academic_year_id: cls.academic_year_id, 
+      branch_id: ctx.branchId 
+    });
   }, '/academic-structure');
 }
 

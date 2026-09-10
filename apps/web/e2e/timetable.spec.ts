@@ -25,7 +25,7 @@ test.describe('Timetable Management', () => {
     });
 
     test('should manage timetable entries and handle conflicts', async ({ page }) => {
-      await page.goto('/scheduling/timetable');
+      await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
 
       // ─── FIXTURE CLEANUP (retry resilience) ───
@@ -35,9 +35,12 @@ test.describe('Timetable Management', () => {
         let count = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
         while (count > 0) {
           await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).first().click();
-          page.once('dialog', d => d.accept());
-          await page.getByRole('button', { name: 'Archive Entry' }).click();
-          await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
+          const editDialog = page.getByLabel('Edit Timetable Entry');
+          await expect(editDialog).toBeVisible();
+          await editDialog.getByRole('button', { name: 'Archive Entry' }).click();
+          const confirmDialog = page.getByRole('dialog', { name: 'Archive Timetable Entry' });
+          await confirmDialog.getByRole('button', { name: 'Archive Entry' }).click();
+          await expect(editDialog).not.toBeVisible({ timeout: 15000 });
           await page.reload();
           count = await page.locator(`[data-testid="timetable-entry"][data-day="${day}"]`).count();
         }
@@ -87,12 +90,16 @@ test.describe('Timetable Management', () => {
 
       // ─── 4. ARCHIVE the Monday entry ───
       // Target it specifically: Monday entry now has Room 102 after edit
-      await page.locator('[data-testid="timetable-entry"][data-day="1"]').click();
-      await expect(page.getByRole('heading', { name: 'Edit Timetable Entry' })).toBeVisible();
-      page.once('dialog', dialog => dialog.accept());
-      await page.getByRole('button', { name: 'Archive Entry' }).click();
-      await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
-      await page.reload();
+      {
+        await page.locator('[data-testid="timetable-entry"][data-day="1"]').click();
+        const editDialog = page.getByLabel('Edit Timetable Entry');
+        await expect(editDialog).toBeVisible();
+        await editDialog.getByRole('button', { name: 'Archive Entry' }).click();
+        const confirmDialog = page.getByRole('dialog', { name: 'Archive Timetable Entry' });
+        await confirmDialog.getByRole('button', { name: 'Archive Entry' }).click();
+        await expect(editDialog).not.toBeVisible({ timeout: 15000 });
+        await page.reload();
+      }
 
       // Verify: Monday entry gone, Tuesday entry remains
       await expect(page.locator('[data-testid="timetable-entry"][data-day="1"]')).toHaveCount(0);
@@ -110,7 +117,7 @@ test.describe('Timetable Management', () => {
       await page.getByRole('button', { name: 'Save' }).click();
 
       // Verify: drawer stays open with exclusion error
-      await expect(page.locator('.text-red-600')).toContainText('A scheduling conflict prevents this operation.');
+      await expect(page.locator('.text-destructive')).toContainText('A scheduling conflict prevents this operation.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 6. CONFLICT: Teacher double-booking (Tuesday) ───
@@ -124,7 +131,7 @@ test.describe('Timetable Management', () => {
       await page.locator('select[name="day_of_week"]').selectOption('2'); // Tuesday
       await page.getByRole('button', { name: 'Save' }).click();
 
-      await expect(page.locator('.text-red-600')).toContainText('A scheduling conflict prevents this operation.');
+      await expect(page.locator('.text-destructive')).toContainText('A scheduling conflict prevents this operation.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 7. CONFLICT: Room double-booking (Tuesday) ───
@@ -138,20 +145,25 @@ test.describe('Timetable Management', () => {
       await page.locator('select[name="day_of_week"]').selectOption('2'); // Tuesday
       await page.getByRole('button', { name: 'Save' }).click();
 
-      await expect(page.locator('.text-red-600')).toContainText('A scheduling conflict prevents this operation.');
+      await expect(page.locator('.text-destructive')).toContainText('A scheduling conflict prevents this operation.');
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // ─── 8. Cross-branch rejection ───
-      await page.goto('/scheduling/timetable?branchId=00000000-0000-0000-0000-000000000000');
+      await page.goto('/scheduling/timetable?branchId=00000000-0000-0000-0000-000000000000&session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.locator('text=Access Denied')).toBeVisible();
 
       // ─── FIXTURE CLEANUP: archive the remaining Tuesday entry ───
-      await page.goto('/scheduling/timetable');
-      await page.locator('[data-testid="timetable-entry"][data-day="2"]').click();
-      page.once('dialog', d => d.accept());
-      await page.getByRole('button', { name: 'Archive Entry' }).click();
-      await expect(page.locator('text=Edit Timetable Entry')).not.toBeVisible();
-      await page.reload();
+      {
+        await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
+        await page.locator('[data-testid="timetable-entry"][data-day="2"]').click();
+        const editDialog = page.getByLabel('Edit Timetable Entry');
+        await expect(editDialog).toBeVisible();
+        await editDialog.getByRole('button', { name: 'Archive Entry' }).click();
+        const confirmDialog = page.getByRole('dialog', { name: 'Archive Timetable Entry' });
+        await confirmDialog.getByRole('button', { name: 'Archive Entry' }).click();
+        await expect(editDialog).not.toBeVisible({ timeout: 15000 });
+        await page.reload();
+      }
 
       // Verify cleanup: 0 entries on our owned days
       await expect(page.locator('[data-testid="timetable-entry"][data-day="1"]')).toHaveCount(0);
@@ -166,7 +178,7 @@ test.describe('Timetable Management', () => {
     });
 
     test('should view timetable but cannot create entries', async ({ page }) => {
-      await page.goto('/scheduling/timetable');
+      await page.goto('/scheduling/timetable?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: 'Timetable' })).toBeVisible();
       const createBtn = page.getByRole('button', { name: 'Create Timetable Entry' });
       await expect(createBtn).not.toBeVisible();

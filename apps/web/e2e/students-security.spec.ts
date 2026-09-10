@@ -19,7 +19,11 @@ test.describe('Students Page Authorization', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
+    // Check empty state
     await page.goto('/students');
+    await expect(page.locator('text=Please select an Academic Session above to view enrolled students.')).toBeVisible();
+
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Page should render successfully — not show Access Denied
     await expect(page.locator('h1:has-text("Students")')).toBeVisible();
@@ -28,6 +32,7 @@ test.describe('Students Page Authorization', () => {
     await expect(page.locator('a:has-text("Add Student")')).toBeVisible();
 
     // The table should render (even if empty)
+    await page.locator('select#academic-session').selectOption({ value: 'aaaaaaaa-1111-1111-1111-111111111111' });
     await expect(page.locator('table')).toBeVisible();
     await expect(page.locator('text=Student E2E')).toBeVisible();
   });
@@ -37,7 +42,7 @@ test.describe('Students Page Authorization', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students');
+    await page.goto('/students?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Page should render successfully
     await expect(page.locator('h1:has-text("Students")')).toBeVisible();
@@ -46,6 +51,7 @@ test.describe('Students Page Authorization', () => {
     await expect(page.locator('a:has-text("Add Student")')).not.toBeVisible();
 
     // The table should render
+    await page.locator('select#academic-session').selectOption({ value: 'aaaaaaaa-1111-1111-1111-111111111111' });
     await expect(page.locator('table')).toBeVisible();
   });
 
@@ -55,7 +61,7 @@ test.describe('Students Page Authorization', () => {
     }
 
     // Access with a branch ID that the user does not belong to
-    await page.goto('/students?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03');
+    await page.goto('/students?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03&session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Should show Access Denied
     await expect(page.locator('text=Access Denied')).toBeVisible();
@@ -69,10 +75,10 @@ test.describe('Students/New Page Authorization', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students/new');
+    await page.goto('/students/new?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Page should render the enrollment form
-    await expect(page.locator('h1:has-text("Enroll New Student")')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Enroll New Student' })).toBeVisible({ timeout: 15000 });
     await expect(page.locator('input[name="firstName"]')).toBeVisible();
     await expect(page.locator('input[name="lastName"]')).toBeVisible();
   });
@@ -82,7 +88,7 @@ test.describe('Students/New Page Authorization', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students/new');
+    await page.goto('/students/new?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Should show insufficient permissions
     await expect(page.locator('text=Insufficient Permissions')).toBeVisible();
@@ -93,7 +99,7 @@ test.describe('Students/New Page Authorization', () => {
       test.skip(1 === 1, 'EXPECTED_ROLE_SCOPE');
     }
 
-    await page.goto('/students/new');
+    await page.goto('/students/new?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Verify the page source does not contain the old hardcoded UUIDs
     const content = await page.content();
@@ -107,7 +113,7 @@ test.describe('Students/New Page Authorization', () => {
     }
 
     // Attempt to access with a foreign branch
-    await page.goto('/students/new?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03');
+    await page.goto('/students/new?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03&session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Should show Access Denied
     await expect(page.locator('text=Access Denied')).toBeVisible();
@@ -122,7 +128,7 @@ test.describe('Students Detail Page Authorization', () => {
     }
 
     // Access a non-existent student ID within the authorized branch
-    await page.goto('/students/00000000-0000-0000-0000-000000000099');
+    await page.goto('/students/00000000-0000-0000-0000-000000000099?session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Should show "Student not found" (auth passes, but student doesn't exist)
     await expect(page.locator('text=Student not found')).toBeVisible();
@@ -134,7 +140,7 @@ test.describe('Students Detail Page Authorization', () => {
     }
 
     // Attempt to access with a foreign branch
-    await page.goto('/students/00000000-0000-0000-0000-000000000099?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03');
+    await page.goto('/students/00000000-0000-0000-0000-000000000099?branchId=eeeeeeee-eeee-eeee-eeee-eeeeeeeeee03&session=aaaaaaaa-1111-1111-1111-111111111111');
 
     // Should show Access Denied
     await expect(page.locator('text=Access Denied')).toBeVisible();

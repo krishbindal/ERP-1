@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { createRoom, updateRoom } from '../actions';
 import { Room } from './types';
 import { DrawerForm } from '@/app/academic-structure/components/DrawerForm';
+import { Input, Select } from '@/components/ui';
 
 export function RoomForm({ onClose, initialData, explicitBranchId }: { onClose: () => void; initialData?: Room | null; explicitBranchId?: string | null }) {
   const [error, setError] = useState<string | null>(null);
@@ -52,26 +53,37 @@ export function RoomForm({ onClose, initialData, explicitBranchId }: { onClose: 
       loading={loading}
       error={error}
     >
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-900">Name</label>
-        <div className="mt-1">
-          <input required defaultValue={initialData?.name} type="text" name="name" id="name" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
-        </div>
-      </div>
-      <div>
-        <label htmlFor="capacity" className="block text-sm font-medium text-gray-900">Capacity</label>
-        <div className="mt-1">
-          <input required defaultValue={initialData?.capacity || 30} type="number" min="1" name="capacity" id="capacity" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md" />
-        </div>
-      </div>
-      <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-900">Status</label>
-        <div className="mt-1">
-          <select required defaultValue={initialData?.status || 'ACTIVE'} name="status" id="status" className="block w-full shadow-sm sm:text-sm focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md">
-            <option value="ACTIVE">Active</option>
-            <option value="ARCHIVED">Archived</option>
-          </select>
-        </div>
+      <div className="space-y-4">
+        <Input
+          required
+          defaultValue={initialData?.name}
+          type="text"
+          name="name"
+          id="name"
+          label="Name"
+          placeholder="e.g. Science Lab 1"
+        />
+        <Input
+          required
+          defaultValue={initialData?.capacity || 30}
+          type="number"
+          min="1"
+          name="capacity"
+          id="capacity"
+          label="Capacity"
+          placeholder="30"
+        />
+        <Select
+          required
+          defaultValue={initialData?.status || 'ACTIVE'}
+          name="status"
+          id="status"
+          label="Status"
+          options={[
+            { value: 'ACTIVE', label: 'Active' },
+            { value: 'ARCHIVED', label: 'Archived' },
+          ]}
+        />
       </div>
     </DrawerForm>
   );

@@ -6,6 +6,7 @@ import { TimetableEntryForm } from './TimetableEntryForm';
 
 type Props = Readonly<{
   branchId: string;
+  academicYearId: string;
   entries: TimetableEntry[];
   periods: Period[];
   rooms: { id: string; name: string }[];
@@ -18,6 +19,7 @@ type Props = Readonly<{
 
 export function TimetableManager({
   branchId,
+  academicYearId,
   entries,
   periods,
   rooms,
@@ -39,6 +41,7 @@ export function TimetableManager({
       <div className="flex justify-end mb-4">
         {!isReadOnly && (
           <TimetableEntryForm 
+            academicYearId={academicYearId}
             branchId={branchId} 
             periods={periods} 
             rooms={rooms} 
@@ -50,7 +53,7 @@ export function TimetableManager({
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow border border-gray-200">
+      <div className="bg-surface rounded-lg shadow-xs border border-border">
         <TimetableGrid 
           entries={entries} 
           periods={periods} 
@@ -61,8 +64,9 @@ export function TimetableManager({
 
       {selectedEntry && !isReadOnly && (
         <TimetableEntryForm 
-          key={selectedEntry.id} // Ensure it re-mounts for new entries
-          branchId={branchId} 
+            key={selectedEntry.id}
+            academicYearId={academicYearId}
+            branchId={branchId} 
           periods={periods} 
           rooms={rooms} 
           classes={classes} 
@@ -77,3 +81,6 @@ export function TimetableManager({
     </>
   );
 }
+
+
+

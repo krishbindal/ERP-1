@@ -11,11 +11,11 @@ test.describe('Homework E2E - Phase 5', () => {
     test('Teacher creates, saves draft, and publishes', async ({ page }, testInfo) => {
       const projectIndex = testInfo.project.name === 'chromium-teacher' ? 3 : 0;
       
-      await page.goto('/homework');
+      await page.goto('/homework?session=aaaaaaaa-1111-1111-1111-111111111111');
       // Wait for the heading to appear. Use a higher timeout because it might be a cold start.
       await expect(page.getByRole('heading', { name: /Homework/i }).first()).toBeVisible({ timeout: 15000 });
 
-      await page.goto('/homework/new');
+      await page.goto('/homework/new?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: /Create Homework Assignment/i }).first()).toBeVisible({ timeout: 15000 });
 
       const uniqueTitle = `E2E Homework ${Date.now()}-${projectIndex}`;
@@ -24,10 +24,10 @@ test.describe('Homework E2E - Phase 5', () => {
       
       // Select the first valid section and subject
       const sectionSelect = page.locator('select[name="sectionId"]');
-      await sectionSelect.selectOption({ index: 1 });
+      await sectionSelect.selectOption({ value: 'aaaaaaaa-3333-3333-3333-333333333333' });
 
       const subjectSelect = page.locator('select[name="subjectId"]');
-      await subjectSelect.selectOption({ index: 1 });
+      await subjectSelect.selectOption({ value: 'aaaaaaaa-4444-4444-4444-444444444444' });
 
       // Dates
       const issueDate = new Date();
@@ -41,7 +41,7 @@ test.describe('Homework E2E - Phase 5', () => {
       await page.fill('input[name="dueAt"]', toDateTimeLocal(dueDate));
       await page.fill('input[name="maxMarks"]', '100');
 
-      await page.click('button[type="submit"]');
+      await page.getByRole('button', { name: 'Save Draft' }).click();
 
       // Should redirect to details
       await expect(page).toHaveURL(/\/homework\/[a-f0-9-]{36}/, { timeout: 15000 });
@@ -61,14 +61,14 @@ test.describe('Homework E2E - Phase 5', () => {
     });
 
     test('Guardian views homework but cannot submit', async ({ page }) => {
-      await page.goto('/homework');
+      await page.goto('/homework?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: /Homework/i }).first()).toBeVisible({ timeout: 15000 });
       
       // Guardian is read-only
       await expect(page.locator('text=Create Homework Assignment')).not.toBeVisible();
       
       // Navigate to seeded homework assignment
-      await page.goto('/homework/bbbbbbbb-5555-5555-5555-555555555555');
+      await page.goto('/homework/bbbbbbbb-5555-5555-5555-555555555555?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.locator('text=Due Date:').first()).toBeVisible({ timeout: 15000 });
       
       // Guardians cannot submit homework directly
@@ -84,7 +84,7 @@ test.describe('Homework E2E - Phase 5', () => {
     });
 
     test('Unauthorized access to creation page is blocked', async ({ page }) => {
-      await page.goto('/homework/new');
+      await page.goto('/homework/new?session=aaaaaaaa-1111-1111-1111-111111111111');
       await expect(page.getByRole('heading', { name: /Access Denied/i }).first()).toBeVisible({ timeout: 15000 });
     });
   });

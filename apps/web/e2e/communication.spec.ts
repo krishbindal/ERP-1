@@ -17,7 +17,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await page.selectOption('select[name="target_type"]', 'BRANCH');
 
     await expect(page.locator('select[name="target_id"]')).not.toBeVisible();
-    await page.click('button[type="submit"]');
+    await page.getByRole('button', { name: 'Send Message' }).click();
 
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
     await expect(page.locator('text=' + subject).first()).toBeVisible();
@@ -52,7 +52,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await page.fill('input[name="subject"]', subject);
     await page.fill('textarea[name="content"]', 'Teacher class announcement.');
 
-    await page.click('button[type="submit"]');
+    await page.getByRole('button', { name: 'Send Message' }).click();
     await expect(page).toHaveURL(/.*\/communication(?:\?.*)?$/);
     await expect(page.locator('text=' + subject).first()).toBeVisible();
     await teacher2Context.close();
@@ -83,7 +83,7 @@ test.describe('Communication End-to-End Workflows', () => {
     await teacherPage.fill('input[name="subject"]', subject);
     await teacherPage.fill('textarea[name="content"]', 'Please check your inbox.');
 
-    await teacherPage.click('button[type="submit"]');
+    await teacherPage.getByRole('button', { name: 'Send Message' }).click();
     await expect(teacherPage).toHaveURL(/.*\/communication(?:\?.*)?$/);
     await expect(teacherPage.locator('text=' + subject).first()).toBeVisible();
     await teacherContext.close();
@@ -102,21 +102,20 @@ test.describe('Communication End-to-End Workflows', () => {
     expect(msgData).toBeDefined();
 
     // Invoke the worker manually in E2E since there is no cron trigger.
-    // The worker processes batches (limit 10). We must poll until our specific event is processed.
-    let isCompleted = false;
-    let workerAttempts = 0;
-    while (!isCompleted && workerAttempts < 10) {
-      const workerRes = await request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
+    // Another concurrent test might have already triggered the worker and claimed our event.
+    // We must use deterministic polling to wait for the COMPLETED state.
+    await expect.poll(async () => {
+      // Trigger worker to ensure progress (if not already running)
+      await request.post(`${supabaseUrl}/functions/v1/communication-worker`, {
         headers: { 'Authorization': `Bearer ${serviceKey}` }
       });
-      expect(workerRes.status()).toBe(200);
       
       const { data: evt } = await adminClient.from('platform_events').select('status').eq('aggregate_id', msgData.id).single();
-      if (evt?.status === 'COMPLETED') {
-        isCompleted = true;
-      }
-      workerAttempts++;
-    }
+      return evt?.status;
+    }, {
+      message: 'Worker should process the platform event and mark it COMPLETED',
+      timeout: 15000,
+    }).toBe('COMPLETED');
 
     const { data: targetData, error: targetErr } = await adminClient.from('communication_message_targets').select('*').eq('message_id', msgData.id);
     expect(targetErr).toBeNull();
@@ -182,7 +181,7 @@ test.describe('Communication End-to-End Workflows', () => {
       await limitPage.fill('input[name="subject"]', subject);
       await limitPage.fill('textarea[name="content"]', `Test message body ${i}`);
 
-      await limitPage.click('button[type="submit"]');
+      await limitPage.getByRole('button', { name: 'Send Message' }).click();
 
       if (i <= 5) {
         // First 5 should succeed and redirect

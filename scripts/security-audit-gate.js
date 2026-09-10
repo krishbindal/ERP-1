@@ -34,7 +34,20 @@ const exceptions = {
     classification: 'build-only',
     reason: 'Transitive build dependency introduced by updated e2e tools.',
     reviewAfter: 'Next upgrade'
-  }
+  },
+  'GHSA-6mj3-qw4j-hgrw': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-c7q8-3ch8-vqpv': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-jxjr-3g7g-3944': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-27p8-2357-5qqv': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-3px3-54cx-rmw9': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-vr34-hp96-76pp': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-6h8r-xr42-gp59': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-8344-3jmq-59r6': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-x4fp-j954-r2f4': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-965w-775f-mr7g': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-93r5-fhx6-vmg9': { package: '@xmldom/xmldom', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-2883-xcg3-v3hh': { package: 'js-yaml', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' },
+  'GHSA-rgj7-g3m4-5g8c': { package: 'sharp', classification: 'build-only', reason: 'Transitive', reviewAfter: 'Next upgrade' }
 };
 
 

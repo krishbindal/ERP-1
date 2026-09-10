@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { createTimetableEntry, updateTimetableEntry } from '../actions';
 import { TeacherSelect } from "../../components/TeacherSelect";
 import { DrawerForm } from '@/app/academic-structure/components/DrawerForm';
+import { Button, ConfirmDialog, toast } from '@/components/ui';
 import { TimetableEntry, Period } from './TimetableGrid';
 
 interface Props {
+  academicYearId: string;
   branchId: string;
   periods: Period[];
   rooms: { id: string; name: string }[];
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export function TimetableEntryForm({
+  academicYearId,
   branchId,
   periods,
   rooms,
@@ -34,6 +37,7 @@ export function TimetableEntryForm({
   const [isOpen, setIsOpen] = useState(triggerOpen);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
 
   // Cascading state
   const [selectedClassId, setSelectedClassId] = useState<string>(initialData?.class_id || '');
@@ -44,6 +48,29 @@ export function TimetableEntryForm({
     setIsOpen(false);
     if (onClose) onClose();
   };
+
+  const handleArchive = async () => {
+    if (!initialData) return;
+    setLoading(true);
+    try {
+      const { archiveTimetableEntry } = await import('../actions');
+      const result = await archiveTimetableEntry(initialData.id, branchId);
+      if (result?.error) {
+        setError(result.error);
+        toast.error(result.error);
+      } else {
+        toast.success('Timetable entry archived successfully.');
+        setIsArchiveConfirmOpen(false);
+        handleClose();
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred.';
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -52,7 +79,8 @@ export function TimetableEntryForm({
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      class_id: formData.get('class_id') as string,
+      academic_year_id: academicYearId,
+        class_id: formData.get('class_id') as string,
       section_id: formData.get('section_id') as string,
       subject_id: formData.get('subject_id') as string,
       period_id: formData.get('period_id') as string,
@@ -88,12 +116,14 @@ export function TimetableEntryForm({
 
   return (
     <>
-      <button type="button" 
+      <Button
+        type="button"
+        variant="primary"
         onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+        className="min-h-[44px] sm:min-h-0"
       >
         {initialData ? 'Edit Entry' : 'Create Timetable Entry'}
-      </button>
+      </Button>
 
       {isOpen && (
         <DrawerForm
@@ -105,10 +135,11 @@ export function TimetableEntryForm({
         >
           <div className="space-y-4">
             <div>
-              <label htmlFor="class_id" className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-                <select id="class_id"
-                  name="class_id" 
-                className="w-full border border-gray-300 rounded-md p-2" 
+              <label htmlFor="class_id" className="block text-sm font-medium text-foreground mb-1">Class</label>
+              <select
+                id="class_id"
+                name="class_id" 
+                className="w-full border border-input bg-surface text-foreground rounded-md p-2 focus-ring text-sm" 
                 required 
                 defaultValue={selectedClassId}
                 onChange={(e) => setSelectedClassId(e.target.value)}
@@ -121,8 +152,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label htmlFor="section_id" className="block text-sm font-medium text-gray-700 mb-1">Section</label>
-              <select id="section_id" name="section_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.section_id || ''}>
+              <label htmlFor="section_id" className="block text-sm font-medium text-foreground mb-1">Section</label>
+              <select id="section_id" name="section_id" className="w-full border border-input bg-surface text-foreground rounded-md p-2 focus-ring text-sm" required defaultValue={initialData?.section_id || ''}>
                 <option value="">Select a section...</option>
                 {filteredSections.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -131,8 +162,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label htmlFor="subject_id" className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-              <select id="subject_id" name="subject_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.subject_id || ''}>
+              <label htmlFor="subject_id" className="block text-sm font-medium text-foreground mb-1">Subject</label>
+              <select id="subject_id" name="subject_id" className="w-full border border-input bg-surface text-foreground rounded-md p-2 focus-ring text-sm" required defaultValue={initialData?.subject_id || ''}>
                 <option value="">Select a subject...</option>
                 {subjects.map(s => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -143,8 +174,8 @@ export function TimetableEntryForm({
             <TeacherSelect teachers={teachers} id="staff_branch_profile_id" name="staff_branch_profile_id" label="Teacher" defaultValue={initialData?.staff_branch_profile_id || ''} />
 
             <div>
-              <label htmlFor="room_id" className="block text-sm font-medium text-gray-700 mb-1">Room</label>
-              <select id="room_id" name="room_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.room_id || ''}>
+              <label htmlFor="room_id" className="block text-sm font-medium text-foreground mb-1">Room</label>
+              <select id="room_id" name="room_id" className="w-full border border-input bg-surface text-foreground rounded-md p-2 focus-ring text-sm" required defaultValue={initialData?.room_id || ''}>
                 <option value="">Select a room...</option>
                 {rooms.map(r => (
                   <option key={r.id} value={r.id}>{r.name}</option>
@@ -153,8 +184,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label htmlFor="period_id" className="block text-sm font-medium text-gray-700 mb-1">Period</label>
-              <select id="period_id" name="period_id" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.period_id || ''}>
+              <label htmlFor="period_id" className="block text-sm font-medium text-foreground mb-1">Period</label>
+              <select id="period_id" name="period_id" className="w-full border border-input bg-surface text-foreground rounded-md p-2 focus-ring text-sm" required defaultValue={initialData?.period_id || ''}>
                 <option value="">Select a period...</option>
                 {periods.map(p => (
                   <option key={p.id} value={p.id}>{p.name} ({p.start_time} - {p.end_time})</option>
@@ -163,8 +194,8 @@ export function TimetableEntryForm({
             </div>
 
             <div>
-              <label htmlFor="day_of_week" className="block text-sm font-medium text-gray-700 mb-1">Day of Week</label>
-              <select id="day_of_week" name="day_of_week" className="w-full border border-gray-300 rounded-md p-2" required defaultValue={initialData?.day_of_week || ''}>
+              <label htmlFor="day_of_week" className="block text-sm font-medium text-foreground mb-1">Day of Week</label>
+              <select id="day_of_week" name="day_of_week" className="w-full border border-input bg-surface text-foreground rounded-md p-2 focus-ring text-sm" required defaultValue={initialData?.day_of_week || ''}>
                 <option value="">Select a day...</option>
                 <option value="1">Monday</option>
                 <option value="2">Tuesday</option>
@@ -177,29 +208,37 @@ export function TimetableEntryForm({
             </div>
 
             {initialData && (
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <button
+              <div className="pt-4 border-t border-border mt-4">
+                <Button
                   type="button"
-                  onClick={async () => {
-                    if (confirm('Are you sure you want to archive this timetable entry?')) {
-                      setLoading(true);
-                      const { archiveTimetableEntry } = await import('../actions');
-                      const result = await archiveTimetableEntry(initialData.id, branchId);
-                      setLoading(false);
-                      if (result?.error) setError(result.error);
-                      else handleClose();
-                    }
-                  }}
-                  className="w-full py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 font-medium text-sm"
+                  variant="destructive"
+                  onClick={() => setIsArchiveConfirmOpen(true)}
+                  className="w-full min-h-[44px] sm:min-h-0"
                   disabled={loading}
                 >
                   Archive Entry
-                </button>
+                </Button>
               </div>
             )}
           </div>
         </DrawerForm>
       )}
+
+      {/* Canonical ConfirmDialog: Archive Timetable Entry */}
+      <ConfirmDialog
+        isOpen={isArchiveConfirmOpen}
+        onClose={() => {
+          if (!loading) setIsArchiveConfirmOpen(false);
+        }}
+        onConfirm={handleArchive}
+        title="Archive Timetable Entry"
+        message="Are you sure you want to archive this timetable entry? This entry will be removed from the active schedule."
+        confirmText="Archive Entry"
+        cancelText="Cancel"
+        isDestructive={true}
+        isLoading={loading}
+      />
     </>
   );
 }
+

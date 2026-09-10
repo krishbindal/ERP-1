@@ -1,0 +1,11 @@
+npm ERR! Lifecycle script `start:web` failed with error: 
+npm ERR! Error: Missing script: "start:web"
+
+To see a list of scripts, run:
+  npm run 
+npm ERR!   in workspace: web@0.1.0 
+npm ERR!   at location: /mnt/c/Users/krish/Desktop/ERP 1/apps/web 
+npm ERR! Missing script: start:web
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /home/krish/.npm/_logs/2026-09-03T14_10_03_985Z-debug-0.log

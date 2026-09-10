@@ -3,6 +3,7 @@ import { BellSchedulesTable } from './components/BellSchedulesTable';
 import { PeriodsTable } from './components/PeriodsTable';
 import { createClient } from '@/lib/supabase/server';
 import { BranchAccessError } from './components/BranchAccessError';
+import Link from 'next/link';
 
 import {  verifyPageBranchContext } from '@/lib/branch-context';
 import { Room, BellSchedule, Period } from './components/types';
@@ -31,25 +32,65 @@ export default async function SchedulingPage(props: { searchParams: Promise<{ ta
     if (error) throw new Error(error.message);
     schedules = (data as BellSchedule[]) || [];
   } else if (tab === 'periods') {
-    const { data, error } = await supabase.from('periods').select('*, bell_schedules(name)').eq('branch_id', branchId).order('start_time', { ascending: true });
-    if (error) throw new Error(error.message);
-    periods = (data as Period[]) || [];
-
     if (!isReadOnly) {
-      const { data: schedData, error: schedError } = await supabase.from('bell_schedules').select('*').eq('branch_id', branchId).order('name', { ascending: true });
-      if (schedError) throw new Error(schedError.message);
-      schedules = (schedData as BellSchedule[]) || [];
+      const [periodsRes, schedRes] = await Promise.all([
+        supabase.from('periods').select('*, bell_schedules(name)').eq('branch_id', branchId).order('start_time', { ascending: true }),
+        supabase.from('bell_schedules').select('*').eq('branch_id', branchId).order('name', { ascending: true }),
+      ]);
+      if (periodsRes.error) throw new Error(periodsRes.error.message);
+      if (schedRes.error) throw new Error(schedRes.error.message);
+      periods = (periodsRes.data as Period[]) || [];
+      schedules = (schedRes.data as BellSchedule[]) || [];
+    } else {
+      const { data, error } = await supabase.from('periods').select('*, bell_schedules(name)').eq('branch_id', branchId).order('start_time', { ascending: true });
+      if (error) throw new Error(error.message);
+      periods = (data as Period[]) || [];
     }
   }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Scheduling</h1>
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <a href={`?tab=rooms${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`} className={`${tab === 'rooms' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Rooms</a>
-          <a href={`?tab=schedules${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`} className={`${tab === 'schedules' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Bell Schedules</a>
-          <a href={`?tab=periods${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`} className={`${tab === 'periods' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}>Periods</a>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Scheduling</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Configure rooms, bell schedules, and periods for instructional operations.
+        </p>
+      </div>
+      <div className="border-b border-border">
+        <nav className="-mb-px flex space-x-8 overflow-x-auto">
+          <Link
+            href={`?tab=rooms${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`}
+            aria-current={tab === 'rooms' ? 'page' : undefined}
+            className={`${
+              tab === 'rooms'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border font-medium'
+            } whitespace-nowrap py-3 px-1 border-b-2 text-sm transition-colors`}
+          >
+            Rooms
+          </Link>
+          <Link
+            href={`?tab=schedules${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`}
+            aria-current={tab === 'schedules' ? 'page' : undefined}
+            className={`${
+              tab === 'schedules'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border font-medium'
+            } whitespace-nowrap py-3 px-1 border-b-2 text-sm transition-colors`}
+          >
+            Bell Schedules
+          </Link>
+          <Link
+            href={`?tab=periods${explicitBranchId ? '&branchId=' + explicitBranchId : ''}`}
+            aria-current={tab === 'periods' ? 'page' : undefined}
+            className={`${
+              tab === 'periods'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border font-medium'
+            } whitespace-nowrap py-3 px-1 border-b-2 text-sm transition-colors`}
+          >
+            Periods
+          </Link>
         </nav>
       </div>
       <div>

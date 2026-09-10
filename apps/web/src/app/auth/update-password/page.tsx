@@ -3,81 +3,150 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updatePasswordAction } from './actions';
+import { Card, CardHeader, CardDescription, CardContent } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { AlertCircle, CheckCircle2, Circle, KeyRound } from 'lucide-react';
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const isMinLength = password.length >= 6;
+  const isMatching = password.length > 0 && confirm.length > 0 && password === confirm;
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="p-6 max-w-sm w-full bg-white shadow rounded">
-        <h1 className="text-xl font-bold mb-2">Update Password</h1>
-        <p className="text-sm text-gray-600 mb-6">You must change your password before continuing.</p>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+      <Card className="max-w-md w-full shadow-lg border-border bg-surface">
+        <CardHeader className="space-y-1.5 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <KeyRound className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Update Password</h1>
+          <CardDescription className="text-sm text-muted-foreground">
+            You must change your password before continuing.
+          </CardDescription>
+        </CardHeader>
         
-        {error && <div className="text-red-500 mb-4 text-sm">{error}</div>}
-        
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            setError('');
-            const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
-            const confirm = (e.currentTarget.elements.namedItem('confirm') as HTMLInputElement).value;
-            
-            if (password.length < 6) {
-              setError('Password must be at least 6 characters.');
-              return;
-            }
-            if (password !== confirm) {
-              setError('Passwords do not match.');
-              return;
-            }
+        <CardContent>
+          {error && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="mb-4 flex items-start gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm font-medium text-destructive text-red-500"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>{error}</span>
+            </div>
+          )}
+          
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError('');
+              
+              if (password.length < 6) {
+                setError('Password must be at least 6 characters.');
+                return;
+              }
+              if (password !== confirm) {
+                setError('Passwords do not match.');
+                return;
+              }
 
-            setLoading(true);
-            const result = await updatePasswordAction(password);
-            setLoading(false);
+              setLoading(true);
+              try {
+                const result = await updatePasswordAction(password);
+                setLoading(false);
 
-            if (result.error) {
-              setError(result.error);
-            } else {
-              router.push('/');
-            }
-          }}
-        >
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">New Password</label>
-            <input 
+                if (result.error) {
+                  setError(result.error);
+                } else {
+                  router.push('/');
+                }
+              } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Failed to update password. Please try again.';
+                setError(message);
+                setLoading(false);
+              }
+            }}
+            className="space-y-4"
+          >
+            <Input 
               type="password" 
               id="password" 
               name="password"
+              label="New Password"
               required
               disabled={loading}
-              className="mt-1 p-2 w-full border rounded" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
             />
-          </div>
-          <div className="mb-6">
-            <label htmlFor="confirm" className="block text-sm font-medium text-gray-700">Confirm Password</label>
-            <input 
+
+            <Input 
               type="password" 
               id="confirm" 
               name="confirm"
+              label="Confirm Password"
               required
               disabled={loading}
-              className="mt-1 p-2 w-full border rounded" 
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
             />
+
+            {/* Visual validation status indicators */}
+            <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-2 text-xs" aria-live="polite">
+              <p className="font-medium text-foreground">Password requirements:</p>
+              <div className="flex items-center gap-2">
+                {isMinLength ? (
+                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden="true" />
+                ) : (
+                  <Circle className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                )}
+                <span className={isMinLength ? 'text-success font-medium' : 'text-muted-foreground'}>
+                  At least 6 characters
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {isMatching ? (
+                  <CheckCircle2 className="h-4 w-4 text-success shrink-0" aria-hidden="true" />
+                ) : (
+                  <Circle className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                )}
+                <span className={isMatching ? 'text-success font-medium' : 'text-muted-foreground'}>
+                  Passwords match
+                </span>
+              </div>
+            </div>
+
+            <Button 
+              type="submit" 
+              variant="primary"
+              size="lg"
+              className="w-full font-semibold"
+              disabled={loading}
+              isLoading={loading}
+              loadingText="Updating..."
+            >
+              Update Password
+            </Button>
+          </form>
+
+          <div className="mt-4 text-center">
+            <a 
+              href="/auth/logout" 
+              className="text-sm font-medium text-primary hover:underline focus-ring rounded transition-colors"
+            >
+              Sign out
+            </a>
           </div>
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-blue-600 text-white p-2 rounded disabled:opacity-50"
-          >
-            {loading ? 'Updating...' : 'Update Password'}
-          </button>
-        </form>
-        <div className="mt-4 text-center">
-          <a href="/auth/logout" className="text-sm text-blue-600 hover:underline">Sign out</a>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

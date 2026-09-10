@@ -1,0 +1,1829 @@
+diff --git a/.github/workflows/schoolos-pipeline.yml b/.github/workflows/schoolos-pipeline.yml
+index 3f3ec7d..37ca8b4 100644
+--- a/.github/workflows/schoolos-pipeline.yml
++++ b/.github/workflows/schoolos-pipeline.yml
+@@ -1,254 +1,209 @@
+-name: SchoolOS Unified Pipeline
+-
+-on:
+-  push:
+-    branches: [master]
+-  pull_request:
+-    branches: [master]
+-  workflow_dispatch:
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  validate:
+-    name: Core Validation & E2E
+-    runs-on: [self-hosted, linux, x64, schoolos-ci]
+-    
+-    steps:
+-      - name: Checkout commit
+-        uses: actions/checkout@v5
+-        with:
+-          clean: true
+-          fetch-depth: 0
+-
+-      - name: Setup Node
+-        uses: actions/setup-node@v5
+-        with:
+-          node-version: '22'
+-
+-      - name: Install dependencies
+-        run: npm ci --ignore-scripts
+-
+-      - name: Verify Playwright Browsers
+-        run: |
+-          chmod +x scripts/ci-runner-preflight.sh
+-          ./scripts/ci-runner-preflight.sh
+-
+-      - name: Lint
+-        run: npm run lint --workspaces --if-present
+-
+-      - name: Typecheck
+-        run: npm run typecheck --workspaces --if-present
+-
+-      - name: Unit Tests
+-        run: npm run test --workspaces --if-present
+-
+-
+-      - name: Run Full Audit (Artifact)
+-        run: npm audit --json > audit-full.json || true
+-        
+-      - name: Run Production Audit (Artifact)
+-        run: npm audit --omit=dev --json > audit-prod.json || true
+-
+-      - name: Security Gate (Check exceptions)
+-        run: node scripts/security-audit-gate.js < audit-full.json
+-
+-      - name: Cleanup Stale Environment
+-        run: |
+-          chmod +x scripts/ci-cleanup.sh
+-          ./scripts/ci-cleanup.sh
+-
+-      - name: Verify Clean State
+-        run: |
+-          STALE=$(docker ps -q -f label=com.supabase.cli.project=ERP_1)
+-          if [ -n "$STALE" ]; then
+-            echo "::error::Stale containers for ERP_1 remain after cleanup!"
+-            docker ps -a -f label=com.supabase.cli.project=ERP_1
+-            exit 1
+-          fi
+-
+-      - name: Environment Preflight
+-        run: |
+-          chmod +x scripts/ci-env-preflight.sh
+-          ./scripts/ci-env-preflight.sh
+-
+-      - name: Start Local Supabase
+-        run: |
+-          if ! timeout 600s npx --no-install supabase start -x realtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
+-            echo "::error::Supabase start failed or timed out!"
+-            echo "--- Diagnostic Trap ---"
+-            docker ps -a
+-            for c in $(docker ps -a -q -f label=com.supabase.cli.project=ERP_1); do
+-              echo "--- Inspecting $c ---"
+-              docker inspect $c
+-              docker inspect $c --format '{{json .State}}'
+-              docker inspect $c --format '{{.State.ExitCode}}'
+-              docker inspect $c --format '{{.State.Error}}'
+-              docker inspect $c --format '{{.State.OOMKilled}}'
+-              echo "--- Logs $c ---"
+-              docker logs $c || true
+-              echo "--- Port $c ---"
+-              docker port $c || true
+-            done
+-            echo "--- System Diagnostics ---"
+-            docker stats --no-stream || true
+-            docker events --since 5m --until 0m -f label=com.supabase.cli.project=ERP_1 || true
+-            ss -ltnp || true
+-            docker network ls || true
+-            docker network inspect supabase_network_ERP_1 || true
+-            echo "--- Start Output ---"
+-            cat start_output.log || true
+-            exit 1
+-          fi
+-
+-      - name: Wait for PostgreSQL Readiness
+-        run: |
+-          echo "Waiting for PostgreSQL to be ready..."
+-          DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
+-          if [ -n "$DB_CONTAINER" ]; then
+-            until docker exec $DB_CONTAINER pg_isready -U postgres; do
+-              echo "Waiting for postgres..."
+-              sleep 2
+-            done
+-          else
+-            echo "Supabase DB container not found!"
+-            exit 1
+-          fi
+-
+-      - name: Database Tests (pgTAP & RLS)
+-        run: |
+-          echo "Discovering Supabase configuration..."
+-          DB_CONTAINER=$(docker ps -qf name="supabase_db_")
+-          if [ -z "$DB_CONTAINER" ]; then
+-            echo "Supabase DB container not found!"
+-            exit 1
+-          fi
+-          
+-          NETWORK_NAME=$(docker inspect $DB_CONTAINER --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+-          DB_NAME=$(docker inspect $DB_CONTAINER --format='{{.Name}}' | sed 's/^\///')
+-          
+-          echo "Network: $NETWORK_NAME"
+-          echo "DB Host: $DB_NAME"
+-          
+-          echo "Initializing pgTAP..."
+-          docker exec "$DB_NAME" psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;"
+-          
+-          echo "Copying tests to a native Docker volume to prevent WSL 9p deadlock..."
+-          docker volume create pg_tests_volume
+-          docker create -v pg_tests_volume:/tests --name pg_tests_dummy alpine /bin/true
+-          docker cp ${{ github.workspace }}/supabase/tests/. pg_tests_dummy:/tests/
+-          docker rm pg_tests_dummy
+-
+-          echo "Running pg_prove tests..."
+-          TEST_EXIT=0
+-          
+-          set +e
+-          docker run --rm \
+-            --network "$NETWORK_NAME" \
+-            -v pg_tests_volume:/tests:ro \
+-            -e PGHOST="$DB_NAME" \
+-            -e PGUSER=postgres \
+-            -e PGPASSWORD=postgres \
+-            -e PGDATABASE=postgres \
+-            public.ecr.aws/supabase/pg_prove:3.36 \
+-            pg_prove --ext .sql -r /tests/db
+-          TEST_EXIT=$?
+-          set -e
+-          
+-          echo "Cleaning up pgTAP..."
+-          CLEANUP_EXIT=0
+-          docker exec "$DB_NAME" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DROP EXTENSION IF EXISTS pgtap;" || CLEANUP_EXIT=$?
+-          
+-          echo "Removing native Docker volume..."
+-          docker volume rm pg_tests_volume || true
+-          
+-          if [ "$TEST_EXIT" -ne 0 ]; then
+-            echo "Database tests FAILED with exit code $TEST_EXIT"
+-            exit "$TEST_EXIT"
+-          fi
+-          
+-          if [ "$CLEANUP_EXIT" -ne 0 ]; then
+-            echo "pgTAP cleanup FAILED with exit code $CLEANUP_EXIT"
+-            exit "$CLEANUP_EXIT"
+-          fi
+-          
+-          echo "Database tests and pgTAP cleanup completed successfully."
+-
+-      - name: Export Supabase Environment Variables
+-        run: |
+-          API_URL=$(npx --no-install supabase status -o env | grep API_URL | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+-          ANON_KEY=$(npx --no-install supabase status -o env | grep ANON_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+-          SERVICE_KEY=$(npx --no-install supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
+-          
+-          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
+-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
+-          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
+-          
+-          echo "Playwright Preflight Environment Check:"
+-          echo "NEXT_PUBLIC_SUPABASE_URL: ${API_URL:+PRESENT}"
+-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:+PRESENT}"
+-          echo "SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_KEY:+PRESENT}"
+-          
+-          if ! [[ "$API_URL" =~ ^https?:// ]]; then
+-            echo "::error::NEXT_PUBLIC_SUPABASE_URL is not a valid HTTP/HTTPS URL! Found: '$API_URL'"
+-            exit 1
+-          fi
+-          
+-          if [[ -z "$API_URL" || -z "$ANON_KEY" ]]; then
+-            echo "::error::Missing required Supabase environment variables for Playwright!"
+-            exit 1
+-          fi
+-
+-      - name: Build Web
+-        run: npm run build:web
+-
+-      - name: Worker Runtime Certification
+-        run: |
+-          echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
+-          npx --no-install supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
+-          echo "Waiting for communication-worker..."
+-          for i in {1..15}; do
+-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:54321/functions/v1/communication-worker || echo "000")
+-            if [ "$STATUS" = "405" ] || [ "$STATUS" = "401" ]; then
+-              echo "Worker is ready!"
+-              break
+-            fi
+-            echo "Waiting... (Status: $STATUS)"
+-            sleep 2
+-          done
+-          node scripts/test-worker.js
+-
+-      - name: Run Playwright Tests
+-        env:
+-          PLAYWRIGHT_GIT_COMMIT_INFO: 0
+-          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
+-        run: |
+-          cd apps/web
+-          npx --no-install playwright test --reporter=line,json
+-
+-      - name: Verify JSON Certification Artifact
+-        run: |
+-          node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
+-
+-      - name: Upload Certification Artifacts
+-        uses: actions/upload-artifact@v4
+-        if: always()
+-        with:
+-          name: schoolos-certification-artifacts
+-          path: |
+-            apps/web/playwright-report/results.json
+-            audit-full.json
+-            audit-prod.json
+-          retention-days: 14
+-
+-
+-
+-      - name: Cleanup Workspace
+-        if: always()
+-        run: |
+-          pkill -f "playwright" || true
+-          pkill -f "chrome" || true
+-          pkill -f "webkit" || true
+-          pkill -f "next" || true
+-          pkill -f "supabase functions serve" || true
++name: SchoolOS Unified Pipeline
++
++on:
++  push:
++    branches: [master]
++  pull_request:
++    branches: [master]
++  workflow_dispatch:
++
++permissions:
++  contents: read
++
++jobs:
++  validate:
++    name: Core Validation & E2E
++    runs-on: [self-hosted, linux, x64, schoolos-ci]
++
++    steps:
++      - name: Checkout commit
++        uses: actions/checkout@v5
++        with:
++          clean: true
++          fetch-depth: 0
++
++      - name: Setup Node
++        uses: actions/setup-node@v5
++        with:
++          node-version: '22'
++
++      - name: Install dependencies
++        run: npm ci --ignore-scripts
++
++      - name: Verify Playwright Browsers
++        run: |
++          chmod +x scripts/ci-runner-preflight.sh
++          ./scripts/ci-runner-preflight.sh
++
++      - name: Lint
++        run: npm run lint --workspaces --if-present
++
++      - name: Typecheck
++        run: npm run typecheck --workspaces --if-present
++
++      - name: Unit Tests
++        run: npm run test --workspaces --if-present
++
++      - name: Run Full Audit (Artifact)
++        run: npm audit --json > audit-full.json || true
++
++      - name: Run Production Audit (Artifact)
++        run: npm audit --omit=dev --json > audit-prod.json || true
++
++      - name: Security Gate (Check exceptions)
++        run: node scripts/security-audit-gate.js < audit-full.json
++
++      - name: Cleanup Stale Environment
++        run: |
++          chmod +x scripts/ci-cleanup.sh
++          ./scripts/ci-cleanup.sh
++
++      - name: Verify Clean State
++        run: |
++          STALE=$(docker ps -q -f label=com.supabase.cli.project=ERP_1)
++          if [ -n "$STALE" ]; then
++            echo "::error::Stale containers for ERP_1 remain after cleanup!"
++            docker ps -a -f label=com.supabase.cli.project=ERP_1
++            exit 1
++          fi
++
++      - name: Environment Preflight
++        run: |
++          chmod +x scripts/ci-env-preflight.sh
++          ./scripts/ci-env-preflight.sh
++
++      - name: Start Local Supabase
++        run: |
++          if ! timeout 600s npx --no-install supabase start -x realtime -x studio -x postgres-meta -x mailpit -x imgproxy -x logflare -x vector -x supavisor --debug > start_output.log 2>&1; then
++            echo "::error::Supabase start failed or timed out!"
++            echo "--- Diagnostic Trap ---"
++            docker ps -a
++            for c in $(docker ps -a -q -f label=com.supabase.cli.project=ERP_1); do
++              echo "--- Inspecting $c ---"
++              docker inspect $c
++              docker inspect $c --format '{{json .State}}'
++              docker inspect $c --format '{{.State.ExitCode}}'
++              docker inspect $c --format '{{.State.Error}}'
++              docker inspect $c --format '{{.State.OOMKilled}}'
++              echo "--- Logs $c ---"
++              docker logs $c || true
++              echo "--- Port $c ---"
++              docker port $c || true
++            done
++            echo "--- System Diagnostics ---"
++            docker stats --no-stream || true
++            docker events --since 5m --until 0m -f label=com.supabase.cli.project=ERP_1 || true
++            ss -ltnp || true
++            docker network ls || true
++            docker network inspect supabase_network_ERP_1 || true
++            echo "--- Start Output ---"
++            cat start_output.log || true
++            exit 1
++          fi
++
++      - name: Wait for PostgreSQL Readiness
++        run: |
++          echo "Waiting for PostgreSQL to be ready..."
++          DB_CONTAINER=$(docker ps -q -f label=com.supabase.cli.project=ERP_1 -f name=supabase_db_)
++          if [ -n "$DB_CONTAINER" ]; then
++            until docker exec $DB_CONTAINER pg_isready -U postgres; do
++              echo "Waiting for postgres..."
++              sleep 2
++            done
++          else
++            echo "Supabase DB container not found!"
++            exit 1
++          fi
++
++      - name: Database Tests (pgTAP & RLS)
++        run: |
++          echo "Discovering Supabase configuration..."
++          DB_CONTAINER=$(docker ps -qf name="supabase_db_")
++          if [ -z "$DB_CONTAINER" ]; then
++            echo "Supabase DB container not found!"
++            exit 1
++          fi
++          NETWORK_NAME=$(docker inspect $DB_CONTAINER --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')
++          DB_NAME=$(docker inspect $DB_CONTAINER --format='{{.Name}}' | sed 's/^\///')
++          echo "Network: $NETWORK_NAME"
++          echo "DB Host: $DB_NAME"
++          docker exec "$DB_NAME" psql -U postgres -d postgres -c "CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;"
++          docker volume create pg_tests_volume
++          docker create -v pg_tests_volume:/tests --name pg_tests_dummy alpine /bin/true
++          docker cp ${{ github.workspace }}/supabase/tests/. pg_tests_dummy:/tests/
++          docker rm pg_tests_dummy
++          TEST_EXIT=0
++          set +e
++          docker run --rm \
++            --network "$NETWORK_NAME" \
++            -v pg_tests_volume:/tests:ro \
++            -e PGHOST="$DB_NAME" -e PGUSER=postgres -e PGPASSWORD=postgres -e PGDATABASE=postgres \
++            public.ecr.aws/supabase/pg_prove:3.36_amd64@sha256:715739e7fdd07a8631c36ea2f1c88fc0144f99a8f5eaa6c3a9799be377f94f2c \
++            pg_prove --ext .sql -r /tests/db
++          TEST_EXIT=$?
++          set -e
++          CLEANUP_EXIT=0
++          docker exec "$DB_NAME" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DROP EXTENSION IF EXISTS pgtap;" || CLEANUP_EXIT=$?
++          docker volume rm pg_tests_volume || true
++          if [ "$TEST_EXIT" -ne 0 ]; then exit "$TEST_EXIT"; fi
++          if [ "$CLEANUP_EXIT" -ne 0 ]; then exit "$CLEANUP_EXIT"; fi
++          echo "Database tests and pgTAP cleanup completed successfully."
++
++      - name: Export Supabase Environment Variables
++        run: |
++          API_URL=$(npx --no-install supabase status -o env | grep API_URL | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
++          ANON_KEY=$(npx --no-install supabase status -o env | grep ANON_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
++          SERVICE_KEY=$(npx --no-install supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2- | sed 's/[^a-zA-Z0-9:\/\.\_\-]//g')
++          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
++          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
++          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
++          echo "NEXT_PUBLIC_SUPABASE_URL: ${API_URL:+PRESENT}"
++          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY: ${ANON_KEY:+PRESENT}"
++          echo "SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_KEY:+PRESENT}"
++          if ! [[ "$API_URL" =~ ^https?:// ]]; then exit 1; fi
++          if [[ -z "$API_URL" || -z "$ANON_KEY" ]]; then exit 1; fi
++
++      - name: Build Web
++        run: npm run build:web
++
++      - name: Worker Runtime Certification
++        run: |
++          echo "USE_MOCK_PROVIDERS=true" > supabase/.env.local
++          npx --no-install supabase functions serve communication-worker --env-file supabase/.env.local --no-verify-jwt &
++          for i in {1..15}; do
++            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:54321/functions/v1/communication-worker || echo "000")
++            if [ "$STATUS" = "405" ] || [ "$STATUS" = "401" ]; then break; fi
++            sleep 2
++          done
++          node scripts/test-worker.js
++
++      - name: Run Playwright Tests
++        env:
++          PLAYWRIGHT_GIT_COMMIT_INFO: 0
++          PLAYWRIGHT_JSON_OUTPUT_NAME: playwright-report/results.json
++        run: |
++          cd apps/web
++          npx --no-install playwright test --reporter=line,json
++
++      - name: Verify JSON Certification Artifact
++        run: node scripts/verify-playwright-results.js apps/web/playwright-report/results.json
++
++      - name: Upload Certification Artifacts
++        uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: schoolos-certification-artifacts
++          path: |
++            apps/web/playwright-report/results.json
++            audit-full.json
++            audit-prod.json
++          retention-days: 14
++
++      - name: Cleanup Workspace
++        if: always()
++        run: |
++          pkill -f "playwright" || true
++          pkill -f "chrome" || true
++          pkill -f "webkit" || true
++          pkill -f "next" || true
++          pkill -f "supabase functions serve" || true
+diff --git a/apps/web/src/app/login/page.tsx b/apps/web/src/app/login/page.tsx
+index 93a5191..dc1d3dc 100644
+--- a/apps/web/src/app/login/page.tsx
++++ b/apps/web/src/app/login/page.tsx
+@@ -12,11 +12,29 @@ export default function LoginPage() {
+       <form
+         onSubmit={async (e) => {
+           e.preventDefault();
+-          console.log("Submitting form...");
+           const email = (e.currentTarget.elements.namedItem("email") as HTMLInputElement).value;
+           const password = (e.currentTarget.elements.namedItem("password") as HTMLInputElement).value;
+           const supabase = createClient();
+-          
++
++          const waitForCookies = new Promise<void>((resolve) => {
++            let settled = false;
++            const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
++              if (event === 'SIGNED_IN' && !settled) {
++                settled = true;
++                subscription.unsubscribe();
++                setTimeout(resolve, 50);
++              }
++            });
++
++            setTimeout(() => {
++              if (!settled) {
++                settled = true;
++                subscription.unsubscribe();
++                resolve();
++              }
++            }, 1000);
++          });
++
+           let authError = null;
+           for (let i = 0; i < 10; i++) {
+             const { error } = await supabase.auth.signInWithPassword({ email, password });
+@@ -26,7 +44,6 @@ export default function LoginPage() {
+             }
+             authError = error;
+             if (error.message === 'Failed to fetch') {
+-              console.warn(`signInWithPassword failed to fetch, retrying ${i + 1}/3...`);
+               await new Promise(r => setTimeout(r, 1000));
+             } else {
+               break;
+@@ -35,33 +52,11 @@ export default function LoginPage() {
+ 
+           if (authError) {
+             setError(authError.message);
+-          } else {
+-            console.log("LOGIN SUCCESS! Navigating...");
+-            
+-            // Wait for onAuthStateChange to fire and write cookies before navigating
+-            // We use a Promise that resolves when the `SIGNED_IN` event is received
+-            const waitForCookies = new Promise<void>((resolve) => {
+-              const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+-                if (event === 'SIGNED_IN') {
+-                  subscription.unsubscribe();
+-                  // Wait an extra 50ms to ensure the browser has completely persisted the cookie chunks
+-                  setTimeout(resolve, 50);
+-                }
+-              });
+-              
+-              // Fallback resolve after 1 second if event doesn't fire
+-              setTimeout(() => {
+-                subscription.unsubscribe();
+-                resolve();
+-              }, 1000);
+-            });
+-
+-            await waitForCookies;
+-            
+-            // Use hard navigation to avoid Playwright Next.js router cache timeouts
+-            // eslint-disable-next-line
+-            window.location.href = "/";
++            return;
+           }
++
++          await waitForCookies;
++          window.location.href = "/";
+         }}
+       >
+         <div className="mb-4">
+diff --git a/apps/web/src/proxy.ts b/apps/web/src/proxy.ts
+index 73c6f1a..c4e3793 100644
+--- a/apps/web/src/proxy.ts
++++ b/apps/web/src/proxy.ts
+@@ -2,12 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
+ import { NextResponse, type NextRequest } from 'next/server'
+ 
+ export async function proxy(request: NextRequest) {
+-  console.log("PROXY CALLED:", request.nextUrl.pathname);
+-  let response = NextResponse.next({
+-    request: {
+-      headers: request.headers,
+-    },
+-  })
++  let response = NextResponse.next({ request: { headers: request.headers } })
+ 
+   const supabase = createServerClient(
+     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+@@ -18,78 +13,54 @@ export async function proxy(request: NextRequest) {
+           return request.cookies.get(name)?.value
+         },
+         set(name: string, value: string, options: CookieOptions) {
+-          request.cookies.set({
+-            name,
+-            value,
+-            ...options,
+-          })
+-          response = NextResponse.next({
+-            request: {
+-              headers: request.headers,
+-            },
+-          })
+-          response.cookies.set({
+-            name,
+-            value,
+-            ...options,
+-          })
++          request.cookies.set({ name, value, ...options })
++          response = NextResponse.next({ request: { headers: request.headers } })
++          response.cookies.set({ name, value, ...options })
+         },
+         remove(name: string, options: CookieOptions) {
+-          request.cookies.set({
+-            name,
+-            value: '',
+-            ...options,
+-          })
+-          response = NextResponse.next({
+-            request: {
+-              headers: request.headers,
+-            },
+-          })
+-          response.cookies.set({
+-            name,
+-            value: '',
+-            ...options,
+-          })
++          request.cookies.set({ name, value: '', ...options })
++          response = NextResponse.next({ request: { headers: request.headers } })
++          response.cookies.set({ name, value: '', ...options })
+         },
+       },
+     }
+   )
+ 
+-  let user = null;
+-  let error = null;
++  let user = null
+   for (let i = 0; i < 5; i++) {
+-    const res = await supabase.auth.getUser();
+-    user = res.data?.user;
+-    error = res.error;
+-    if (!error || error.message !== 'Failed to fetch') break;
+-    console.warn(`proxy.ts getUser failed to fetch, retrying ${i + 1}/5...`);
+-    await new Promise(r => setTimeout(r, 1000));
++    const res = await supabase.auth.getUser()
++    user = res.data?.user ?? null
++    if (!res.error || res.error.message !== 'Failed to fetch') break
++    console.warn(`proxy auth lookup failed to fetch; retry ${i + 1}/5`)
++    await new Promise(resolve => setTimeout(resolve, 1000))
+   }
+ 
+-  const isLoginRoute = request.nextUrl.pathname.startsWith('/login');
+-  const isAuthUpdateRoute = request.nextUrl.pathname.startsWith('/auth/update-password');
+-  const isAuthActionRoute = request.nextUrl.pathname.startsWith('/auth');
++  const pathname = request.nextUrl.pathname
++  const isLoginRoute = pathname === '/login'
++  const isAuthUpdateRoute = pathname === '/auth/update-password'
++  const isLogoutRoute = pathname === '/auth/logout'
+ 
+-  console.log("PROXY CHECK USER:", { user: !!user, error, path: request.nextUrl.pathname, cookies: request.cookies.getAll().map(c => c.name) });
+-
+-  if (!user && !isLoginRoute && !isAuthActionRoute) {
++  if (!user && !isLoginRoute && !isLogoutRoute) {
+     return NextResponse.redirect(new URL('/login', request.url))
+   }
+ 
+   if (user) {
+-    // If logged in, check if password reset is required
+-    const { data: requiresReset, error: rpcError } = await supabase.rpc('requires_password_reset');
+-    console.log("PROXY RPC requires_password_reset:", { requiresReset, rpcError, userId: user.id, path: request.nextUrl.pathname });
+-    
+-    if (requiresReset) {
+-      if (!isAuthUpdateRoute && !request.nextUrl.pathname.startsWith('/auth/logout')) {
+-        return NextResponse.redirect(new URL('/auth/update-password', request.url));
++    const { data: requiresReset, error: rpcError } = await supabase.rpc('requires_password_reset')
++
++    if (rpcError) {
++      console.error('Password reset security check failed', { code: rpcError.code ?? 'unknown' })
++      if (!isLoginRoute && !isLogoutRoute) {
++        return NextResponse.redirect(new URL('/login?error=security-check', request.url))
+       }
+-    } else {
+-      // If no reset required but they are on login page, redirect to home
+-      if (isLoginRoute) {
+-        return NextResponse.redirect(new URL('/', request.url));
++      return response
++    }
++
++    if (requiresReset) {
++      if (!isAuthUpdateRoute && !isLogoutRoute) {
++        return NextResponse.redirect(new URL('/auth/update-password', request.url))
+       }
++    } else if (isLoginRoute) {
++      return NextResponse.redirect(new URL('/', request.url))
+     }
+   }
+ 
+diff --git a/docs/IDENTIFIER_ENGINE_DESIGN.md b/docs/IDENTIFIER_ENGINE_DESIGN.md
+index c8720f0..c625a6b 100644
+--- a/docs/IDENTIFIER_ENGINE_DESIGN.md
++++ b/docs/IDENTIFIER_ENGINE_DESIGN.md
+@@ -1,122 +1,20 @@
+ # Identifier Engine Design
+ 
+-## 1. Specification & Requirement Analysis
+-**Requirement (Master Spec 39_PROJECT_ROADMAP.md):** 
+-"Support school/branch-configurable templates for identifiers such as: student code, invoice/reference numbers where applicable, other approved entity identifiers. Generators may use approved context such as organization, branch, academic year, prefix, and sequence. The system remains authoritative for uniqueness and numbering. Concurrent generation must be deterministic and collision-safe; failed transactions must not create duplicate identifiers."
++## 1. Purpose
++The identifier engine provides configurable human-readable identifiers while UUIDs remain system primary keys. Approved scope can include organization, branch, academic year, prefix, and sequence.
+ 
+-**Entities Requiring Business Identifiers:**
+-- `student_branch_profiles` (student code / student_id_local)
+-- Invoices / Fees (Phase 7 / Future)
+-- Staff (staff code / staff_id_local - if required later)
+-- Exams / Report Cards (Phase 6 / Future)
++## 2. Generation and transaction semantics
++`generate_business_identifier()` uses an atomic `UPDATE ... RETURNING` against one sequence row. PostgreSQL serializes concurrent updates to the same row, preventing duplicate sequence values.
+ 
+-**Scope of Numbering:**
+-- Organization (Global to the trust)
+-- Branch (Unique per school branch)
+-- Academic Year (Restarts every year)
+-- Any combination (e.g., Branch + Academic Year)
++The update participates in the caller's transaction: a committed transaction commits the increment; a rolled-back transaction rolls the increment back. This is a database transaction property, not a universal business-level guarantee of gap-free identifiers across deletion, abandonment, retries, or other lifecycle events.
+ 
+-**UUID vs Business ID:**
+-- System UUIDs (`gen_random_uuid()`) remain the primary keys for ALL tables to ensure decoupled relations and offline replication capabilities.
+-- Business Identifiers are purely for human-readable reference, display, and search. They are strictly stored as `TEXT`.
++## 3. Concurrency benchmark
++The benchmark driver is `scripts/identifier-concurrency-benchmark.sh` and its SQL assets are under `scripts/concurrency_tests/`. It exercises same-sequence and different-sequence contention with 2–10 clients and transaction holds from 10ms to 5s.
+ 
+-## 2. Data Model
+-To support atomic, isolated generation, we need an `identifier_sequences` table.
+-
+-```sql
+-CREATE TABLE public.identifier_sequences (
+-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+-    organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+-    branch_id UUID REFERENCES public.branches(id) ON DELETE CASCADE,
+-    academic_year_id UUID REFERENCES public.academic_years(id) ON DELETE CASCADE,
+-    
+-    entity_type TEXT NOT NULL, -- e.g., 'student_code', 'invoice_number'
+-    
+-    -- Format configuration
+-    prefix TEXT NOT NULL DEFAULT '',
+-    suffix TEXT NOT NULL DEFAULT '',
+-    padding_length INT NOT NULL DEFAULT 4,
+-    
+-    -- State
+-    last_value BIGINT NOT NULL DEFAULT 0,
+-    
+-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+-    
+-    -- Uniqueness constraint: Only one active sequence per combination
+-    UNIQUE (organization_id, branch_id, academic_year_id, entity_type)
+-);
+-```
+-
+-## 3. Generation Algorithm (Concurrency & Transaction Safety)
+-Generation must be wrapped in a transaction. We will use a PostgreSQL function `generate_business_identifier()` that uses a row-level lock (`FOR UPDATE`) or an atomic `UPDATE ... RETURNING` to increment the sequence.
+-
+-```sql
+-CREATE OR REPLACE FUNCTION generate_business_identifier(
+-    p_organization_id UUID,
+-    p_branch_id UUID,
+-    p_academic_year_id UUID,
+-    p_entity_type TEXT
+-) RETURNS TEXT AS $$
+-DECLARE
+-    v_new_value BIGINT;
+-    v_prefix TEXT;
+-    v_suffix TEXT;
+-    v_padding INT;
+-    v_result TEXT;
+-BEGIN
+-    -- Atomic update and lock
+-    UPDATE public.identifier_sequences
+-    SET last_value = last_value + 1, updated_at = NOW()
+-    WHERE organization_id = p_organization_id
+-      AND (branch_id = p_branch_id OR (branch_id IS NULL AND p_branch_id IS NULL))
+-      AND (academic_year_id = p_academic_year_id OR (academic_year_id IS NULL AND p_academic_year_id IS NULL))
+-      AND entity_type = p_entity_type
+-    RETURNING last_value, prefix, suffix, padding_length 
+-    INTO v_new_value, v_prefix, v_suffix, v_padding;
+-
+-    IF NOT FOUND THEN
+-        RAISE EXCEPTION 'Sequence not configured for entity %', p_entity_type;
+-    END IF;
+-
+-    -- Format
+-    v_result := v_prefix || LPAD(v_new_value::TEXT, v_padding, '0') || v_suffix;
+-    RETURN v_result;
+-END;
+-$$ LANGUAGE plpgsql;
+-```
+-
+-**Concurrency & Lock Contention:**
+-The `UPDATE ... RETURNING` clause takes a row-exclusive lock on the specific sequence row. If multiple transactions call this function concurrently, Postgres queues the updates serially on that specific row. This guarantees no two transactions receive the same sequence number.
+-
+-**Rollbacks & Gap-Free Semantics:**
+-Because the engine uses a standard table `UPDATE` (rather than a PostgreSQL `SEQUENCE` or an autonomous transaction), the increment is strictly bound to the caller's outer transaction. 
+-
+-This provides a **DATABASE TRANSACTION GUARANTEE**:
+-- If the outer transaction commits, the increment is committed.
+-- If the outer transaction rolls back, the `last_value` increment is completely rolled back, leaving no gap.
+-
+-This results in strictly gap-free sequences at the database level.
+-
+-**BUSINESS PROCESS GUARANTEE**:
+-While the database guarantees gap-free generation, business processes can still create gaps if a record is successfully committed and later deleted, or if a user abandons a draft (e.g. reserving an ID but never finalizing the business object).
+-
+-**Concurrency Benchmark Results:**
+-Because row locks are held until transaction completion, concurrent requests on the *same sequence* queue linearly.
+-Empirical benchmark (AUD-003) results under actual workload conditions:
+-- **Same sequence, 100ms transaction hold, 5 concurrent clients**: P99 wait time scales linearly (~2.4s max wait). No deadlocks occur; Postgres manages the queue perfectly.
+-- **Different sequences, 1s transaction hold, 10 concurrent clients**: Runs in complete parallel (~1s total latency).
+-- **Decision**: The lock contention scales linearly without deadlock, which is operationally acceptable for a low-throughput, high-integrity requirement like school ERP identifiers. The current atomic `UPDATE` model (Option A) is certified for Phase 6.
++The benchmark is an operational contention/correctness check. It should be rerun when identifier workloads or transaction boundaries materially change.
+ 
+ ## 4. Authorization & Security
+-- **RLS**: The `identifier_sequences` table enforces RLS, allowing only admins to configure sequences for their organizations.
+-- **Generation Function**: The function enforces authorization strictly. It validates organization membership, branch membership (if branch-scoped), academic year relations, and supports canonical Super Admin behavior. The `UPDATE` executes inside a hardened `SECURITY DEFINER` function with `search_path=''` but only proceeds after successful authorization. System-level operations (e.g., bulk import) via `service_role` bypass user authorization as intended. 
+-
+-## 5. Idempotency & Reuse
+-Identifiers are never reused once generated to prevent confusion. If a user deletes a student, the student code is permanently retired. The business ID column on the target table must have a `UNIQUE` constraint scoped correctly (e.g., `UNIQUE(branch_id, student_id_local)`).
+-
+-## 6. Phase 6 Integration (Prerequisite check)
+-Phase 6 (Exams & Marks) will require generating Exam references, Roll Numbers, or Report Card IDs. By building this shared engine now, Phase 6 can simply insert a sequence row for `exam_reference` and call `generate_business_identifier()`.
++`generate_business_identifier()` is a hardened `SECURITY DEFINER` function with `search_path = ''` and restricted EXECUTE grants. It validates active organization membership, requested branch ownership/membership, academic-year relationships, and canonical Super Admin semantics before updating the sequence.
+ 
+-## 7. Existing Identifiers Migration
+-Currently, `student_branch_profiles` has `student_id_local TEXT`. This is the ONLY existing business identifier identified in the schema so far. The column is already defined with a `UNIQUE(branch_id, student_id_local)` constraint. The Engine satisfies this requirement perfectly. No data migration is required if no actual generated strings exist, or if they do, we can initialize `last_value` based on existing records during adoption.
++## 5. Reuse and Phase 6
++Identifiers are not reused as a business rule. Target identifier columns retain appropriate uniqueness constraints. Phase 6 may define an `exam_reference` sequence and invoke the shared generator after entity-specific authorization and lifecycle validation.
+diff --git a/docs/POST_FOUNDATION_REMEDIATION_REPORT.md b/docs/POST_FOUNDATION_REMEDIATION_REPORT.md
+index 994d0a5..8f040a1 100644
+--- a/docs/POST_FOUNDATION_REMEDIATION_REPORT.md
++++ b/docs/POST_FOUNDATION_REMEDIATION_REPORT.md
+@@ -1,51 +1,24 @@
+-# Post-Foundation Remediation Final Report
+-
+-## Executive Summary
+-This report certifies the remediation of all pre-Phase 6 deep audit findings (AUD-002 through AUD-007). The SchoolOS repository has been hardened, benchmarked, and verified to safely support Phase 6 (Grading & Results) workloads.
+-
+-**Final Decision: READY FOR PHASE 6**
+-
+-## Remediation Details
+-
+-### 1. AUD-002: Identifier Engine Cross-Branch Authorization
+-- **Finding**: `generate_business_identifier` lacked branch authorization.
+-- **Remediation**: Re-implemented as a `SECURITY DEFINER` function with strict `search_path=''`.
+-- **Enforcement**: Validates the caller's organizational context via `auth_is_active_user()` and explicit branch checks. Super Admin canonical behavior is fully supported. Academic year validation ensures branch mismatch isolation.
+-- **Verification**: Covered by 21 assertions in `07_identifier_engine.sql`. All passing.
+-
+-### 2. AUD-003: Identifier Transaction Semantics & Concurrency
+-- **Finding**: Theoretical lock queuing needed real workload proof.
+-- **Remediation**: Deployed `pgbench` directly against the database container with realistic workloads (2 to 10 concurrent clients, varying transaction hold times).
+-- **Results**: 
+-  - Monotonic, gap-free generation guaranteed at the database level.
+-  - Zero deadlocks under heavy contention.
+-  - Latency scales linearly with lock queue time.
+-  - Independent sequences execute in complete parallel without blocking.
+-- **Conclusion**: The atomic `UPDATE` model (Option A) is robust and operationally acceptable.
+-
+-### 3. AUD-004: Adversarial Security Boundary
+-- **Finding**: E2E tests lacked direct server-boundary adversarial attacks.
+-- **Remediation**: Introduced `adversarial-security.spec.ts` using direct JWT authentication to the PostgREST API to attempt unauthorized mutations.
+-- **Verified Protections**:
+-  - Teacher cannot mutate attendance in unauthorized branches.
+-  - Teacher cannot mutate homework in unauthorized branches.
+-  - Teacher cannot alter a locked attendance session.
+-  - Guardian cannot mutate their own child's attendance.
+-  - Teacher cannot invoke admin-only communication endpoints.
+-
+-### 4. AUD-006: Next.js Security Patch
+-- **Finding**: `next` and `eslint-config-next` required updates.
+-- **Remediation**: Updated from `16.3.1` to `16.3.3` in `package.json`.
+-- **Verification**: `proxy-security.spec.ts` introduced to ensure the middleware (`proxy.ts`) correctly isolates authenticated, unauthenticated, and reset-required users across the patched Next.js runtime.
+-
+-### 5. AUD-005: Documentation Integrity
+-- **Finding**: `IDENTIFIER_ENGINE_DESIGN.md` contained inaccurate transaction semantics.
+-- **Remediation**: Documented the proven database transaction guarantee (gap-free at the DB level) and included the pgbench empirical results.
+-
+-### 6. AUD-007: Requirements Reconciliation
+-- **Finding**: Catalog and Reconciliation matrices contained stale Evidence values ("Missing middleware enforcement", etc.).
+-- **Remediation**: Synchronized all documentation fields for REQ-001, REQ-002, REQ-004, REQ-016, REQ-069, REQ-371-392, and REQ-393-412. Evidence now explicitly references the verified remediations.
+-- **Status**: 421 requirements reconciled. 100% agreement.
+-
+-## Repository State
+-All remediations have been committed. The master branch is architecturally, securely, and operationally sound for the immediate commencement of Phase 6: Exams, Marks, Grading, and Results.
++# Post-Foundation Remediation Report
++
++## Current Status
++**PENDING FINAL CI ON FOUNDATION-HARDENING COMMIT**
++
++The previously identified pre-Phase-6 remediation findings have been addressed in the current repository state. Final certification remains contingent on a green CI run for the exact hardening commit.
++
++## Verified remediation
++1. Identifier branch authorization is enforced inside the SECURITY DEFINER generator.
++2. Identifier concurrency and transaction semantics are documented precisely, with runnable benchmark assets.
++3. Adversarial server-boundary E2E tests cover unauthorized attendance/homework/communication mutations and locked attendance.
++4. Next.js is on 16.3.3.
++5. Temporary credentials are enforced by `proxy.ts`, including fail-closed handling when the reset-check RPC itself fails.
++6. Password-reset SECURITY DEFINER privileges are explicitly restricted.
++7. Playwright result accounting no longer relies on global skip arithmetic.
++8. CI pg_prove execution is digest pinned.
++9. Repository debug artifacts were removed.
++10. The unfinished client permissions helper now fails closed without explicit permission data and is clearly non-authoritative.
++
++## CI evidence already obtained
++CI #356 on commit `329d0e16f61e3b27c31df1738f0f114bea5be592` was green before these final hardening changes: database 479/479, Playwright 234/234 with 392 intentional skips, verifier passed, and worker certification 20/20.
++
++## Remaining production-operational work
++Real communication providers, backup/DR, observability, and self-hosted runner isolation remain deployment/infrastructure responsibilities and are not represented as completed application features.
+diff --git a/docs/PRE_PHASE6_DEEP_AUDIT_REPORT.md b/docs/PRE_PHASE6_DEEP_AUDIT_REPORT.md
+index cebc469..50f9e58 100644
+--- a/docs/PRE_PHASE6_DEEP_AUDIT_REPORT.md
++++ b/docs/PRE_PHASE6_DEEP_AUDIT_REPORT.md
+@@ -1,186 +1,16 @@
+-# PRE-PHASE-6 DEEP AUDIT REPORT
++# PRE-PHASE-6 DEEP AUDIT REPORT — HISTORICAL BASELINE
+ 
+-## 1. Executive Decision
+-**NOT READY FOR PHASE 6**
++This file records the original pre-remediation audit snapshot. It is intentionally retained for traceability and is **not** the current Phase-6 readiness authority.
+ 
+-The repository remains blocked from Phase 6, but the initial audit report contained one material framework-version error: `apps/web/src/proxy.ts` is the correct convention for Next.js 16 and is not, by itself, a P0 middleware bypass. The gate is therefore based on the confirmed identifier authorization issue, insufficient adversarial E2E coverage, and the need to prove identifier concurrency behavior under Phase-6-style load.
++The historical findings AUD-002 through AUD-007 were subsequently remediated or superseded by later repository changes. Use `docs/PRE_PHASE6_FOUNDATION_GATE.md` as the current gate.
+ 
+-A separate security-maintenance finding is also recorded: the repository currently declares Next.js `16.3.1`, while Next.js published `16.3.3` as the Active LTS security release on August 25, 2026 addressing two critical vulnerabilities. This must be evaluated and patched before production certification.
++## Historical findings
++- AUD-001: rejected; Next.js 16 uses `proxy.ts`.
++- AUD-002: identifier branch authorization — remediated in the identifier authorization hardening migration and adversarial DB tests.
++- AUD-003: identifier concurrency — benchmark infrastructure and precise transaction semantics added; benchmark launcher path corrected in the current hardening work.
++- AUD-004: adversarial E2E coverage — direct server-boundary mutation tests added for attendance, homework, communication and locked state.
++- AUD-005: identifier transaction semantics — documentation corrected to distinguish DB rollback semantics from end-to-end business lifecycle gaps.
++- AUD-006: Next.js dependency — current web package is on 16.3.3.
++- AUD-007: requirements/governance drift — current foundation gate supersedes this historical status document.
+ 
+-## 2. Exact Repository State
+-Audit report was generated at commit `94458988149c93633dd72aa975e38f3700b3f0d7`.
+-The audited application code baseline is `25b439084c9d84ee79deb9b7c15a2a2a58c4259f` before the audit-report-only commit.
+-
+-## 3. Repository Inventory
+-The repository is a monorepo containing:
+-- `apps/web`: Next.js web application
+-- `supabase/migrations`: schema, RLS and SECURITY DEFINER functions
+-- `supabase/functions/communication-worker`: Deno communication worker
+-- `supabase/tests/db`: pgTAP database tests
+-- `apps/web/e2e`: Playwright end-to-end tests
+-- shared packages including authentication and permissions
+-
+-## 4. Architecture Audit
+-The overall architecture largely conforms to the documented multi-tenant, multi-branch model: organization/branch separation, RLS, RPC-based mutations, event-driven communication, and explicit authorization layers exist.
+-
+-The remaining concern is not that the architecture is fundamentally unusable, but that several security-critical boundaries rely on manually enforced authorization inside SECURITY DEFINER functions and on E2E coverage that does not always exercise the same mutation path.
+-
+-## 5. Corrected Next.js Proxy Finding
+-**AUD-001 from the original report is REJECTED.**
+-
+-The web application declares Next.js `16.3.1`. In Next.js 16, the routing convention changed from `middleware.ts` to `proxy.ts`; the official Next.js documentation demonstrates a root `proxy.ts` file for route protection. Therefore `apps/web/src/proxy.ts` is not evidence of an ignored middleware.
+-
+-The file exports a `proxy` function and an applicable `matcher`, so the filename alone does not demonstrate a temporary-credential bypass.
+-
+-This finding must not be remediated by renaming `proxy.ts` to `middleware.ts`.
+-
+-A runtime/build-level test should still prove that the deployed Next.js build executes the proxy and that `requires_password_reset` actually redirects users who require a password change.
+-
+-## 6. Auth / Temporary Credentials
+-The temporary-credential logic itself exists inside the proxy and calls `requires_password_reset` for authenticated users. The remaining audit requirement is execution-path verification, not filename correction.
+-
+-Required proof before production certification:
+-1. Build the web application using the repository's pinned dependency set.
+-2. Confirm the proxy is loaded by the built application.
+-3. Authenticate as a user requiring password reset.
+-4. Confirm protected routes redirect to `/auth/update-password`.
+-5. Confirm logout and password-update routes remain usable.
+-
+-## 7. Multi-Tenancy / RLS Audit
+-RLS is extensively implemented and the existing database tests cover important organization and branch isolation scenarios. However, SECURITY DEFINER RPCs can bypass table RLS and therefore must perform explicit authorization inside the function body.
+-
+-This makes the correctness of those manual checks security-critical rather than merely defensive.
+-
+-## 8. SECURITY DEFINER Audit
+-The repository contains many SECURITY DEFINER functions. Several established functions use hardened search paths, controlled grants, and explicit branch/organization checks.
+-
+-The Identifier Engine function is a notable exception and requires remediation and hardening.
+-
+-## 9. AUD-002 — Identifier Engine Branch Authorization Bypass — P1
+-`generate_business_identifier(...)` authorizes the caller at organization scope but does not adequately verify authorization for the requested `p_branch_id`.
+-
+-Because the function is SECURITY DEFINER, the caller can obtain effects that are intentionally unavailable through direct sequence-table access. An authenticated member of an organization may therefore be able to request identifier generation against another branch in that same organization.
+-
+-This violates the repository's branch isolation model and is a confirmed foundation blocker.
+-
+-### Required remediation
+-- Validate that `p_branch_id` exists and belongs to `p_organization_id`.
+-- Require the caller to have an authorized relationship/role for that branch, with an explicit Super Admin exception where documented.
+-- Validate any academic-year/entity scope against the requested branch and organization.
+-- Harden the SECURITY DEFINER function with an explicit safe `search_path` and controlled EXECUTE grants.
+-- Add a direct DB test proving an A1 user cannot generate identifiers for A2 in the same organization.
+-
+-## 10. AUD-003 — Identifier Transaction Serialization / Contention — P1 pending workload proof
+-The current generator advances the sequence using transactional `UPDATE ... RETURNING`. PostgreSQL row locks acquired by the update remain held until the surrounding transaction completes.
+-
+-This means concurrent identifier requests for the same sequence are serialized. That behavior is useful for correctness, but it can create significant contention when a long-running application transaction generates identifiers and holds the sequence row lock for an extended period.
+-
+-The current audit report overstated this by calling it a proven "catastrophic deadlock". A deadlock requires a reproducible wait cycle; the static implementation review alone does not prove one.
+-
+-### Required remediation / proof
+-Before Phase 6:
+-- Run a two-session concurrency test against the actual database function.
+-- Measure lock wait time at increasing transaction durations and concurrency.
+-- Exercise bulk operations representative of Phase 6.
+-- Determine whether the intended identifier semantics should be transactional or gap-tolerant.
+-- Document the resulting guarantee precisely.
+-
+-Do not introduce an autonomous-transaction mechanism merely to make numbers gap-prone until the business requirement and load test justify it.
+-
+-## 11. Identifier Transaction Semantics / Documentation — P2
+-The existing documentation says the identifier engine is not strictly gap-free because outer transaction rollback can consume a value. That statement should be corrected for the current transactional implementation: the sequence-table update participates in the caller's transaction and is rolled back with it.
+-
+-However, this does not establish a universal business-level guarantee of "no gaps" across every possible application design. The specification should distinguish database transaction rollback behavior from end-to-end identifier lifecycle guarantees.
+-
+-The existing test suite also needs explicit concurrent-session coverage rather than relying only on savepoint behavior.
+-
+-## 12. AUD-004 — E2E Test Integrity — P1
+-Several authorization tests validate only the browser presentation layer. For example, a test that navigates to another branch and checks for `Access Denied` does not prove that a lower-privileged principal cannot invoke the underlying mutation endpoint/RPC directly.
+-
+-Likewise, a form test that asserts the presence of inputs does not prove that submission persists valid state.
+-
+-### Required remediation
+-Security-critical E2E tests must exercise the server boundary directly. Add adversarial tests that:
+-- authenticate as the lower-privileged role;
+-- issue the actual POST/RPC/API mutation request;
+-- assert the request fails with the expected authorization result;
+-- verify that no unauthorized database state changed;
+-- repeat this for cross-branch, cross-organization, role-restricted, locked/published, and other privileged mutation paths.
+-
+-For important create/update flows, fill the form, submit it, and verify resulting database/UI state.
+-
+-## 13. Attendance Audit
+-Attendance server-side RPCs contain meaningful authorization and state-transition checks. The remaining gap is certification depth: the E2E suite should independently exercise direct unauthorized mutation attempts rather than relying primarily on route-level denial assertions.
+-
+-## 14. Homework Audit
+-Homework authorization is similarly stronger at the server/RPC layer than the current E2E security assertions demonstrate. Direct unauthorized mutation tests and state-verification assertions are required before calling the module security-certified.
+-
+-## 15. Communication Worker Audit
+-The communication worker fails closed in production when mock providers are disabled. Production email/push provider integrations are still incomplete and must not be represented as production-complete until their third-party connections are implemented and certified.
+-
+-## 16. Database Integrity Audit
+-The schema contains substantial relational constraints and tenant-aware RLS. Some cross-tenant correctness still depends on RLS and explicit authorization rather than composite `(entity_id, branch_id)` foreign keys. This is an architectural trade-off, but every SECURITY DEFINER mutation crossing those boundaries must have explicit tests.
+-
+-## 17. CI/CD Audit
+-The pipeline executes a broad validation surface including lint, typecheck, unit tests, database tests, security checks, builds, worker certification and Playwright.
+-
+-The audit does not treat a green CI result as proof of complete authorization coverage because the E2E assertions themselves can be too weak.
+-
+-The persistent self-hosted-runner model also remains an operational security concern for untrusted pull requests; this should be assessed against repository contribution policy and runner isolation.
+-
+-## 18. Dependency / Security Maintenance — P1
+-The web package currently declares `next` version `16.3.1`. Next.js published `16.3.3` on August 25, 2026 as an Active LTS security release addressing two critical vulnerabilities.
+-
+-Therefore the dependency baseline is behind the current security patch level and requires immediate assessment and update before production certification.
+-
+-The previous report statement that no supply-chain/security dependency issue was observed is superseded by this finding.
+-
+-## 19. Documentation / Requirements Drift — P2
+-The requirements catalog and reconciliation artifacts still contain contradictory status/evidence combinations in places, including rows marked IMPLEMENTED while their evidence still says missing. Layer columns also appear to mix applicability with implementation state.
+-
+-This does not directly compromise runtime security, but it reduces the reliability of the repository's own completion/certification claims and must be cleaned before final production certification.
+-
+-## 20. Complete Findings Register
+-
+-| ID | Sev | Component | Description |
+-|---|---|---|---|
+-| AUD-001 | CLOSED | Auth/Web | Original `middleware.ts` naming finding rejected; `proxy.ts` is the Next.js 16 convention. |
+-| AUD-002 | P1 | Identifiers | SECURITY DEFINER identifier generation lacks sufficient requested-branch authorization. |
+-| AUD-003 | P1 | Identifiers | Transactional sequence update serializes concurrent requests and may cause severe contention; Phase-6 workload must be benchmarked. |
+-| AUD-004 | P1 | E2E Tests | Security-critical authorization tests are too UI-centric and do not consistently prove server-side mutation denial/state immutability. |
+-| AUD-005 | P2 | Identifier Docs | Transaction/rollback semantics are inaccurately documented and need precise end-to-end guarantees. |
+-| AUD-006 | P1 | Dependencies | Next.js `16.3.1` is behind the August 2026 security patch `16.3.3` and requires security update assessment. |
+-| AUD-007 | P2 | Governance | Requirements/reconciliation status and evidence fields contain contradictions. |
+-
+-## 21. Severity Totals
+-- **P0:** 0 confirmed
+-- **P1:** 4
+-- **P2:** 2
+-- **P3:** 0
+-
+-## 22. Phase-6 Blocking Findings
+-The following remain blocking until repaired and independently verified:
+-
+-- **AUD-002** — cross-branch identifier authorization
+-- **AUD-003** — identifier concurrency behavior not yet proven safe for Phase-6 workload
+-- **AUD-004** — insufficient adversarial authorization test coverage
+-- **AUD-006** — security-patch assessment/update for Next.js
+-
+-AUD-005 and AUD-007 are not the primary reasons Phase 6 is frozen, but they must be resolved before final production certification.
+-
+-## 23. Required Verification Gate Before Phase 6
+-Phase 6 may begin only after all of the following are true:
+-
+-1. Cross-branch identifier generation is explicitly rejected at the database function boundary and covered by pgTAP.
+-2. SECURITY DEFINER identifier function uses hardened search-path and privilege configuration.
+-3. Identifier concurrency has been exercised with real concurrent database sessions under Phase-6-like load and the documented behavior is accepted.
+-4. Attendance/Homework and other security-critical E2E tests perform direct unauthorized mutation attempts and verify unchanged database state.
+-5. Next.js is updated to the currently supported security-patched release line after regression testing.
+-6. Temporary-credential proxy behavior is proven in a production build/runtime test.
+-7. The requirements catalog/reconciliation is synchronized so status, evidence and layer semantics agree.
+-
+-## 24. Final Decision
+-
+-> **NOT READY FOR PHASE 6**
+-
+-This decision is intentionally conservative: the repository has a strong base and green CI, but the remaining foundation security and certification gaps must be closed before adding a large new mutation-heavy module.
+\ No newline at end of file
++Do not use the old severity totals or old commit hashes below this line as current status.
+diff --git a/docs/PRE_PHASE6_FOUNDATION_GATE.md b/docs/PRE_PHASE6_FOUNDATION_GATE.md
+index ee305d5..a50e1cb 100644
+--- a/docs/PRE_PHASE6_FOUNDATION_GATE.md
++++ b/docs/PRE_PHASE6_FOUNDATION_GATE.md
+@@ -1,97 +1,30 @@
+ # Pre-Phase 6 Foundation Gate
+ 
+-## Repository State
+-
+-| Field | Value |
+-|---|---|
+-| HEAD | `150a9cb5278bdfbb11d00f68e6ff9dc915f46334` |
+-| Branch | `master` |
+-| Final CI Run | [#33539857541](https://github.com/krishbindal/ERP-1/actions/runs/33539857541) |
+-| Job | Core Validation & E2E (ID 99963134101) - SUCCESS |
+-| Catalog / Reconciliation | 421 / 421 IDs - 0 mismatches, 0 duplicates |
+-| Reconciliation Synchronized | YES (2026-09-02) |
+-
+-## Phase 5 Gate
+-
+-- **Identity**: IMPLEMENTED (Evidence: DB schema, RLS, middleware, web UI present)
+-- **Tenancy**: IMPLEMENTED (Evidence: branch_id enforced in RLS and middleware)
+-- **Students**: IMPLEMENTED (Evidence: Admission and transfer flows fully built)
+-- **Guardians**: IMPLEMENTED (Evidence: Guardian linking and relationships built)
+-- **Staff**: IMPLEMENTED (Evidence: Teacher subject assignments built)
+-- **Scheduling**: IMPLEMENTED (Evidence: Timetable, substitution UI, and backend built)
+-- **Attendance**: IMPLEMENTED (Evidence: DB/Backend + Web UI + 6 Playwright E2E tests passing - Foundation Remediation 3)
+-- **Homework**: IMPLEMENTED (Evidence: DB/Backend + Web UI + 3 Playwright E2E tests passing - Foundation Remediation 4, CI run #33539857541)
+-- **Communication**: IMPLEMENTED (Evidence: Worker and E2E built)
+-
+-## Foundation Remediation Workstreams (All Verified)
+-
+-### 1. Temporary Credentials - IMPLEMENTED
+-- **Original Finding (REQ-001, P0)**: Missing middleware enforcement for force_password_reset
+-- **Remediation**: requires_password_reset() and clear_password_reset_flag() DB functions + proxy.ts middleware enforcement
+-- **Current Verified State**: Middleware intercepts every authenticated request, redirects to /auth/update-password when flag is set
+-
+-### 2. Identifier Engine - IMPLEMENTED
+-- **Original Finding (REQ-002, REQ-004, REQ-016, P1)**: No central generator, no sequence table, no business ID function
+-- **Remediation**: identifier_sequences table + generate_business_identifier() function with atomic UPDATE...RETURNING, per-org/branch/year/entity sequencing, RLS, GRANTs
+-- **Current Verified State**: Central generator exists. Concurrency-safe via row-level lock. Monotonic and unique. NOT strictly gap-free on rollback (documented in IDENTIFIER_ENGINE_DESIGN.md).
+-
+-### 3. Attendance Web UI + E2E - IMPLEMENTED
+-- **Original Finding (REQ-069, REQ-371-392, P1)**: BROKEN - Missing Web UI and Playwright E2E tests
+-- **Remediation**: attendance/page.tsx, AttendanceManager.tsx, history/page.tsx, attendance.spec.ts (6 test cases)
+-- **Current Verified State**: Teacher mark/save/lock, admin publish/correct, guardian history view, authorization enforcement - all E2E-certified
+-
+-### 4. Homework E2E/UI + DB/RLS - IMPLEMENTED
+-- **Original Finding (REQ-393-412, P1)**: BROKEN - Missing Web UI, broken RLS, wrong enrollment status
+-- **Remediation**: 9 UI files, 4 migration files, homework.spec.ts (3 test cases)
+-- **Current Verified State**: Teacher create/publish, student view, guardian view (read-only), RLS with correct enrollment status ('ACTIVE'), staff join via staff table, proper dollar-quoting, UTF-8 encoding - all E2E-certified in CI run #33539857541
+-
+-## Pre-Phase-6 Cross-Cutting Capabilities Gate
+-
+-- **Temporary credentials**: IMPLEMENTED. (Foundation Remediation 1)
+-- **Identifier engine**: IMPLEMENTED. (Foundation Remediation 2)
+-- **UUID generation**: IMPLEMENTED. Evidence: gen_random_uuid() used consistently across tables.
+-- **Business identifier generation**: IMPLEMENTED. (Foundation Remediation 2 - same as identifier engine)
+-- **Generated fields**: IMPLEMENTED. (Identifier engine dependency satisfied)
+-- **Bulk import**: CAN DEFER. Evidence: Not an architectural blocker for grading logic.
+-- **Template engine**: CAN DEFER.
+-- **Duplicate detection**: CAN DEFER. Evidence: Does not block core grading logic.
+-- **Duplicate resolution**: CAN DEFER.
+-- **Bulk operation engine**: CAN DEFER.
+-- **Action Center**: PLANNED / DEFERRED TO PHASE 8+ (REQ-021, P1). Reason: Not an architectural blocker for Phase 6 grading.
+-- **Universal search**: CAN DEFER.
+-- **Onboarding**: CAN DEFER.
+-- **History**: CAN IMPLEMENT DURING PHASE 6.
+-- **Auditability**: CAN IMPLEMENT DURING PHASE 6.
+-- **Notifications**: IMPLEMENTED.
+-- **Import preview**: CAN DEFER.
+-- **Restartability**: CAN DEFER.
+-- **Idempotency**: IMPLEMENTED (Evidence: Communication worker uses idempotency keys).
+-- **Reconciliation**: CAN DEFER.
+-- **Production ownership**: FUTURE PRODUCTION REQUIREMENT.
+-- **Backup/restore**: PLANNED / DEFERRED (REQ-022, P1). Reason: Disaster recovery is an infrastructure concern, not an architectural blocker for Phase 6.
+-- **Monitoring/observability**: FUTURE PRODUCTION REQUIREMENT.
+-- **Branch App Factory**: FUTURE PRODUCTION REQUIREMENT.
+-
+-## Severity Summary
+-
+-| Severity | Count |
+-|---|---|
+-| P0 | 0 |
+-| P1 | 2 (intentionally deferred: REQ-021 Action Center, REQ-022 Backup/DR) |
+-| P2 | 319 |
+-| P3 | 3 |
+-| N/A | 97 |
+-| **Total** | **421** |
+-
+-## Remaining P1 Findings (Intentionally Deferred)
+-
+-| REQ ID | Domain | Requirement | Status | Justification |
+-|---|---|---|---|---|
+-| REQ-021 | Cross-Cutting | Action Center | PLANNED | Phase 8+ scope - not an architectural blocker for Phase 6 grading |
+-| REQ-022 | Cross-Cutting | Backup/DR | PLANNED | Infrastructure concern - not an architectural blocker for Phase 6 grading |
+-
+-## Final Decision
+-
+-**READY FOR PHASE 6**
+-
+-All foundation gates are satisfied. The reconciliation document has been synchronized to the current repository state. All P0 findings are resolved. The only remaining P1 findings (REQ-021, REQ-022) are intentionally deferred with explicit justification and do not block Phase 6.
++## Current Status
++**PENDING FINAL CI ON FOUNDATION-HARDENING COMMIT**
++
++This is the canonical current gate. Earlier audit/certification documents are historical snapshots and must not be used as current readiness authority.
++
++## Closed Audit Items
++- Password-reset proxy enforcement now fails closed when the reset-check RPC errors.
++- Password-reset SECURITY DEFINER functions now use `search_path = ''` and explicit least-privilege EXECUTE grants.
++- Login event synchronization now registers before authentication so `SIGNED_IN` cannot be missed.
++- Playwright certification now uses direct test accounting without global skip subtraction.
++- Identifier concurrency benchmark paths match the current repository layout.
++- pg_prove CI image is pinned to a linux/amd64 digest.
++- The application permissions helper no longer silently denies every non-super-admin while pretending to implement permissions; it fails closed without an explicit permission set and is documented as a UI hint.
++- Repository debugging artifacts `patch_proxy.js` and `scratch/ci_fixes_report.md` have been removed.
++
++## Already Verified Foundation
++- Identifier Engine branch/organization/academic-year authorization is enforced at the database function boundary.
++- Attendance and Homework have direct adversarial server-boundary E2E coverage.
++- Next.js is 16.3.3.
++- CI #356 on commit `329d0e16f61e3b27c31df1738f0f114bea5be592` passed the full existing pipeline: 32 unit tests, 479 DB tests, 20 worker assertions, 234 Playwright tests with 0 failures, and zero unexpected skips.
++
++## Non-Blocking Operational Items
++- Real third-party communication providers remain deployment work; CI intentionally uses mocks.
++- The validation job uses the project self-hosted runner; runner isolation/trust is an infrastructure control outside repository code.
++- Backup/DR and broader production observability remain deployment requirements.
++
++## Final Gate
++Mark **READY FOR PHASE 6** only after this foundation-hardening commit gets a complete green CI run on its exact SHA and the resulting artifacts are reviewed.
+diff --git a/packages/permissions/index.ts b/packages/permissions/index.ts
+index 0ffdd48..f7df057 100644
+--- a/packages/permissions/index.ts
++++ b/packages/permissions/index.ts
+@@ -1,26 +1,33 @@
+ import { AuthContextState } from '@schoolos/auth';
+ 
++type PermissionAwareState = AuthContextState & { permissions?: readonly string[] };
++
++/** Client-side permission hint only. Database/RPC authorization is authoritative. */
+ export const can = (permission: string, state: AuthContextState): boolean => {
++  if (!permission) return false;
+   if (state.isSuperAdmin) return true;
+-  // Future: mapping of state.activeBranchId's role -> allowed permissions
+-  return false; 
++  const permissions = (state as PermissionAwareState).permissions;
++  return Boolean(state.activeBranchId && permissions?.includes(permission));
+ };
+ 
+ export const canAccessOrganization = (orgId: string, state: AuthContextState): boolean => {
++  if (!orgId) return false;
+   if (state.isSuperAdmin) return true;
+   return state.organizationMemberships.some(m => m.organizationId === orgId);
+ };
+ 
+ export const canAccessBranch = (branchId: string, state: AuthContextState): boolean => {
++  if (!branchId) return false;
+   if (state.isSuperAdmin) return true;
+   return state.branchMemberships.some(m => m.branchId === branchId);
+ };
+ 
+ export const hasRole = (role: string, state: AuthContextState): boolean => {
++  if (!role) return false;
+   if (state.isSuperAdmin) return true;
+   if (state.activeBranchId) {
+-     const membership = state.branchMemberships.find(m => m.branchId === state.activeBranchId);
+-     if (membership && membership.role === role) return true;
++    const membership = state.branchMemberships.find(m => m.branchId === state.activeBranchId);
++    if (membership?.role === role) return true;
+   }
+   return false;
+ };
+diff --git a/packages/permissions/package.json b/packages/permissions/package.json
+index 9e6a47a..8296baa 100644
+--- a/packages/permissions/package.json
++++ b/packages/permissions/package.json
+@@ -2,6 +2,7 @@
+   "name": "@schoolos/permissions",
+   "version": "1.0.0",
+   "main": "index.ts",
++  "description": "Client-side permission hints only; database/RPC authorization is authoritative.",
+   "dependencies": {
+     "@schoolos/auth": "*"
+   }
+diff --git a/patch_proxy.js b/patch_proxy.js
+deleted file mode 100644
+index c5c5dce..0000000
+--- a/patch_proxy.js
++++ /dev/null
+@@ -1,16 +0,0 @@
+-const fs = require('fs');
+-const path = 'apps/web/src/proxy.ts';
+-let code = fs.readFileSync(path, 'utf8');
+-code = code.replace(
+-  /const { data: { user }, error } = await supabase\.auth\.getUser\(\)/,
+-  \let user = null;
+-  let error = null;
+-  for (let i = 0; i < 5; i++) {
+-    const res = await supabase.auth.getUser();
+-    user = res.data?.user;
+-    error = res.error;
+-    if (!error || error.message !== 'Failed to fetch') break;
+-    console.warn(\\proxy.ts getUser failed to fetch, retrying \\/5...\\);
+-    await new Promise(r => setTimeout(r, 1000));
+-  });
+-fs.writeFileSync(path, code);
+diff --git a/scratch/ci_fixes_report.md b/scratch/ci_fixes_report.md
+deleted file mode 100644
+index 835f158..0000000
+--- a/scratch/ci_fixes_report.md
++++ /dev/null
+@@ -1,44 +0,0 @@
+-# CI Test Fixes: Next.js + Playwright Auth Session Race Condition
+-
+-## The Root Cause of the 16-Test Regression
+-We experienced a severe regression taking us from 2 failing proxy tests to 16 failing teacher tests. The root cause lay deeply embedded in the interaction between `@supabase/ssr`'s cookie chunking mechanism and browser navigation lifecycles.
+-
+-When `signInWithPassword()` succeeds, the `@supabase/supabase-js` client writes the session to Local Storage. Then, it asynchronously emits a `SIGNED_IN` event. The `@supabase/ssr` browser client listens to this event to write the JWT into `document.cookie`. Because JWTs can be large, `@supabase/ssr` chunks them into multiple cookies (e.g., `sb-[ref]-auth-token.0` and `sb-[ref]-auth-token.1`).
+-
+-Our previous fix (`document.cookie.includes('sb-')`) was structurally flawed. It fired the moment the **first** chunk (`.0`) was written and immediately triggered a hard navigation (`window.location.href = "/"`). This navigation abruptly unloaded the document, terminating the JavaScript execution before the **second** chunk (`.1`) could be written. 
+-
+-Consequently, `auth.setup.ts` saved a corrupted session into `teacher.json`. When the teacher tests ran, the Next.js `proxy.ts` middleware read the incomplete cookie, failed to reconstruct the JWT, evaluated `!user`, and aggressively redirected the tests from protected routes (like `/students`) to `/login`. The tests timed out looking for `Insufficient Permissions` text on pages they were never allowed to reach.
+-
+-## The Solution
+-I have rewritten the `login/page.tsx` submit handler to use a robust, deterministic synchronization pattern. 
+-
+-We now wrap the `onAuthStateChange` listener in a Promise that explicitly waits for the `SIGNED_IN` event to fire, plus a minimal buffer to ensure the event loop has flushed all cookie chunks to the document. 
+-
+-```typescript
+-const waitForCookies = new Promise<void>((resolve) => {
+-  const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+-    if (event === 'SIGNED_IN') {
+-      subscription.unsubscribe();
+-      // Ensure the browser has persisted the cookie chunks
+-      setTimeout(resolve, 50);
+-    }
+-  });
+-  
+-  // Fallback resolve after 1 second
+-  setTimeout(() => {
+-    subscription.unsubscribe();
+-    resolve();
+-  }, 1000);
+-});
+-
+-await waitForCookies;
+-window.location.href = "/";
+-```
+-
+-This guarantees:
+-1. All cookie chunks are written before the browser unloads.
+-2. The `teacher` tests receive valid JWTs and stay on their designated pages to properly assert `Insufficient Permissions`.
+-3. The manual login within the `Password Reset Flow` test receives its cookies and successfully triggers the `/auth/update-password` middleware redirect, resolving the final 2 proxy failures.
+-
+-## Current Status
+-The changes have been pushed to `master`. The CI pipeline is currently running. Assuming no further environment flakiness, this will yield a **100% green pipeline** for our foundation remediation, fully satisfying the `PRE_PHASE6_DEEP_AUDIT_REPORT.md` requirements.
+diff --git a/scripts/ci-pgprove-test.sh b/scripts/ci-pgprove-test.sh
+index 57d3499..ed41993 100644
+--- a/scripts/ci-pgprove-test.sh
++++ b/scripts/ci-pgprove-test.sh
+@@ -1,5 +1,5 @@
+ #!/bin/bash
+-set -e
++set -euo pipefail
+ DB_CONTAINER=$(docker ps -qf name="supabase_db_")
+ NETWORK_NAME=$(docker inspect $DB_CONTAINER --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+ DB_NAME=$(docker inspect $DB_CONTAINER --format='{{.Name}}' | sed 's/^\///')
+@@ -11,9 +11,6 @@ echo "Running pg_prove tests..."
+ time docker run --rm \
+   --network "$NETWORK_NAME" \
+   -v "$(pwd)/supabase/tests:/tests:ro" \
+-  -e PGHOST="$DB_NAME" \
+-  -e PGUSER=postgres \
+-  -e PGPASSWORD=postgres \
+-  -e PGDATABASE=postgres \
+-  public.ecr.aws/supabase/pg_prove:3.36 \
++  -e PGHOST="$DB_NAME" -e PGUSER=postgres -e PGPASSWORD=postgres -e PGDATABASE=postgres \
++  public.ecr.aws/supabase/pg_prove:3.36_amd64@sha256:715739e7fdd07a8631c36ea2f1c88fc0144f99a8f5eaa6c3a9799be377f94f2c \
+   pg_prove --ext .sql -r /tests/db
+diff --git a/scripts/identifier-concurrency-benchmark.sh b/scripts/identifier-concurrency-benchmark.sh
+index 091749a..a9b4c19 100644
+--- a/scripts/identifier-concurrency-benchmark.sh
++++ b/scripts/identifier-concurrency-benchmark.sh
+@@ -1,11 +1,10 @@
+ #!/bin/bash
+-set -e
++set -euo pipefail
+ 
+ echo "============================================================"
+ echo "IDENTIFIER CONCURRENCY BENCHMARK"
+ echo "============================================================"
+ 
+-# Setup sequences for the test
+ docker exec supabase_db_ERP_1 psql -U postgres -d postgres -c "
+   INSERT INTO public.identifier_sequences (organization_id, branch_id, entity_type, prefix, padding_length)
+   VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeee01', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeee02', 'test_concurrent', 'TC-', 5)
+@@ -20,9 +19,8 @@ for i in {0..10}; do
+   "
+ done
+ 
+-# Copy scripts into container
+-docker cp supabase/tests/db/08_identifier_concurrency_benchmark.sql supabase_db_ERP_1:/tmp/08_identifier_concurrency_benchmark.sql
+-docker cp supabase/tests/db/08_identifier_concurrency_multi.sql supabase_db_ERP_1:/tmp/08_identifier_concurrency_multi.sql
++docker cp scripts/concurrency_tests/08_identifier_concurrency_benchmark.sql supabase_db_ERP_1:/tmp/08_identifier_concurrency_benchmark.sql
++docker cp scripts/concurrency_tests/08_identifier_concurrency_multi.sql supabase_db_ERP_1:/tmp/08_identifier_concurrency_multi.sql
+ 
+ run_benchmark() {
+   local name=$1
+@@ -34,41 +32,19 @@ run_benchmark() {
+   echo "------------------------------------------------------------"
+   echo "Scenario: $name (Clients: $clients, Txns/Client: $txns, Sleep: ${sleep}s)"
+   echo "------------------------------------------------------------"
+-  
+   docker exec supabase_db_ERP_1 pgbench -U postgres -d postgres \
+-    -f "/tmp/$script" \
+-    -c "$clients" \
+-    -t "$txns" \
+-    -j "$clients" \
+-    -D sleep_duration="$sleep" \
+-    -r
++    -f "/tmp/$script" -c "$clients" -t "$txns" -j "$clients" \
++    -D sleep_duration="$sleep" -r
+ }
+ 
+-# 1. Short transactions (0.01s hold) on SAME sequence
+ run_benchmark "Same Seq / Short Txn / 2 clients" "08_identifier_concurrency_benchmark.sql" 2 20 0.01
+ run_benchmark "Same Seq / Short Txn / 5 clients" "08_identifier_concurrency_benchmark.sql" 5 20 0.01
+ run_benchmark "Same Seq / Short Txn / 10 clients" "08_identifier_concurrency_benchmark.sql" 10 20 0.01
+-
+-# 2. Medium hold (0.1s) on SAME sequence
+ run_benchmark "Same Seq / 100ms Hold / 2 clients" "08_identifier_concurrency_benchmark.sql" 2 10 0.1
+ run_benchmark "Same Seq / 100ms Hold / 5 clients" "08_identifier_concurrency_benchmark.sql" 5 10 0.1
+-
+-# 3. Long hold (1s) on SAME sequence
+-# 10 clients doing 2 requests each = 20 seconds total if fully serialized
+ run_benchmark "Same Seq / 1s Hold / 10 clients" "08_identifier_concurrency_benchmark.sql" 10 2 1
+-
+-# 4. Long hold (5s) on SAME sequence
+-# 5 clients doing 1 request each = 25 seconds total if fully serialized
+ run_benchmark "Same Seq / 5s Hold / 5 clients" "08_identifier_concurrency_benchmark.sql" 5 1 5
+-
+-# 5. Long hold (1s) on DIFFERENT sequences (should run in parallel)
+ run_benchmark "Diff Seq / 1s Hold / 10 clients" "08_identifier_concurrency_multi.sql" 10 2 1
+ 
+-echo "============================================================"
+-echo "Verify Data Correctness"
+-echo "============================================================"
+-docker exec supabase_db_ERP_1 psql -U postgres -d postgres -c "
+-  SELECT entity_type, last_value 
+-  FROM public.identifier_sequences 
+-  WHERE entity_type LIKE 'test_concurrent%';
+-"
++psql_cmd="SELECT entity_type, last_value FROM public.identifier_sequences WHERE entity_type LIKE 'test_concurrent%';"
++docker exec supabase_db_ERP_1 psql -U postgres -d postgres -c "$psql_cmd"
+diff --git a/scripts/verify-playwright-results.js b/scripts/verify-playwright-results.js
+index bc1d033..a273ca8 100644
+--- a/scripts/verify-playwright-results.js
++++ b/scripts/verify-playwright-results.js
+@@ -1,145 +1,89 @@
+-const fs = require('fs');
+-const path = require('path');
+-
+-if (!process.argv[2]) {
+-  throw new Error(`ERROR: No report path provided`);
+-}
+-
+-const workspaceRoot = path.resolve(process.cwd());
+-const reportPath = path.resolve(process.argv[2]);
+-const relative = path.relative(workspaceRoot, reportPath);
+-
+-if (relative === '' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
+-  throw new Error(`ERROR: Path traversal detected`);
+-}
+-
+-if (!fs.existsSync(reportPath)) {
+-  throw new Error(`ERROR: Playwright report not found at ${reportPath}`);
+-}
+-
+-const rawData = fs.readFileSync(reportPath, 'utf8');
+-const report = JSON.parse(rawData);
+-
+-let total = 0;
+-let executed = 0;
+-let passed = 0;
+-let failed = 0;
+-let expectedSkips = 0;
+-let unexpectedSkips = 0;
+-let requiredSecurityExecuted = 0;
+-let requiredSecurityTotal = 0;
+-
+-let roleScopeSkips = 0;
+-let projectScopeSkips = 0;
+-
+-for (const suite of report.suites || []) {
+-  processSuite(suite);
+-}
+-
+-function processSuite(suite) {
+-  for (const spec of suite.specs || []) {
+-    total++;
+-    
+-    // Each spec has tests (e.g. one for each project/browser)
+-    // We count based on the tests array
+-    for (const test of spec.tests || []) {
+-      const results = test.results || [];
+-      const skipAnnotation = test.annotations?.find(a => a.type === 'skip');
+-      let isExpectedSkip = false;
+-      let skipType = null;
+-      
+-      if (skipAnnotation && skipAnnotation.description) {
+-          const desc = skipAnnotation.description;
+-          if (desc === 'EXPECTED_ROLE_SCOPE' || desc.includes('Only relevant for')) {
+-              isExpectedSkip = true;
+-              skipType = 'ROLE';
+-          } else if (desc === 'EXPECTED_PROJECT_SCOPE' || desc === 'Only need to run proxy tests once') {
+-              isExpectedSkip = true;
+-              skipType = 'PROJECT';
+-          }
+-      }
+-
+-      if (isExpectedSkip) {
+-        if (skipType === 'ROLE') roleScopeSkips++;
+-        if (skipType === 'PROJECT') projectScopeSkips++;
+-      }
+-      
+-      const status = test.status;
+-      if (status === 'expected') {
+-        if (test.expectedStatus === 'skipped') {
+-           if (isExpectedSkip) {
+-               expectedSkips++;
+-           } else {
+-               unexpectedSkips++;
+-               console.error(`Unexpected skip (expected skip): ${test.projectName} | ${spec.title} | ${skipAnnotation?.description}`);
+-           }
+-        } else {
+-           passed++;
+-           executed++;
+-        }
+-      } else if (status === 'skipped') {
+-        if (isExpectedSkip) {
+-            expectedSkips++;
+-        } else {
+-            unexpectedSkips++;
+-            console.error(`Unexpected skip (status skip): ${test.projectName} | ${spec.title} | ${skipAnnotation?.description}`);
+-        }
+-      } else {
+-        failed++;
+-        executed++;
+-      }
+-      
+-      // Determine if it's a security test (e.g. by title or file)
+-      // Since all our tests here are security/role-based right now, we can count all executed tests as security tests.
+-      // But we can filter specifically:
+-      if (test.projectName?.includes('superadmin') || test.projectName?.includes('branchadmin') || test.projectName?.includes('teacher')) {
+-          requiredSecurityTotal++;
+-          if (status === 'expected' && test.expectedStatus !== 'skipped') {
+-              requiredSecurityExecuted++;
+-          }
+-      }
+-    }
+-  }
+-  
+-  for (const childSuite of suite.suites || []) {
+-    processSuite(childSuite);
+-  }
+-}
+-
+-console.log("==================================================");
+-console.log("PLAYWRIGHT CERTIFICATION GATE");
+-console.log("==================================================");
+-console.log(`Total tests: ${total * 3}`); // approx, since each spec runs in 3 projects
+-console.log(`Executed: ${executed}`);
+-console.log(`Passed: ${passed}`);
+-console.log(`Failed: ${failed}`);
+-console.log(`Intentionally skipped: ${expectedSkips}`);
+-console.log(`  - EXPECTED_ROLE_SCOPE: ${roleScopeSkips}`);
+-console.log(`  - EXPECTED_PROJECT_SCOPE: ${projectScopeSkips}`);
+-console.log(`Unexpectedly skipped: ${unexpectedSkips}`);
+-
+-// We need exactly 60 tests (20 specs * 3 projects)
+-// Out of which 48 passed, 12 intentionally skipped.
+-// If there are ANY unexpected skips or failures, it's a hard fail.
+-if (failed > 0) {
+-    console.error("CERTIFICATION FAILED: Found failing tests.");
+-    process.exit(1);
+-}
+-
+-if (unexpectedSkips > 0) {
+-    console.error("CERTIFICATION FAILED: Found unexpected skipped tests.");
+-    process.exit(1);
+-}
+-
+-if (executed === 0) {
+-    console.error("CERTIFICATION FAILED: No tests executed.");
+-    process.exit(1);
+-}
+-
+-if (requiredSecurityExecuted < requiredSecurityTotal - expectedSkips) {
+-    console.error("CERTIFICATION FAILED: Required security scenarios not fully executed.");
+-    process.exit(1);
+-}
+-
+-console.log("CERTIFICATION PASSED");
+-process.exit(0);
++const fs = require('fs');
++const path = require('path');
++
++if (!process.argv[2]) {
++  throw new Error('ERROR: No report path provided');
++}
++
++const workspaceRoot = path.resolve(process.cwd());
++const reportPath = path.resolve(process.argv[2]);
++const relative = path.relative(workspaceRoot, reportPath);
++
++if (relative === '' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
++  throw new Error('ERROR: Path traversal detected');
++}
++
++if (!fs.existsSync(reportPath)) {
++  throw new Error(`ERROR: Playwright report not found at ${reportPath}`);
++}
++
++const rawData = fs.readFileSync(reportPath, 'utf8');
++const report = JSON.parse(rawData);
++
++let total = 0;
++let executed = 0;
++let passed = 0;
++let failed = 0;
++let skipped = 0;
++let unexpectedSkips = 0;
++let roleScopeSkips = 0;
++let projectScopeSkips = 0;
++
++for (const suite of report.suites || []) {
++  processSuite(suite);
++}
++
++function classifySkip(test) {
++  const annotation = test.annotations?.find(a => a.type === 'skip');
++  const description = annotation?.description || '';
++  if (description === 'EXPECTED_ROLE_SCOPE' || description.includes('Only relevant for')) return 'ROLE';
++  if (description === 'EXPECTED_PROJECT_SCOPE' || description === 'Only need to run proxy tests once') return 'PROJECT';
++  return null;
++}
++
++function processSuite(suite) {
++  for (const spec of suite.specs || []) {
++    for (const test of spec.tests || []) {
++      total++;
++      const status = test.status;
++
++      if (status === 'expected' && test.expectedStatus !== 'skipped') {
++        executed++;
++        passed++;
++      } else if (status === 'skipped' || (status === 'expected' && test.expectedStatus === 'skipped')) {
++        skipped++;
++        const skipType = classifySkip(test);
++        if (skipType === 'ROLE') roleScopeSkips++;
++        else if (skipType === 'PROJECT') projectScopeSkips++;
++        else {
++          unexpectedSkips++;
++          console.error(`Unexpected skip: ${test.projectName || 'unknown-project'} | ${spec.title}`);
++        }
++      } else {
++        executed++;
++        failed++;
++      }
++    }
++  }
++  for (const childSuite of suite.suites || []) processSuite(childSuite);
++}
++
++console.log('==================================================');
++console.log('PLAYWRIGHT CERTIFICATION GATE');
++console.log('==================================================');
++console.log(`Total tests: ${total}`);
++console.log(`Executed: ${executed}`);
++console.log(`Passed: ${passed}`);
++console.log(`Failed: ${failed}`);
++console.log(`Intentionally skipped: ${skipped}`);
++console.log(`  - EXPECTED_ROLE_SCOPE: ${roleScopeSkips}`);
++console.log(`  - EXPECTED_PROJECT_SCOPE: ${projectScopeSkips}`);
++console.log(`Unexpectedly skipped: ${unexpectedSkips}`);
++
++if (failed > 0) process.exitCode = 1;
++else if (unexpectedSkips > 0) process.exitCode = 1;
++else if (executed === 0) process.exitCode = 1;
++else {
++  console.log('CERTIFICATION PASSED');
++  process.exitCode = 0;
++}
+diff --git a/supabase/migrations/20260904000000_harden_temporary_credentials.sql b/supabase/migrations/20260904000000_harden_temporary_credentials.sql
+new file mode 100644
+index 0000000..83cb1f4
+--- /dev/null
++++ b/supabase/migrations/20260904000000_harden_temporary_credentials.sql
+@@ -0,0 +1,39 @@
++-- Harden temporary-credential SECURITY DEFINER functions.
++
++CREATE OR REPLACE FUNCTION public.requires_password_reset()
++RETURNS BOOLEAN
++LANGUAGE sql
++SECURITY DEFINER
++STABLE
++SET search_path = ''
++AS $$
++    SELECT COALESCE(
++        (
++            SELECT uc.force_password_reset
++            FROM public.user_credentials AS uc
++            WHERE uc.profile_id = auth.uid()
++            LIMIT 1
++        ),
++        false
++    );
++$$;
++
++CREATE OR REPLACE FUNCTION public.clear_password_reset_flag()
++RETURNS void
++LANGUAGE plpgsql
++SECURITY DEFINER
++SET search_path = ''
++AS $$
++BEGIN
++    UPDATE public.user_credentials
++    SET force_password_reset = false,
++        updated_at = now()
++    WHERE profile_id = auth.uid();
++END;
++$$;
++
++REVOKE ALL ON FUNCTION public.requires_password_reset() FROM PUBLIC;
++REVOKE ALL ON FUNCTION public.clear_password_reset_flag() FROM PUBLIC;
++
++GRANT EXECUTE ON FUNCTION public.requires_password_reset() TO authenticated;
++GRANT EXECUTE ON FUNCTION public.clear_password_reset_flag() TO authenticated;
+diff --git a/supabase/tests/database/07_auth_password_reset.test.sql b/supabase/tests/database/07_auth_password_reset.test.sql
+index ed16c45..096cc44 100644
+--- a/supabase/tests/database/07_auth_password_reset.test.sql
++++ b/supabase/tests/database/07_auth_password_reset.test.sql
+@@ -1,17 +1,12 @@
+ BEGIN;
+ 
+-SELECT plan(5);
++SELECT plan(9);
+ 
+--- Helper functions for deterministic UUIDs
+ CREATE FUNCTION get_test_user_1() RETURNS uuid LANGUAGE sql AS $$ SELECT '77777777-7777-7777-7777-777777777777'::uuid $$;
+ CREATE FUNCTION get_test_user_2() RETURNS uuid LANGUAGE sql AS $$ SELECT '88888888-8888-8888-8888-888888888888'::uuid $$;
+ CREATE FUNCTION get_test_role() RETURNS uuid LANGUAGE sql AS $$ SELECT '99999999-8888-7777-6666-555555555555'::uuid $$;
+ CREATE FUNCTION get_test_org() RETURNS uuid LANGUAGE sql AS $$ SELECT 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'::uuid $$;
+ 
+--- 1. Setup Mock Data
+--- Need auth schema since users table is in auth
+--- Need auth schema since users table is in auth
+-
+ INSERT INTO auth.users (id, email) VALUES
+ (get_test_user_1(), 'test1@example.com'),
+ (get_test_user_2(), 'test2@example.com')
+@@ -35,58 +30,27 @@ INSERT INTO public.user_credentials (username, profile_id, role_id, is_active, f
+ ('testuser2', get_test_user_2(), get_test_role(), true, false)
+ ON CONFLICT DO NOTHING;
+ 
+--- =================================================================
+--- TEST 1: requires_password_reset() returns true when force_password_reset = true
+--- =================================================================
+ SELECT set_config('request.jwt.claims', format('{"sub": "%s", "role": "authenticated"}', get_test_user_1()), true);
+ SELECT set_config('role', 'authenticated', true);
++SELECT is(public.requires_password_reset(), true, 'flagged user requires reset');
+ 
+-SELECT is(
+-    public.requires_password_reset(),
+-    true,
+-    'TEST 1: requires_password_reset() returns true for user with force_password_reset = true'
+-);
+-
+--- =================================================================
+--- TEST 2: requires_password_reset() returns false when force_password_reset = false
+--- =================================================================
+ SELECT set_config('request.jwt.claims', format('{"sub": "%s", "role": "authenticated"}', get_test_user_2()), true);
+ SELECT set_config('role', 'authenticated', true);
++SELECT is(public.requires_password_reset(), false, 'unflagged user does not require reset');
+ 
+-SELECT is(
+-    public.requires_password_reset(),
+-    false,
+-    'TEST 2: requires_password_reset() returns false for user with force_password_reset = false'
+-);
+-
+--- =================================================================
+--- TEST 3: clear_password_reset_flag() sets force_password_reset to false
+--- =================================================================
+ SELECT set_config('request.jwt.claims', format('{"sub": "%s", "role": "authenticated"}', get_test_user_1()), true);
+ SELECT set_config('role', 'authenticated', true);
++SELECT lives_ok($$ SELECT public.clear_password_reset_flag() $$, 'clear_password_reset_flag() executes');
++SELECT is(public.requires_password_reset(), false, 'reset flag is cleared');
+ 
+-SELECT lives_ok(
+-    $$ SELECT public.clear_password_reset_flag() $$,
+-    'TEST 3a: clear_password_reset_flag() executes without error'
+-);
+-
+-SELECT is(
+-    public.requires_password_reset(),
+-    false,
+-    'TEST 3b: requires_password_reset() returns false after calling clear_password_reset_flag()'
+-);
+-
+--- =================================================================
+--- TEST 4: requires_password_reset() returns false when record doesn't exist
+--- =================================================================
+ SELECT set_config('request.jwt.claims', '{"sub": "99999999-9999-9999-9999-999999999999", "role": "authenticated"}', true);
+ SELECT set_config('role', 'authenticated', true);
++SELECT is(public.requires_password_reset(), false, 'unknown user does not require reset');
+ 
+-SELECT is(
+-    public.requires_password_reset(),
+-    false,
+-    'TEST 4: requires_password_reset() returns false for unknown user'
+-);
++SELECT is(has_function_privilege('public', 'public.requires_password_reset()', 'EXECUTE'), false, 'PUBLIC cannot execute requires_password_reset()');
++SELECT is(has_function_privilege('authenticated', 'public.requires_password_reset()', 'EXECUTE'), true, 'authenticated can execute requires_password_reset()');
++SELECT is(has_function_privilege('public', 'public.clear_password_reset_flag()', 'EXECUTE'), false, 'PUBLIC cannot execute clear_password_reset_flag()');
++SELECT is(has_function_privilege('authenticated', 'public.clear_password_reset_flag()', 'EXECUTE'), true, 'authenticated can execute clear_password_reset_flag()');
+ 
+ SELECT * FROM finish();
+ ROLLBACK;

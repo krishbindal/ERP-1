@@ -81,24 +81,24 @@ export function OperatingDaysEditor({
             type="button"
             disabled={!isDirty || isPending}
             onClick={saveChanges}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center min-h-[44px] sm:min-h-0 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:opacity-90 focus-ring disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isPending ? 'Saving...' : 'Save Changes'}
           </button>
         )}
       </div>
 
-      {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
-      {success && <div className="mb-4 text-sm text-green-600">Operating days updated successfully.</div>}
+      {error && <div className="mb-4 text-sm text-destructive">{error}</div>}
+      {success && <div className="mb-4 text-sm text-success">Operating days updated successfully.</div>}
 
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-2 sm:gap-4">
         {DAYS.map((day) => {
           const isSelected = selectedDays.includes(day.id);
           const isOnlyRemaining = isSelected && selectedDays.length === 1;
           const isDisabled = isReadOnly || isPending || isOnlyRemaining;
 
           return (
-            <div key={day.id} className="flex items-center">
+            <div key={day.id} className="flex items-center min-h-[44px] sm:min-h-0 py-1.5 px-2 rounded-md hover:bg-muted/40 cursor-pointer touch-manipulation">
               <input
                 id={`operating-day-${day.id}`}
                 name={`operating-day-${day.id}`}
@@ -106,10 +106,10 @@ export function OperatingDaysEditor({
                 checked={isSelected}
                 disabled={isDisabled}
                 onChange={() => toggleDay(day.id)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                className="h-4 w-4 text-primary focus-ring border-input rounded disabled:opacity-50 cursor-pointer"
                 aria-disabled={isDisabled}
               />
-              <label htmlFor={`operating-day-${day.id}`} className="ml-2 block text-sm text-gray-900">
+              <label htmlFor={`operating-day-${day.id}`} className="ml-2 block text-sm text-foreground cursor-pointer select-none">
                 {day.label}
               </label>
               {isOnlyRemaining && (
