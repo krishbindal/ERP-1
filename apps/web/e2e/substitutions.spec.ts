@@ -87,6 +87,7 @@ test.describe('Substitutions Management', () => {
         await eventRow.getByRole('button', { name: 'Archive' }).click();
         const confirmDialog = page.getByRole('dialog', { name: 'Archive Calendar Event' });
         await confirmDialog.getByRole('button', { name: 'Archive Event' }).click();
+        await expect(confirmDialog).not.toBeVisible({ timeout: 15000 });
         await page.reload();
         holidayCount = await page.locator('tr').filter({ hasText: 'E2E Holiday' }).count();
       }
@@ -155,6 +156,7 @@ test.describe('Substitutions Management', () => {
       await eventRow.getByRole('button', { name: 'Archive' }).click();
       const confirmDialog = page.getByRole('dialog', { name: 'Archive Calendar Event' });
       await confirmDialog.getByRole('button', { name: 'Archive Event' }).click();
+      await expect(confirmDialog).not.toBeVisible({ timeout: 15000 });
       await page.reload();
       await expect(eventRow).toBeHidden({ timeout: 15000 });
       // ─── 1. CREATE a substitution for Wednesday ───
